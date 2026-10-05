@@ -9,14 +9,31 @@ result=$?
 
 if grep -Eq '^[0-9]+ scenarios?' "$log"; then
   printf 'Full build log: %s\n\n' "$log"
-  # The summary includes failed examples and their diagnostics, followed by
-  # counts. Generated step snippets and Maven's wrapper error follow it.
+  # Read annotation lines from Cucumber's snippets, then insert just their
+  # step expressions before the counts. Keep code templates in the full log.
   awk '
+    NR == FNR {
+      if (/^@(Given|When|Then|And|But)\("/) {
+        step = $0
+        sub(/^@/, "", step)
+        sub(/\("/, " ", step)
+        sub(/"\)$/, "", step)
+        if (!seen[step]++) undefined[++count] = step
+      }
+      next
+    }
     /^(Undefined|Pending|Failed) scenarios:/ { showing = 1 }
-    /^[0-9]+ scenarios?/ { showing = 1 }
+    /^[0-9]+ scenarios?/ {
+      if (count) {
+        print "Undefined steps (expressions):"
+        for (i = 1; i <= count; i++) print "  " undefined[i]
+        print ""
+      }
+      showing = 1
+    }
     showing { print }
     showing && /^[0-9]+m / { exit }
-  ' "$log"
+  ' "$log" "$log"
 else
   # Compilation/configuration failed before Cucumber could report results.
   cat "$log"

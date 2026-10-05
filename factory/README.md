@@ -7,7 +7,8 @@ Requires JDK 21 and Maven. From this folder:
 ./test -Preal-agent      # real-agent examples only
 ```
 
-`./test` keeps Cucumber results on the terminal and saves full Maven output in
+`./test` shows Cucumber results and undefined step expressions, with the counts
+at the bottom. Generated code templates stay in the log. It saves full Maven output in
 `target/test.log`. Failed or undefined examples still return a nonzero exit code.
 Build errors are displayed if Cucumber cannot run. Use `mvn test` for raw output.
 
