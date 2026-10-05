@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Keep Cucumber's results visible; retain all build diagnostics in the log.
+set -uo pipefail
+cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+mkdir -p target
+log=target/test.log
+mvn -B -Dstyle.color=never test "$@" > "$log" 2>&1
+result=$?
+
+if grep -Eq '^[0-9]+ scenarios?' "$log"; then
+  printf 'Full build log: %s\n\n' "$log"
+  # The summary includes failed examples and their diagnostics, followed by
+  # counts. Generated step snippets and Maven's wrapper error follow it.
+  awk '
+    /^(Undefined|Pending|Failed) scenarios:/ { showing = 1 }
+    /^[0-9]+ scenarios?/ { showing = 1 }
+    showing { print }
+    showing && /^[0-9]+m / { exit }
+  ' "$log"
+else
+  # Compilation/configuration failed before Cucumber could report results.
+  cat "$log"
+fi
+exit "$result"

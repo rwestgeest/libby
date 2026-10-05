@@ -30,4 +30,4 @@ If your harness doesn't load skills, read the skill's `SKILL.md` and follow it.
 
 ## Checks
 
-From `factory/`, run `mvn test` (excludes `@real-agent`); use `mvn test -Preal-agent` to run real-agent examples explicitly. Requires JDK 21 and Maven.
+From `factory/`, run `./test` (excludes `@real-agent`); use `./test -Preal-agent` to run real-agent examples explicitly. Full output is in `factory/target/test.log`; `mvn test` shows raw output. Requires JDK 21 and Maven.

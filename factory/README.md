@@ -3,9 +3,13 @@
 Requires JDK 21 and Maven. From this folder:
 
 ```sh
-mvn test                 # excludes @real-agent
-mvn test -Preal-agent    # real-agent examples only
+./test                  # excludes @real-agent; concise results
+./test -Preal-agent      # real-agent examples only
 ```
+
+`./test` keeps Cucumber results on the terminal and saves full Maven output in
+`target/test.log`. Failed or undefined examples still return a nonzero exit code.
+Build errors are displayed if Cucumber cannot run. Use `mvn test` for raw output.
 
 From the repository root:
 
