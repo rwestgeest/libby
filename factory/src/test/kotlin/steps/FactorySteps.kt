@@ -8,6 +8,7 @@ import java.nio.file.Path
 class FactorySteps {
     private lateinit var workspace: Path
     private lateinit var target: Path
+    private lateinit var seed: Path
 
     @Given("a copy of the factory")
     fun copyFactory() {
@@ -25,6 +26,18 @@ class FactorySteps {
     @Given("a new target")
     fun newTarget() {
         target = Files.createDirectory(workspace.resolve("target"))
+    }
+
+    @Given("a seed describing a game of Tetris")
+    fun createSeed() {
+        seed = Files.writeString(
+            workspace.resolve("seed.md"),
+            """
+            Build a game of Tetris that runs in the terminal.
+            Start it with npm start.
+            Keep the complete display withing 24 terminal rows.
+            """.trimIndent()
+        )
     }
 
     @After
