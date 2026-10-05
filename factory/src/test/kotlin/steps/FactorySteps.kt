@@ -9,6 +9,7 @@ class FactorySteps {
     private lateinit var workspace: Path
     private lateinit var target: Path
     private lateinit var seed: Path
+    private lateinit var agent: Path
 
     @Given("a copy of the factory")
     fun copyFactory() {
@@ -38,6 +39,13 @@ class FactorySteps {
             Keep the complete display withing 24 terminal rows.
             """.trimIndent()
         )
+    }
+
+    @Given("the agent plans the tasks alpha and beta, and does one task a pass")
+    fun prepareAgent() {
+        agent = workspace.resolve("agent.py")
+        Files.copy(Path.of("src/test/doubles/agent.py"), agent)
+        agent.toFile().setExecutable(true)
     }
 
     @After
