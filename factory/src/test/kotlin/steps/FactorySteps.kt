@@ -10,6 +10,7 @@ class FactorySteps {
     private lateinit var target: Path
     private lateinit var seed: Path
     private lateinit var agent: Path
+    private var chooseAgent = true
 
     @Given("a copy of the factory")
     fun copyFactory() {
@@ -46,6 +47,11 @@ class FactorySteps {
         agent = workspace.resolve("agent.py")
         Files.copy(Path.of("src/test/doubles/agent.py"), agent)
         agent.toFile().setExecutable(true)
+    }
+
+    @Given("no harness is chosen")
+    fun noHarnessChosen() {
+        chooseAgent = false
     }
 
     @After
