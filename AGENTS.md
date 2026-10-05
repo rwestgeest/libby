@@ -27,3 +27,7 @@ Skills, in `.agents/skills/` at the repository's root:
 - **implement-fast** — when the student wants you to just build the iteration.
 
 If your harness doesn't load skills, read the skill's `SKILL.md` and follow it.
+
+## Checks
+
+From `factory/`, run `mvn test` (excludes `@real-agent`); use `mvn test -Preal-agent` to run real-agent examples explicitly. Requires JDK 21 and Maven.
