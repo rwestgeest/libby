@@ -3,6 +3,7 @@ package steps
 import io.cucumber.java.After
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.When
+import io.cucumber.java.en.Then
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -84,7 +85,12 @@ class FactorySteps {
         exitCode = process.waitFor()
     }
 
-
+    @Then("pi has been called")
+    fun piHasBeenCalled() {
+        check(Files.exists(workspace.resolve("bin/calls/0.json"))) {
+            "Expected pi to be called. Exit code: $exitCode\n$output"
+        }
+    }
 
     @After
     fun cleanUp() {
