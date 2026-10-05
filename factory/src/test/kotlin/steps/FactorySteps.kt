@@ -7,6 +7,7 @@ import java.nio.file.Path
 
 class FactorySteps {
     private lateinit var workspace: Path
+    private lateinit var target: Path
 
     @Given("a copy of the factory")
     fun copyFactory() {
@@ -19,6 +20,11 @@ class FactorySteps {
         source.resolve("src/main").copyRecursively(copy.resolve("src/main"))
         source.resolve("factory").copyTo(copy.resolve("factory"))
         copy.resolve("factory").setExecutable(true)
+    }
+
+    @Given("a new target")
+    fun newTarget() {
+        target = Files.createDirectory(workspace.resolve("target"))
     }
 
     @After
