@@ -1,0 +1,7 @@
+{
+  "cucumberautocomplete.steps": ["factory/src/test/kotlin/steps/**/*.kt"],
+  "cucumberautocomplete.syncfeatures": "factory/spec/features/**/*.feature",
+  "cucumberautocomplete.gherkinDefinitionPart": "@(Given|When|Then|And|But)\\(",
+  "cucumberautocomplete.stepRegExSymbol": "\"",
+  "cucumberautocomplete.onTypeFormat": false
+}

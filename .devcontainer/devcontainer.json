@@ -5,7 +5,9 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "openai.chatgpt@26.5908.31748"
+        "openai.chatgpt@26.5908.31748",
+        "JetBrains.kotlin-server",
+        "alexkrechik.cucumberautocomplete"
       ]
     }
   },
