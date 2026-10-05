@@ -2,6 +2,7 @@ package steps
 
 import io.cucumber.java.After
 import io.cucumber.java.en.Given
+import io.cucumber.java.en.When
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -11,6 +12,8 @@ class FactorySteps {
     private lateinit var seed: Path
     private lateinit var agent: Path
     private var chooseAgent = true
+    private var output = ""
+    private var exitCode = -1
 
     @Given("a copy of the factory")
     fun copyFactory() {
@@ -53,6 +56,35 @@ class FactorySteps {
     fun noHarnessChosen() {
         chooseAgent = false
     }
+
+    @When("the factory runs one pass")
+    fun runOnePass() {
+        val bin = Files.createDirectory(workspace.resolve("bin"))
+        val pi = Files.copy(agent, bin.resolve("pi"))
+        pi.toFile().setExecutable(true)
+
+        val command = mutableListOf(
+            workspace.resolve("factory/factory").toString(),
+            "--seed", seed.toString(),
+            "--target", target.toString()
+        )
+        if (chooseAgent) {
+            command.addAll(listOf("--agent", agent.toString()))
+        }
+
+        val builder = ProcessBuilder(command)
+            .directory(workspace.toFile())
+            .redirectErrorStream(true)
+
+        builder.environment()["PATH"] =
+            "$bin:${System.getenv("PATH")}"
+
+        val process = builder.start()
+        output = process.inputStream.bufferedReader().use { it.readText() }
+        exitCode = process.waitFor()
+    }
+
+
 
     @After
     fun cleanUp() {
