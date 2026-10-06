@@ -149,6 +149,17 @@ class FactorySteps {
         }
     }
 
+    @Then("the plan has the tasks {string} and {string}, and no others")
+    fun planHasExactlyTwoTasks(first: String, second: String) {
+        val lines = Files.readAllLines(target.resolve(".factory/plan.md"))
+            .filter { it.isNotBlank() }
+
+        check(lines == listOf("- [ ] $first", "- [ ] $second")) {
+            "Expected only tasks $first and $second, but found:\n" +
+                lines.joinToString("\n")
+        }
+    }
+
     private fun git(vararg arguments: String): String {
         val process = ProcessBuilder(listOf("git") + arguments)
             .directory(workspace.toFile())
