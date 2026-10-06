@@ -72,6 +72,20 @@ class FactorySteps {
         Files.deleteIfExists(target.resolve(".factory/plan.md"))
     }
 
+    @Given("a plan with three tasks, none of them done")
+    fun planWithThreeTasks() {
+        val plan = target.resolve(".factory/plan.md")
+        Files.createDirectories(plan.parent)
+        Files.writeString(
+            plan,
+            """
+            - [ ] alpha
+            - [ ] beta
+            - [ ] gamma
+            """.trimIndent() + "\n"
+        )
+    }
+
     @Given("no harness is chosen")
     fun noHarnessChosen() {
         chooseAgent = false
