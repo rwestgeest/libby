@@ -23,8 +23,10 @@ class FactorySteps {
         val copy = workspace.resolve("factory").toFile()
 
         copy.mkdirs()
-        source.resolve("pom.xml").copyTo(copy.resolve("pom.xml"))
-        source.resolve("src/main").copyRecursively(copy.resolve("src/main"))
+        // Each example owns its compiled code; only dependency JARs are shared.
+        source.resolve("target/classes").copyRecursively(copy.resolve("target/classes"))
+        source.resolve("target/runtime-classpath.txt")
+            .copyTo(copy.resolve("target/runtime-classpath.txt"))
         source.resolve("factory").copyTo(copy.resolve("factory"))
         copy.resolve("factory").setExecutable(true)
         git("init")

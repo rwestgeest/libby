@@ -18,12 +18,17 @@ From the repository root:
 bin/factory --seed tetris/spec.md --target tetris/tetris-001
 ```
 
-The launcher builds the Kotlin entry point and preserves the caller's working
-folder. It currently prints `not built yet`.
+The launcher builds the Kotlin entry point in a source checkout and preserves
+the caller's working folder. A compiled distribution without `pom.xml` runs
+directly through the same launcher.
 
-Step definitions will live in `src/test/kotlin/steps/`. Each example will use a
-copy of the factory code in its own temporary workspace, sharing dependencies
-rather than copying them. Specs and step definitions stay out of that copy.
+The suite compiles the factory once before running examples. Each example gets
+its own copy of `target/classes`, the runtime classpath file, and the launcher.
+No factory classes are symlinked or shared between examples. Only dependency
+JARs in Maven's cache are shared, as they were before this optimization.
+Each example starts a separate JVM and owns its temporary Git repository,
+seed, target, plan, agent double and call records. Cleanup removes that workspace.
+Specs and step definitions stay out of the factory copy.
 Test doubles live with the steps and are selected from outside the factory.
 They record calls and inputs in the example's workspace, which is removed
 after the example. A fake `pi` on PATH will check default agent selection.

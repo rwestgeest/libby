@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 factory_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
-mvn -q -f "$factory_dir/pom.xml" compile dependency:build-classpath \
-  -Dmdep.includeScope=runtime -Dmdep.outputFile="$factory_dir/target/runtime-classpath.txt"
+# Source checkouts build before running; compiled distributions run directly.
+if [[ -f "$factory_dir/pom.xml" ]]; then
+  mvn -q -f "$factory_dir/pom.xml" compile dependency:build-classpath \
+    -Dmdep.includeScope=runtime -Dmdep.outputFile="$factory_dir/target/runtime-classpath.txt"
+fi
 exec java -cp "$factory_dir/target/classes:$(cat "$factory_dir/target/runtime-classpath.txt")" MainKt "$@"

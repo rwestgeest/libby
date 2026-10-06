@@ -39,6 +39,18 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <version>3.8.1</version>
+        <executions>
+          <execution>
+            <id>runtime-classpath</id>
+            <phase>process-test-classes</phase>
+            <goals><goal>build-classpath</goal></goals>
+            <configuration>
+              <includeScope>runtime</includeScope>
+              <outputFile>${project.build.directory}/runtime-classpath.txt</outputFile>
+              <regenerateFile>true</regenerateFile>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
