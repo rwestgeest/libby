@@ -53,6 +53,18 @@ class FactorySteps {
         agent.toFile().setExecutable(true)
     }
 
+    @Given("the agent cannot be run")
+    fun agentCannotBeRun() {
+        check(agent.toFile().setExecutable(false, false)) {
+            "Could not remove the test agent's execute permission"
+        }
+    }
+
+    @Given("no plan")
+    fun noPlan() {
+        Files.deleteIfExists(target.resolve(".factory/plan.md"))
+    }
+
     @Given("no harness is chosen")
     fun noHarnessChosen() {
         chooseAgent = false
@@ -89,6 +101,27 @@ class FactorySteps {
     fun piHasBeenCalled() {
         check(Files.exists(workspace.resolve("bin/calls/0.json"))) {
             "Expected pi to be called. Exit code: $exitCode\n$output"
+        }
+    }
+
+    @Then("the chosen agent has been called")
+    fun chosenAgentHasBeenCalled() {
+        check(Files.exists(workspace.resolve("calls/0.json"))) {
+            "Expected the chosen agent to be called. Exit code: $exitCode\n$output"
+        }
+    }
+
+    @Then("pi has not been called")
+    fun piHasNotBeenCalled() {
+        check(!Files.exists(workspace.resolve("bin/calls/0.json"))) {
+            "Expected pi not to be called.\n$output"
+        }
+    }
+
+    @Then("it reports that it could not run the agent")
+    fun reportsAgentCouldNotRun() {
+        check(output.contains("could not run the agent", ignoreCase = true)) {
+            "Expected an agent startup error message.\n$output"
         }
     }
 
