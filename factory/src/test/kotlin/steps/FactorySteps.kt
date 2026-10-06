@@ -125,6 +125,13 @@ class FactorySteps {
         }
     }
 
+    @Then("there is no plan")
+    fun thereIsNoPlan() {
+        check(!Files.exists(target.resolve(".factory/plan.md"))) {
+            "Expected no plan after the factory ran.\n$output"
+        }
+    }
+
     @After
     fun cleanUp() {
         if (::workspace.isInitialized) {
