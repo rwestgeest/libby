@@ -27,6 +27,10 @@ class FactorySteps {
         source.resolve("src/main").copyRecursively(copy.resolve("src/main"))
         source.resolve("factory").copyTo(copy.resolve("factory"))
         copy.resolve("factory").setExecutable(true)
+        git("init")
+        git("config", "user.name", "Factory Test")
+        git("config", "user.email", "factory-test@example.invalid")
+        git("commit", "--allow-empty", "-m", "Initial test state")
     }
 
     @Given("a new target")
@@ -130,6 +134,22 @@ class FactorySteps {
         check(!Files.exists(target.resolve(".factory/plan.md"))) {
             "Expected no plan after the factory ran.\n$output"
         }
+    }
+
+
+    private fun git(vararg arguments: String): String {
+        val process = ProcessBuilder(listOf("git") + arguments)
+            .directory(workspace.toFile())
+            .redirectErrorStream(true)
+            .start()
+
+        val result = process.inputStream.bufferedReader().use {
+            it.readText()
+        }
+        check(process.waitFor() == 0) {
+            "git ${arguments.joinToString(" ")} failed:\n$result"
+        }
+        return result.trim()
     }
 
     @After
