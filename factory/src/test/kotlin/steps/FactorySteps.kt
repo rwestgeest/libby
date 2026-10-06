@@ -15,6 +15,7 @@ class FactorySteps {
     private var chooseAgent = true
     private var output = ""
     private var exitCode = -1
+    private lateinit var headBeforeRun: String
 
     @Given("a copy of the factory")
     fun copyFactory() {
@@ -98,6 +99,7 @@ class FactorySteps {
         builder.environment()["PATH"] =
             "$bin:${System.getenv("PATH")}"
 
+        headBeforeRun = git("rev-parse", "HEAD")
         val process = builder.start()
         output = process.inputStream.bufferedReader().use { it.readText() }
         exitCode = process.waitFor()
@@ -138,6 +140,14 @@ class FactorySteps {
         }
     }
 
+    @Then("there are no new commits")
+    fun thereAreNoNewCommits() {
+        val headAfterRun = git("rev-parse", "HEAD")
+        check(headAfterRun == headBeforeRun) {
+            "Expected no new commits, but HEAD changed " +
+                "from $headBeforeRun to $headAfterRun"
+        }
+    }
 
     private fun git(vararg arguments: String): String {
         val process = ProcessBuilder(listOf("git") + arguments)
