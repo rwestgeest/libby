@@ -26,7 +26,7 @@ God-step class so each concern has a clear home.
   execution. Pull them into a named helper so `runOnePass` only builds the command,
   runs it, and captures output.
 
-- [ ] **Extract `GitRepo` collaborator** — The `git()` helper returns raw strings;
+- [x] **Extract `GitRepo` collaborator** — The `git()` helper returns raw strings;
   callers must know `rev-parse`, `log --format=%H`, `diff-tree --no-commit-id`
   flags. Replace with a `GitRepo(workspace)` object that offers named queries:
   `head()`, `logSince(commit, path)`, `diffTree(commit)`, and setup methods

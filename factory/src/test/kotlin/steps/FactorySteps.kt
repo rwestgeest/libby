@@ -21,8 +21,57 @@ private class Plan(private val path: Path) {
     }
 }
 
+private fun runProcess(
+    command: List<String>,
+    dir: Path,
+    environment: Map<String, String> = emptyMap()
+): Pair<String, Int> {
+    val builder = ProcessBuilder(command)
+        .directory(dir.toFile())
+        .redirectErrorStream(true)
+    builder.environment().putAll(environment)
+    val process = builder.start()
+    val output = process.inputStream.bufferedReader().use { it.readText() }
+    return output to process.waitFor()
+}
+
+private class GitRepo(private val workspace: Path) {
+    fun init() {
+        git("init")
+        git("config", "user.name", "Factory Test")
+        git("config", "user.email", "factory-test@example.invalid")
+    }
+
+    fun commit(msg: String) {
+        git("commit", "--allow-empty", "-m", msg)
+    }
+
+    fun head(): String = git("rev-parse", "HEAD")
+
+    fun logSince(commit: String, path: Path): List<String> {
+        val relativePath = workspace.relativize(path).toString()
+        return git(
+            "log", "--format=%H", "$commit..HEAD", "--",
+            relativePath, ":(exclude)$relativePath/.factory"
+        ).lines().filter { it.isNotBlank() }
+    }
+
+    fun diffTree(commit: String): List<String> = git(
+        "diff-tree", "--no-commit-id", "--name-only", "-r", commit
+    ).lines().filter { it.isNotBlank() }
+
+    private fun git(vararg arguments: String): String {
+        val (result, status) = runProcess(listOf("git") + arguments, workspace)
+        check(status == 0) {
+            "git ${arguments.joinToString(" ")} failed:\n$result"
+        }
+        return result.trim()
+    }
+}
+
 class FactorySteps {
     private lateinit var workspace: Path
+    private lateinit var repo: GitRepo
     private lateinit var target: Path
     private lateinit var seed: Path
     private lateinit var agent: Path
@@ -45,10 +94,9 @@ class FactorySteps {
             .copyTo(copy.resolve("target/runtime-classpath.txt"))
         source.resolve("factory").copyTo(copy.resolve("factory"))
         copy.resolve("factory").setExecutable(true)
-        git("init")
-        git("config", "user.name", "Factory Test")
-        git("config", "user.email", "factory-test@example.invalid")
-        git("commit", "--allow-empty", "-m", "Initial test state")
+        repo = GitRepo(workspace)
+        repo.init()
+        repo.commit("Initial test state")
     }
 
     @Given("a new target")
@@ -110,7 +158,7 @@ class FactorySteps {
             "--target", target.toString()
         ) + agentArgs
 
-        headBeforeRun = git("rev-parse", "HEAD")
+        headBeforeRun = repo.head()
         val result = runProcess(
             command,
             workspace,
@@ -157,7 +205,7 @@ class FactorySteps {
 
     @Then("there are no new commits")
     fun thereAreNoNewCommits() {
-        val headAfterRun = git("rev-parse", "HEAD")
+        val headAfterRun = repo.head()
         check(headAfterRun == headBeforeRun) {
             "Expected no new commits, but HEAD changed " +
                 "from $headBeforeRun to $headAfterRun"
@@ -169,15 +217,7 @@ class FactorySteps {
 
     @Then("there is one new work commit")
     fun oneNewWorkCommit() {
-        val targetPath = workspace.relativize(target).toString()
-        val commits = git(
-            "log",
-            "--format=%H",
-            "$headBeforeRun..HEAD",
-            "--",
-            targetPath,
-            ":(exclude)$targetPath/.factory"
-        ).lines().filter { it.isNotBlank() }
+        val commits = repo.logSince(headBeforeRun, target)
 
         check(commits.size == 1) {
             "Expected one new work commit, found ${commits.size}.\n$output"
@@ -188,10 +228,8 @@ class FactorySteps {
     @Then("its only product file is SENTINEL")
     fun onlyProductFileIsSentinel() {
         val targetPath = workspace.relativize(target).toString()
-        val productFiles = git(
-            "diff-tree", "--no-commit-id", "--name-only", "-r", workCommit
-        ).lines().filter {
-            it.isNotBlank() && !it.startsWith("$targetPath/.factory/")
+        val productFiles = repo.diffTree(workCommit).filter {
+            !it.startsWith("$targetPath/.factory/")
         }
 
         check(productFiles == listOf("$targetPath/SENTINEL")) {
@@ -218,28 +256,6 @@ class FactorySteps {
         val pi = Files.copy(agent, bin.resolve("pi"))
         pi.toFile().setExecutable(true)
         return mapOf("PATH" to "$bin:${System.getenv("PATH")}")
-    }
-
-    private fun runProcess(
-        command: List<String>,
-        dir: Path,
-        environment: Map<String, String> = emptyMap()
-    ): Pair<String, Int> {
-        val builder = ProcessBuilder(command)
-            .directory(dir.toFile())
-            .redirectErrorStream(true)
-        builder.environment().putAll(environment)
-        val process = builder.start()
-        val output = process.inputStream.bufferedReader().use { it.readText() }
-        return output to process.waitFor()
-    }
-
-    private fun git(vararg arguments: String): String {
-        val (result, status) = runProcess(listOf("git") + arguments, workspace)
-        check(status == 0) {
-            "git ${arguments.joinToString(" ")} failed:\n$result"
-        }
-        return result.trim()
     }
 
     @After
