@@ -60,6 +60,11 @@ class FactorySteps {
         agent.toFile().setExecutable(true)
     }
 
+    @Given("the agent writes a file called SENTINEL")
+    fun agentWritesSentinel() {
+        Files.writeString(workspace.resolve("product-name.txt"), "SENTINEL")
+    }
+
     @Given("the agent cannot be run")
     fun agentCannotBeRun() {
         check(agent.toFile().setExecutable(false, false)) {

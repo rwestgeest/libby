@@ -29,7 +29,9 @@ else:
         result = {"complete": True}
     else:
         task = lines[pending][6:]
-        Path(f"{task}.txt").write_text(f"Work for {task}\n")
+        name_file = Path(__file__).parent / "product-name.txt"
+        product = name_file.read_text().strip() if name_file.exists() else f"{task}.txt"
+        Path(product).write_text(f"Work for {task}\n")
         lines[pending] = f"- [x] {task}"
         plan.write_text("\n".join(lines) + "\n")
         result = {"complete": False, "task": task}
