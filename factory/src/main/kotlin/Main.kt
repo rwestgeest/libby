@@ -2,12 +2,21 @@ import java.io.File
 
 fun main(args: Array<String>) {
     val target = File(args[args.indexOf("--target") + 1])
+    val seed = File(args[args.indexOf("--seed") + 1]).absoluteFile
+    val plan = File(target, ".factory/plan.md").absoluteFile
+
+    val prompt = """
+        Read the seed at "$seed".
+        Keep your plan at "$plan".
+        If no plan exists, write a plan without implementing any tasks.
+        Otherwise, implement the first unfinished task and mark it done.
+        """.trimIndent()
 
     val agentIndex = args.indexOf("--agent")
     val agent = if (agentIndex >= 0) args[agentIndex + 1] else "pi"
 
     val process = try {
-        ProcessBuilder(agent)
+        ProcessBuilder(agent, "--print", "--no-session", prompt)
             .directory(target)
             .inheritIO()
             .start()

@@ -325,6 +325,21 @@ with `/model` and `/permissions`, or in `~/.codex/config.toml`. Full Access
 means Codex can run any command, including `git push` with the Codespace's
 GitHub token, without asking.
 
+### Run a plan with a Ralph loop
+
+Write your instructions in root `prompt.md` and tasks as `- [ ] ...` in
+root `PLAN.md`, then run:
+
+```sh
+bin/ralph
+# Optional model and pass limit:
+MAX_ITERATIONS=100 bin/ralph --model openai-codex/gpt-6-sol
+```
+
+Each pass starts a fresh Pi session, implements and verifies the next task,
+and marks it `- [x]`. The loop stops when no unchecked tasks remain, Pi fails,
+or `MAX_ITERATIONS` passes have run (default: 50). Rerun to resume.
+
 ### Testing the starter
 
 Run `bin/doctor_test.sh` to exercise `bin/doctor` against fake agent CLIs.

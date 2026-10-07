@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 1
+for ((i=0; i<${MAX_ITERATIONS:-50}; i++)); do
+  grep -qE '^[[:space:]]*[-*+] \[ \]' PLAN.md || exit 0
+  pi --print --no-session @prompt.md 'Implement the next open task in PLAN.md, verify it, then mark it [x].' "$@" || exit $?
+done
