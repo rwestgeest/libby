@@ -17,4 +17,18 @@ fun main(args: Array<String>) {
     }
 
     process.waitFor()
+
+    fun git(vararg arguments: String) {
+        val command = ProcessBuilder(listOf("git") + arguments)
+            .directory(target)
+            .inheritIO()
+            .start()
+
+        check(command.waitFor() == 0) {
+            "git ${arguments.joinToString(" ")} failed"
+        }
+    }
+
+    git("add", "--", ".")
+    git("commit", "--only", "-m", "Record factory pass", "--", ".")
 }

@@ -11,6 +11,7 @@ number = len(list(calls.glob("*.json")))
     "args": sys.argv[1:],
     "cwd": str(Path.cwd()),
 }))
+(calls / f"{number}.txt").write_text("\n".join(sys.argv[1:]))
 
 # The factory must run the agent inside its target.
 plan = Path(".factory/plan.md")

@@ -16,6 +16,7 @@ class FactorySteps {
     private var output = ""
     private var exitCode = -1
     private lateinit var headBeforeRun: String
+    private lateinit var workCommit: String
 
     @Given("a copy of the factory")
     fun copyFactory() {
@@ -176,6 +177,52 @@ class FactorySteps {
         check(lines == listOf("- [ ] $first", "- [ ] $second")) {
             "Expected only tasks $first and $second, but found:\n" +
                 lines.joinToString("\n")
+        }
+    }
+
+    @Then("there is one new work commit")
+    fun oneNewWorkCommit() {
+        val targetPath = workspace.relativize(target).toString()
+        val commits = git(
+            "log",
+            "--format=%H",
+            "$headBeforeRun..HEAD",
+            "--",
+            targetPath,
+            ":(exclude)$targetPath/.factory"
+        ).lines().filter { it.isNotBlank() }
+
+        check(commits.size == 1) {
+            "Expected one new work commit, found ${commits.size}.\n$output"
+        }
+        workCommit = commits.single()
+    }
+
+    @Then("its only product file is SENTINEL")
+    fun onlyProductFileIsSentinel() {
+        val targetPath = workspace.relativize(target).toString()
+        val productFiles = git(
+            "diff-tree", "--no-commit-id", "--name-only", "-r", workCommit
+        ).lines().filter {
+            it.isNotBlank() && !it.startsWith("$targetPath/.factory/")
+        }
+
+        check(productFiles == listOf("$targetPath/SENTINEL")) {
+            "Expected only SENTINEL as a product file, found: $productFiles"
+        }
+    }
+
+    @Then("the agent was pointed at the plan and at the seed")
+    fun agentReceivedPlanAndSeed() {
+        val arguments = Files.readString(workspace.resolve("calls/0.txt"))
+        val plan = target.resolve(".factory/plan.md").toAbsolutePath()
+        val seedPath = seed.toAbsolutePath()
+
+        check(arguments.contains(plan.toString())) {
+            "Agent was not given the plan path: $plan\n$arguments"
+        }
+        check(arguments.contains(seedPath.toString())) {
+            "Agent was not given the seed path: $seedPath\n$arguments"
         }
     }
 
