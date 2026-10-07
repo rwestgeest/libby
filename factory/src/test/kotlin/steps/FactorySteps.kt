@@ -112,17 +112,14 @@ class FactorySteps {
             command.addAll(listOf("--agent", agent.toString()))
         }
 
-        val builder = ProcessBuilder(command)
-            .directory(workspace.toFile())
-            .redirectErrorStream(true)
-
-        builder.environment()["PATH"] =
-            "$bin:${System.getenv("PATH")}"
-
         headBeforeRun = git("rev-parse", "HEAD")
-        val process = builder.start()
-        output = process.inputStream.bufferedReader().use { it.readText() }
-        exitCode = process.waitFor()
+        val result = runProcess(
+            command,
+            workspace,
+            mapOf("PATH" to "$bin:${System.getenv("PATH")}")
+        )
+        output = result.first
+        exitCode = result.second
     }
 
     @Then("pi has been called")
@@ -226,16 +223,23 @@ class FactorySteps {
         }
     }
 
-    private fun git(vararg arguments: String): String {
-        val process = ProcessBuilder(listOf("git") + arguments)
-            .directory(workspace.toFile())
+    private fun runProcess(
+        command: List<String>,
+        dir: Path,
+        environment: Map<String, String> = emptyMap()
+    ): Pair<String, Int> {
+        val builder = ProcessBuilder(command)
+            .directory(dir.toFile())
             .redirectErrorStream(true)
-            .start()
+        builder.environment().putAll(environment)
+        val process = builder.start()
+        val output = process.inputStream.bufferedReader().use { it.readText() }
+        return output to process.waitFor()
+    }
 
-        val result = process.inputStream.bufferedReader().use {
-            it.readText()
-        }
-        check(process.waitFor() == 0) {
+    private fun git(vararg arguments: String): String {
+        val (result, status) = runProcess(listOf("git") + arguments, workspace)
+        check(status == 0) {
             "git ${arguments.joinToString(" ")} failed:\n$result"
         }
         return result.trim()
