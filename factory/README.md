@@ -35,3 +35,18 @@ after the example. A fake `pi` on PATH will check default agent selection.
 
 Build configuration references: [Kotlin with Maven](https://kotlinlang.org/docs/maven.html)
 and [Cucumber CLI](https://cucumber.io/docs/cucumber/api/).
+
+## Current iteration behavior
+
+The factory calls an agent once, or repeatedly with `--all`, reads the last
+JSON line in its answer, commits the selected target's changes, and stops when
+`complete` is true. It never reads or writes the plan itself. `--seed` and
+`--target` are required. `--agent` selects an executable; it must accept the
+same `--print --no-session <prompt>` invocation as pi (use an adapter for a
+harness with a different interface).
+
+The remaining iteration implementation and non-real-agent steps have been
+written but have not been compiled or tested yet. `ITERATION` remains WIP.
+No real-agent game build has been run. After verification, the optional course
+follow-up is to generate and play Tetris, then compare fresh generations made
+with different models.

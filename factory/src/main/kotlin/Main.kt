@@ -1,47 +1,76 @@
 import java.io.File
+import java.io.IOException
+import kotlinx.serialization.json.*
+import kotlin.system.exitProcess
+
+private fun fail(message: String): Nothing {
+    System.err.println(message)
+    exitProcess(1)
+}
 
 fun main(args: Array<String>) {
-    val target = File(args[args.indexOf("--target") + 1])
-    val seed = File(args[args.indexOf("--seed") + 1]).absoluteFile
-    val plan = File(target, ".factory/plan.md").absoluteFile
+    fun option(name: String): String? = args.indexOf(name).takeIf { it >= 0 }
+        ?.let { args.getOrNull(it + 1) }?.takeUnless { it.startsWith("--") }
+
+    val seed = option("--seed")?.let { File(it).absoluteFile.normalize() }
+        ?.takeIf { it.isFile } ?: fail("There is no seed")
+    val target = option("--target")?.let { File(it).absoluteFile.normalize() }
+        ?: fail("A target is required")
+    target.mkdirs()
+    val plan = File(target, ".factory/plan.md")
+    val agent = option("--agent") ?: "pi"
+
+    fun gitResult(vararg arguments: String): Pair<String, Int> {
+        val process = ProcessBuilder(listOf("git") + arguments)
+            .directory(target).redirectErrorStream(true).start()
+        val output = process.inputStream.bufferedReader().use { it.readText() }
+        return output to process.waitFor()
+    }
+    fun git(vararg arguments: String): String {
+        val (output, status) = gitResult(*arguments)
+        if (status != 0) fail(output.trim())
+        return output
+    }
+    if (gitResult("rev-parse", "--show-toplevel").second != 0) git("init")
 
     val prompt = """
         Read the seed at "$seed".
         Keep your plan at "$plan".
         If no plan exists, write a plan without implementing any tasks.
         Otherwise, implement the first unfinished task and mark it done.
+        Work only in the current target directory. The factory handles commits.
         End your answer with a single line of JSON.
         Include a boolean field "complete": true when no unfinished tasks
         remain, false otherwise. If you implemented a task, also include
         its description in a "task" field.
-        """.trimIndent()
+    """.trimIndent()
 
-    val agentIndex = args.indexOf("--agent")
-    val agent = if (agentIndex >= 0) args[agentIndex + 1] else "pi"
-
-    val process = try {
-        ProcessBuilder(agent, "--print", "--no-session", prompt)
-            .directory(target)
-            .inheritIO()
-            .start()
-    } catch (error: java.io.IOException) {
-        System.err.println("Could not run the agent: ${error.message}")
-        kotlin.system.exitProcess(1)
-    }
-
-    process.waitFor()
-
-    fun git(vararg arguments: String) {
-        val command = ProcessBuilder(listOf("git") + arguments)
-            .directory(target)
-            .inheritIO()
-            .start()
-
-        check(command.waitFor() == 0) {
-            "git ${arguments.joinToString(" ")} failed"
+    do {
+        val process = try {
+            ProcessBuilder(agent, "--print", "--no-session", prompt)
+                .directory(target)
+                .redirectError(ProcessBuilder.Redirect.INHERIT)
+                .start()
+        } catch (error: IOException) {
+            fail("Could not run the agent: ${error.message}")
         }
-    }
+        val answer = process.inputStream.bufferedReader().use { it.readText() }
+        if (process.waitFor() != 0) fail("Agent exited unsuccessfully\n$answer")
+        val result = answer.lineSequence().mapNotNull { line ->
+            runCatching { Json.parseToJsonElement(line) }.getOrNull()
+        }.lastOrNull()
+        val complete = (result as? JsonObject)?.get("complete") as? JsonPrimitive
+        if (complete == null || complete.isString || complete.booleanOrNull == null) {
+            fail("Could not read the agent's result")
+        }
 
-    git("add", "--", ".")
-    git("commit", "--only", "-m", "Record factory pass", "--", ".")
+        // Both staging and committing are limited to this target, including its plan.
+        if (git("status", "--porcelain", "--", ".").isNotBlank()) {
+            git("add", "--", ".")
+            git("commit", "--only", "-m", "Record factory pass", "--", ".")
+        }
+        println(result)
+        if (complete.boolean || "--all" !in args) break
+    } while (true)
+    println("factory stopped")
 }

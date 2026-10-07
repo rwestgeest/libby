@@ -17,27 +17,44 @@ number = len(list(calls.glob("*.json")))
 plan = Path(".factory/plan.md")
 plan.parent.mkdir(exist_ok=True)
 
+prose_plan = (Path(__file__).parent / "prose-plan").exists()
 if not plan.exists():
-    plan.write_text("- [ ] alpha\n- [ ] beta\n")
+    if prose_plan:
+        plan.write_text("First make alpha; afterward make beta. Neither is ready.\n")
+    else:
+        plan.write_text("- [ ] alpha\n- [ ] beta\n")
     result = {"complete": False}
 else:
-    lines = plan.read_text().splitlines()
-    pending = next(
-        (i for i, line in enumerate(lines) if line.startswith("- [ ] ")),
-        None,
-    )
-    if pending is None:
+    text = plan.read_text()
+    if prose_plan:
+        task = ("alpha" if "Neither is ready" in text else
+                "beta" if "Beta is next" in text else None)
+        next_plan = ("Alpha is ready. Beta is next.\n" if task == "alpha" else
+                     "Both alpha and beta are ready.\n")
+    else:
+        lines = text.splitlines()
+        pending = next(
+            (i for i, line in enumerate(lines) if line.startswith("- [ ] ")),
+            None,
+        )
+        task = lines[pending][6:] if pending is not None else None
+        if task is not None:
+            lines[pending] = f"- [x] {task}"
+        next_plan = "\n".join(lines) + "\n"
+
+    if task is None:
         result = {"complete": True}
     else:
-        task = lines[pending][6:]
         name_file = Path(__file__).parent / "product-name.txt"
         product = name_file.read_text().strip() if name_file.exists() else f"{task}.txt"
         Path(product).write_text(f"Work for {task}\n")
-        lines[pending] = f"- [x] {task}"
-        plan.write_text("\n".join(lines) + "\n")
+        plan.write_text(next_plan)
         result = {"complete": False, "task": task}
 
 message_file = Path(__file__).parent / "before-result.txt"
 if message_file.exists():
     print(message_file.read_text())
-print(json.dumps(result))
+if (Path(__file__).parent / "no-result").exists():
+    print("I did some work, but have no structured result.")
+else:
+    print(json.dumps(result))
