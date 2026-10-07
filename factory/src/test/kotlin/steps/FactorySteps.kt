@@ -7,6 +7,20 @@ import io.cucumber.java.en.Then
 import java.nio.file.Files
 import java.nio.file.Path
 
+private class Plan(private val path: Path) {
+    fun tasks(): List<String> = Files.readAllLines(path)
+        .filter { it.isNotBlank() }
+        .map { line ->
+            check(line.startsWith("- [ ] ")) { "Invalid unfinished task: $line" }
+            line.removePrefix("- [ ] ")
+        }
+
+    fun write(tasks: List<String>) {
+        Files.createDirectories(path.parent)
+        Files.writeString(path, tasks.joinToString("") { "- [ ] $it\n" })
+    }
+}
+
 class FactorySteps {
     private lateinit var workspace: Path
     private lateinit var target: Path
@@ -79,18 +93,7 @@ class FactorySteps {
     }
 
     @Given("a plan with three tasks, none of them done")
-    fun planWithThreeTasks() {
-        val plan = target.resolve(".factory/plan.md")
-        Files.createDirectories(plan.parent)
-        Files.writeString(
-            plan,
-            """
-            - [ ] alpha
-            - [ ] beta
-            - [ ] gamma
-            """.trimIndent() + "\n"
-        )
-    }
+    fun planWithThreeTasks() = Plan(target.resolve(".factory/plan.md")).write(listOf("alpha", "beta", "gamma"))
 
     @Given("no harness is chosen")
     fun noHarnessChosen() {
@@ -167,15 +170,7 @@ class FactorySteps {
     }
 
     @Then("the plan has the tasks {string} and {string}, and no others")
-    fun planHasExactlyTwoTasks(first: String, second: String) {
-        val lines = Files.readAllLines(target.resolve(".factory/plan.md"))
-            .filter { it.isNotBlank() }
-
-        check(lines == listOf("- [ ] $first", "- [ ] $second")) {
-            "Expected only tasks $first and $second, but found:\n" +
-                lines.joinToString("\n")
-        }
-    }
+    fun planHasExactlyTwoTasks(first: String, second: String) = check(Plan(target.resolve(".factory/plan.md")).tasks() == listOf(first, second)) { "Expected only unfinished tasks $first and $second.\n$output" }
 
     @Then("there is one new work commit")
     fun oneNewWorkCommit() {

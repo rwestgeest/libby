@@ -10,7 +10,7 @@ God-step class so each concern has a clear home.
   read output → `.waitFor()` skeleton. Pull it into a `runProcess(command, dir)`
   that returns `(output, exitCode)`. Both callers delegate to it.
 
-- [ ] **Extract `Plan` value object** — The `- [ ] taskname` format is written
+- [x] **Extract `Plan` value object** — The `- [ ] taskname` format is written
   in `planWithThreeTasks` and parsed by hand in `planHasExactlyTwoTasks`.
   Create a `Plan(path)` that owns the format: `tasks()` returns the list,
   `write(tasks)` writes the file. The two steps become one-liners.
