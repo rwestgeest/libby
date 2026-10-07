@@ -37,4 +37,7 @@ else:
         plan.write_text("\n".join(lines) + "\n")
         result = {"complete": False, "task": task}
 
+message_file = Path(__file__).parent / "before-result.txt"
+if message_file.exists():
+    print(message_file.read_text())
 print(json.dumps(result))

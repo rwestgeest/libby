@@ -134,6 +134,11 @@ class FactorySteps {
         Files.writeString(workspace.resolve("product-name.txt"), "SENTINEL")
     }
 
+    @Given("the agent says {string} before its result")
+    fun agentSaysBeforeResult(message: String) {
+        Files.writeString(workspace.resolve("before-result.txt"), message)
+    }
+
     @Given("the agent cannot be run")
     fun agentCannotBeRun() {
         check(agent.toFile().setExecutable(false, false)) {
