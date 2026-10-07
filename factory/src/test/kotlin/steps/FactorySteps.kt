@@ -103,10 +103,7 @@ class FactorySteps {
 
     @When("the factory runs one pass")
     fun runOnePass() {
-        val bin = Files.createDirectory(workspace.resolve("bin"))
-        val pi = Files.copy(agent, bin.resolve("pi"))
-        pi.toFile().setExecutable(true)
-
+        val environment = setupTestEnvironment()
         val command = listOf(
             workspace.resolve("factory/factory").toString(),
             "--seed", seed.toString(),
@@ -117,7 +114,7 @@ class FactorySteps {
         val result = runProcess(
             command,
             workspace,
-            mapOf("PATH" to "$bin:${System.getenv("PATH")}")
+            environment
         )
         output = result.first
         exitCode = result.second
@@ -214,6 +211,13 @@ class FactorySteps {
         check(arguments.contains(seedPath.toString())) {
             "Agent was not given the seed path: $seedPath\n$arguments"
         }
+    }
+
+    private fun setupTestEnvironment(): Map<String, String> {
+        val bin = Files.createDirectory(workspace.resolve("bin"))
+        val pi = Files.copy(agent, bin.resolve("pi"))
+        pi.toFile().setExecutable(true)
+        return mapOf("PATH" to "$bin:${System.getenv("PATH")}")
     }
 
     private fun runProcess(

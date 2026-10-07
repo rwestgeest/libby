@@ -21,7 +21,7 @@ God-step class so each concern has a clear home.
   `prepareAgent()` → `listOf("--agent", agent.toString())`. The conditional disappears
   from `runOnePass`.
 
-- [ ] **Extract `setupTestEnvironment` from `runOnePass`** — The `bin/` directory
+- [x] **Extract `setupTestEnvironment` from `runOnePass`** — The `bin/` directory
   creation, agent-copy-as-`pi`, and `PATH` manipulation are environment setup, not
   execution. Pull them into a named helper so `runOnePass` only builds the command,
   runs it, and captures output.
