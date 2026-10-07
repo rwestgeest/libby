@@ -7,6 +7,8 @@ import io.cucumber.java.en.Then
 import java.nio.file.Files
 import java.nio.file.Path
 
+private data class Task(val name: String, val done: Boolean = false)
+
 private class Plan(private val path: Path) {
     fun tasks(): List<String> = Files.readAllLines(path)
         .filter { it.isNotBlank() }
@@ -15,9 +17,12 @@ private class Plan(private val path: Path) {
             line.removePrefix("- [ ] ")
         }
 
-    fun write(tasks: List<String>) {
+    fun write(tasks: List<Task>) {
         Files.createDirectories(path.parent)
-        Files.writeString(path, tasks.joinToString("") { "- [ ] $it\n" })
+        Files.writeString(path, tasks.joinToString("") {
+            val marker = if (it.done) "x" else " "
+            "- [$marker] ${it.name}\n"
+        })
     }
 }
 
@@ -142,7 +147,12 @@ class FactorySteps {
     }
 
     @Given("a plan with three tasks, none of them done")
-    fun planWithThreeTasks() = Plan(target.resolve(".factory/plan.md")).write(listOf("alpha", "beta", "gamma"))
+    fun planWithThreeTasks() = Plan(target.resolve(".factory/plan.md"))
+        .write(listOf(Task("alpha"), Task("beta"), Task("gamma")))
+
+    @Given("a plan in which every task is done")
+    fun completedPlan() = Plan(target.resolve(".factory/plan.md"))
+        .write(listOf(Task("alpha", done = true), Task("beta", done = true)))
 
     @Given("no harness is chosen")
     fun noHarnessChosen() {
@@ -248,6 +258,16 @@ class FactorySteps {
         }
         check(arguments.contains(seedPath.toString())) {
             "Agent was not given the seed path: $seedPath\n$arguments"
+        }
+    }
+
+    @Then("the agent was asked for a result with the field {string}")
+    fun agentWasAskedForResult(field: String) {
+        val arguments = Files.readString(workspace.resolve("calls/0.txt"))
+
+        check(arguments.contains("JSON", ignoreCase = true) &&
+            arguments.contains("\"$field\"")) {
+            "Expected a request for a JSON result with field \"$field\".\n$arguments"
         }
     }
 

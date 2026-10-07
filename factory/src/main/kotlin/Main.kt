@@ -10,6 +10,10 @@ fun main(args: Array<String>) {
         Keep your plan at "$plan".
         If no plan exists, write a plan without implementing any tasks.
         Otherwise, implement the first unfinished task and mark it done.
+        End your answer with a single line of JSON.
+        Include a boolean field "complete": true when no unfinished tasks
+        remain, false otherwise. If you implemented a task, also include
+        its description in a "task" field.
         """.trimIndent()
 
     val agentIndex = args.indexOf("--agent")
