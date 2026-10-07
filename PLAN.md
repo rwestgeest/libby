@@ -15,7 +15,7 @@ God-step class so each concern has a clear home.
   Create a `Plan(path)` that owns the format: `tasks()` returns the list,
   `write(tasks)` writes the file. The two steps become one-liners.
 
-- [ ] **Replace `chooseAgent` boolean with `agentArgs` list** — The flag drives a
+- [x] **Replace `chooseAgent` boolean with `agentArgs` list** — The flag drives a
   conditional inside `runOnePass`. Change to a `lateinit var agentArgs: List<String>`
   that each `@Given` step sets directly: `noHarnessChosen()` → `listOf()`,
   `prepareAgent()` → `listOf("--agent", agent.toString())`. The conditional disappears

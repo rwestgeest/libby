@@ -26,7 +26,7 @@ class FactorySteps {
     private lateinit var target: Path
     private lateinit var seed: Path
     private lateinit var agent: Path
-    private var chooseAgent = true
+    private lateinit var agentArgs: List<String>
     private var output = ""
     private var exitCode = -1
     private lateinit var headBeforeRun: String
@@ -73,6 +73,7 @@ class FactorySteps {
         agent = workspace.resolve("agent.py")
         Files.copy(Path.of("src/test/doubles/agent.py"), agent)
         agent.toFile().setExecutable(true)
+        agentArgs = listOf("--agent", agent.toString())
     }
 
     @Given("the agent writes a file called SENTINEL")
@@ -97,7 +98,7 @@ class FactorySteps {
 
     @Given("no harness is chosen")
     fun noHarnessChosen() {
-        chooseAgent = false
+        agentArgs = listOf()
     }
 
     @When("the factory runs one pass")
@@ -106,14 +107,11 @@ class FactorySteps {
         val pi = Files.copy(agent, bin.resolve("pi"))
         pi.toFile().setExecutable(true)
 
-        val command = mutableListOf(
+        val command = listOf(
             workspace.resolve("factory/factory").toString(),
             "--seed", seed.toString(),
             "--target", target.toString()
-        )
-        if (chooseAgent) {
-            command.addAll(listOf("--agent", agent.toString()))
-        }
+        ) + agentArgs
 
         headBeforeRun = git("rev-parse", "HEAD")
         val result = runProcess(
