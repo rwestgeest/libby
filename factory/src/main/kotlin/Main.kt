@@ -20,6 +20,8 @@ fun main(args: Array<String>) {
     val plan = File(target, ".factory/plan.md")
     val agent = option("--agent") ?: "pi"
     val doer = option("--doer") ?: agent
+    val validator = option("--validator") ?: agent
+    val lens = option("--lens") ?: "testability"
 
     fun gitResult(vararg arguments: String): Pair<String, Int> {
         val process = ProcessBuilder(listOf("git") + arguments)
@@ -62,6 +64,13 @@ fun main(args: Array<String>) {
         return answer
     }
 
+    fun readResult(answer: String, role: String): JsonObject {
+        val result = answer.lineSequence().mapNotNull { line ->
+            runCatching { Json.parseToJsonElement(line) }.getOrNull()
+        }.lastOrNull()
+        return result as? JsonObject ?: fail("Could not read the $role's result")
+    }
+
     fun runPlanner(job: String): Boolean {
         val answer = runMachine("planner", agent, """
             $job
@@ -69,15 +78,30 @@ fun main(args: Array<String>) {
             Include a boolean field "complete": true when no unfinished tasks remain,
             false otherwise.
         """.trimIndent())
-        val result = answer.lineSequence().mapNotNull { line ->
-            runCatching { Json.parseToJsonElement(line) }.getOrNull()
-        }.lastOrNull()
-        val complete = (result as? JsonObject)?.get("complete") as? JsonPrimitive
+        val result = readResult(answer, "planner")
+        val complete = result["complete"] as? JsonPrimitive
         if (complete == null || complete.isString || complete.booleanOrNull == null) {
             fail("Could not read the planner's result")
         }
         println(result)
         return complete.boolean
+    }
+
+    fun validateWork() {
+        val answer = runMachine("validator", validator, """
+            Check the doer's uncommitted product work in this target, including new files.
+            Use Git to inspect the changes; do not recheck previously committed work.
+            Your validation lens is: $lens.
+            Report findings only. Change neither the plan nor the product files.
+            Include a boolean field "satisfied" and an array "findings" in your JSON result.
+        """.trimIndent())
+        val result = readResult(answer, "validator")
+        val satisfied = result["satisfied"] as? JsonPrimitive
+        val findings = result["findings"] as? JsonArray
+        if (satisfied == null || satisfied.isString || satisfied.booleanOrNull == null || findings == null) {
+            fail("Could not read the validator's result")
+        }
+        if (!satisfied.boolean) fail("Validation not satisfied: $findings")
     }
 
     fun commitChanges() {
@@ -101,6 +125,7 @@ fun main(args: Array<String>) {
             Do not mark the task done; the planner will do that after the work is committed.
             Include the task description in a "task" field in your result.
         """.trimIndent())
+        validateWork()
         commitChanges()
         val finished = runPlanner("The task's work has been committed. Mark the first unfinished task done and report whether the plan is complete.")
         commitChanges()
