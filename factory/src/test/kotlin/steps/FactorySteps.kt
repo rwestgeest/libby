@@ -135,13 +135,31 @@ class FactorySteps {
             """.trimIndent()
         )
     }
+    
+    @Given("the doer does the next task in the plan")
+    fun prepareDoer() {
+        val folder = Files.createDirectories(workspace.resolve("doer"))
+        val doer = folder.resolve("agent.py")
+        Files.copy(Path.of("src/test/doubles/agent.py"), doer)
+        doer.toFile().setExecutable(true)
+        agentArgs = agentArgs + listOf("--doer", doer.toString())
+    }
 
-    @Given("the agent plans the tasks alpha and beta, and does one task a pass")
-    fun prepareAgent() {
+    @Given("the planner plans the tasks alpha and beta")
+    fun preparePlanner() {
         agent = workspace.resolve("agent.py")
         Files.copy(Path.of("src/test/doubles/agent.py"), agent)
         agent.toFile().setExecutable(true)
         agentArgs = listOf("--agent", agent.toString())
+    }
+
+    @Given("the validator is always satisfied")
+    fun prepareValidator() {
+        val folder = Files.createDirectories(workspace.resolve("validator"))
+        val validator = folder.resolve("validator.py")
+        Files.copy(Path.of("src/test/doubles/validator.py"), validator)
+        validator.toFile().setExecutable(true)
+        agentArgs = agentArgs + listOf("--validator", validator.toString())
     }
 
     @Given("the agent writes a file called SENTINEL")
@@ -215,10 +233,10 @@ class FactorySteps {
         }
     }
 
-    @Then("the chosen agent has been called")
-    fun chosenAgentHasBeenCalled() {
-        check(Files.exists(workspace.resolve("calls/0.json"))) {
-            "Expected the chosen agent to be called. Exit code: $exitCode\n$output"
+    @Then("the doer's chosen harness has been called")
+    fun chosenDoerHasBeenCalled() {
+        check(Files.exists(workspace.resolve("doer/calls/0.json"))) {
+            "Expected the chosen doer to be called. Exit code: $exitCode\n$output"
         }
     }
 
