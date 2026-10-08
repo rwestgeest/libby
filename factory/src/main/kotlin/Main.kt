@@ -19,6 +19,7 @@ fun main(args: Array<String>) {
     target.mkdirs()
     val plan = File(target, ".factory/plan.md")
     val agent = option("--agent") ?: "pi"
+    val doer = option("--doer") ?: agent
 
     fun gitResult(vararg arguments: String): Pair<String, Int> {
         val process = ProcessBuilder(listOf("git") + arguments)
@@ -48,7 +49,7 @@ fun main(args: Array<String>) {
     do {
         val process = try {
             ProcessBuilder(buildList {
-                add(agent)
+                add(if (plan.exists()) doer else agent)
                 addAll(listOf("--print", "--no-session"))
                 option("--model")?.let { addAll(listOf("--model", it)) }
                 add(prompt)
