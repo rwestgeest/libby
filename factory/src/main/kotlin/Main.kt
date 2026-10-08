@@ -47,7 +47,12 @@ fun main(args: Array<String>) {
 
     do {
         val process = try {
-            ProcessBuilder(agent, "--print", "--no-session", prompt)
+            ProcessBuilder(buildList {
+                add(agent)
+                addAll(listOf("--print", "--no-session"))
+                option("--model")?.let { addAll(listOf("--model", it)) }
+                add(prompt)
+            })
                 .directory(target)
                 .redirectError(ProcessBuilder.Redirect.INHERIT)
                 .start()
