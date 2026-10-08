@@ -172,10 +172,10 @@ class FactorySteps {
         Files.writeString(workspace.resolve("before-result.txt"), message)
     }
 
-    @Given("the agent cannot be run")
-    fun agentCannotBeRun() {
-        check(agent.toFile().setExecutable(false, false)) {
-            "Could not remove the test agent's execute permission"
+    @Given("the doer cannot be run")
+    fun doerCannotBeRun() {
+        check(workspace.resolve("doer/agent.py").toFile().setExecutable(false, false)) {
+            "Could not remove the test doer's execute permission"
         }
     }
 
@@ -247,10 +247,10 @@ class FactorySteps {
         }
     }
 
-    @Then("it reports that it could not run the agent")
-    fun reportsAgentCouldNotRun() {
-        check(output.contains("could not run the agent", ignoreCase = true)) {
-            "Expected an agent startup error message.\n$output"
+    @Then("it reports that it could not run the doer")
+    fun reportsDoerCouldNotRun() {
+        check(exitCode != 0 && output.contains("could not run the doer", ignoreCase = true)) {
+            "Expected a doer startup error and nonzero exit code.\n$output"
         }
     }
 
