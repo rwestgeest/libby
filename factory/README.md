@@ -43,10 +43,9 @@ JSON line in its answer, commits the selected target's changes, and stops when
 `complete` is true. It never reads or writes the plan itself. `--seed` and
 `--target` are required. `--agent` selects an executable; it must accept the
 same `--print --no-session <prompt>` invocation as pi (use an adapter for a
-harness with a different interface).
+harness with a different interface). Optional `--model` is forwarded to the
+agent to select a model.
 
-The remaining iteration implementation and non-real-agent steps have been
-written but have not been compiled or tested yet. `ITERATION` remains WIP.
-No real-agent game build has been run. After verification, the optional course
-follow-up is to generate and play Tetris, then compare fresh generations made
-with different models.
+Iteration 001 is complete. The non-real-agent suite passes, and the factory
+has generated Tetris with a real agent. Keep `tetris/tetris-001` for the next
+iteration, which adds validation of the generated work.
