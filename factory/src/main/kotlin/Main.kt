@@ -54,6 +54,8 @@ fun main(args: Array<String>) {
         } catch (error: IOException) {
             fail("Could not run the agent: ${error.message}")
         }
+        // The prompt is an argument; signal EOF so pi doesn't wait for piped input.
+        process.outputStream.close()
         val answer = process.inputStream.bufferedReader().use { it.readText() }
         if (process.waitFor() != 0) fail("Agent exited unsuccessfully\n$answer")
         val result = answer.lineSequence().mapNotNull { line ->

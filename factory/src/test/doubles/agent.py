@@ -3,6 +3,9 @@ import json
 import sys
 from pathlib import Path
 
+# Like pi, wait for piped input to finish before processing the prompt.
+sys.stdin.read()
+
 # Keep call records beside this double, in the temporary workspace.
 calls = Path(__file__).parent / "calls"
 calls.mkdir(exist_ok=True)
