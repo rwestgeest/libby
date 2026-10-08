@@ -260,8 +260,8 @@ function renderGame(gameOrSnapshot) {
     : gameOrSnapshot;
   const boardWidth = snapshot.width * 2;
   const outerWidth = boardWidth + 2;
-  const header = ` Tetris  Score ${snapshot.score}  Lines ${snapshot.lines}  Lv ${snapshot.level} `;
-  const controls = ' ←/→ move  ↑ rotate  ↓ soft  space hard  q quit ';
+  const header = `Score:${snapshot.score} L:${snapshot.lines} Lv:${snapshot.level}`;
+  const controls = '←→ move ↑ rot ↓ sp q';
   const rows = [`┌${fitText(header, outerWidth - 2)}┐`];
   const gameOverRow = Math.floor(snapshot.height / 2);
   const activeRow = gameOverRow - 1;
@@ -294,7 +294,70 @@ export {
   rotateCells,
 };
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+function startTerminalGame({ input = process.stdin, output = process.stdout } = {}) {
   const game = new TetrisGame();
-  console.log(renderGame(game));
+  let stopped = false;
+  let timer = null;
+
+  const write = (text) => output.write(text);
+  const render = () => {
+    write('\x1b[H\x1b[2J');
+    write(`${renderGame(game)}\n`);
+  };
+  const stop = () => {
+    if (stopped) return;
+    stopped = true;
+    if (timer) clearTimeout(timer);
+    write('\x1b[?25h');
+    if (input.isTTY) input.setRawMode(false);
+    input.pause();
+  };
+  const scheduleTick = () => {
+    if (stopped) return;
+
+    const interval = Math.max(100, 800 - (game.level - 1) * 60);
+    timer = setTimeout(() => {
+      game.tick();
+      render();
+      scheduleTick();
+    }, interval);
+  };
+
+  if (!input.isTTY || !output.isTTY) {
+    output.write(`${renderGame(game)}\n`);
+    return stop;
+  }
+
+  write('\x1b[?25l');
+  input.setEncoding('utf8');
+  input.setRawMode(true);
+  input.resume();
+  input.on('data', (key) => {
+    if (key === '\u0003' || key === 'q' || key === 'Q') {
+      stop();
+      return;
+    }
+
+    if (game.gameOver) return;
+
+    if (key === '\x1b[D' || key === 'a' || key === 'h') game.moveLeft();
+    if (key === '\x1b[C' || key === 'd' || key === 'l') game.moveRight();
+    if (key === '\x1b[A' || key === 'w' || key === 'k') game.rotate();
+    if (key === '\x1b[B' || key === 's' || key === 'j') game.softDrop();
+    if (key === ' ') game.hardDrop();
+
+    render();
+  });
+  process.on('exit', stop);
+  process.on('SIGINT', stop);
+
+  render();
+  scheduleTick();
+  return stop;
+}
+
+export { startTerminalGame };
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  startTerminalGame();
 }
