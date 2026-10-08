@@ -1,7 +1,7 @@
 import { emitKeypressEvents } from 'node:readline';
 import { Game, WIDTH, HEIGHT } from './engine.js';
 
-export const CONTROLS = 'Arrows: move/rotate/drop | Space: slam | Q: quit';
+export const CONTROLS = 'Arrows:move/rotate/drop Space:slam R: reset Q:quit';
 export const MIN_COLUMNS = 50;
 export const SCREEN_ROWS = HEIGHT + 4;
 
@@ -29,6 +29,7 @@ export function render(game) {
 export function handleKey(game, key = {}) {
   if (key.name === 'q' || (key.ctrl && key.name === 'c')) return 'quit';
   switch (key.name) {
+    case 'r': game.reset(); return 'restart';
     case 'left': game.move(-1); break;
     case 'right': game.move(1); break;
     case 'up': game.rotate(); break;
@@ -91,7 +92,12 @@ export function startTerminal({ game = new Game(), input = process.stdin,
 
   function onKey(_text, key) {
     safely(() => {
-      if (handleKey(game, key) === 'quit') { stop(); return; }
+      const action = handleKey(game, key);
+      if (action === 'quit') { stop(); return; }
+      if (action === 'restart') {
+        clearTimeout(timer);
+        schedule();
+      }
       if (game.gameOver) clearTimeout(timer);
       draw();
     });
