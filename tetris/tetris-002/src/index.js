@@ -29,6 +29,16 @@ const TETROMINOES = {
 
 const TYPES = Object.keys(TETROMINOES);
 const LINE_SCORES = [0, 100, 300, 500, 800];
+const CELL_CHARS = {
+  I: '██',
+  J: '██',
+  L: '██',
+  O: '██',
+  S: '██',
+  T: '██',
+  Z: '██',
+};
+const EMPTY_CELL = '  ';
 
 function createBoard() {
   return Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(null));
@@ -233,6 +243,46 @@ export class TetrisGame {
   }
 }
 
+function fitText(text, width) {
+  if (text.length > width) return text.slice(0, width);
+  return text.padEnd(width, ' ');
+}
+
+function centeredText(text, width) {
+  if (text.length >= width) return text.slice(0, width);
+  const left = Math.floor((width - text.length) / 2);
+  return `${' '.repeat(left)}${text}`.padEnd(width, ' ');
+}
+
+function renderGame(gameOrSnapshot) {
+  const snapshot = typeof gameOrSnapshot.snapshot === 'function'
+    ? gameOrSnapshot.snapshot()
+    : gameOrSnapshot;
+  const boardWidth = snapshot.width * 2;
+  const outerWidth = boardWidth + 2;
+  const header = ` Tetris  Score ${snapshot.score}  Lines ${snapshot.lines}  Lv ${snapshot.level} `;
+  const controls = ' ←/→ move  ↑ rotate  ↓ soft  space hard  q quit ';
+  const rows = [`┌${fitText(header, outerWidth - 2)}┐`];
+  const gameOverRow = Math.floor(snapshot.height / 2);
+  const activeRow = gameOverRow - 1;
+
+  for (let y = 0; y < snapshot.height; y += 1) {
+    let content = snapshot.board[y]
+      .map((cell) => (cell ? CELL_CHARS[cell] : EMPTY_CELL))
+      .join('');
+
+    if (snapshot.gameOver && (y === activeRow || y === gameOverRow)) {
+      const message = y === activeRow ? 'GAME OVER' : 'Press q to quit';
+      content = centeredText(message, boardWidth);
+    }
+
+    rows.push(`│${content}│`);
+  }
+
+  rows.push(`└${fitText(controls, outerWidth - 2)}┘`);
+  return rows.join('\n');
+}
+
 export {
   BOARD_WIDTH,
   BOARD_HEIGHT,
@@ -240,10 +290,11 @@ export {
   createBoard,
   makePiece,
   normalizeCells,
+  renderGame,
   rotateCells,
 };
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const game = new TetrisGame();
-  console.log(`Tetris core ready. Score: ${game.score} Lines: ${game.lines} Level: ${game.level}`);
+  console.log(renderGame(game));
 }
