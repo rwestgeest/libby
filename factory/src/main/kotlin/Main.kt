@@ -34,26 +34,20 @@ fun main(args: Array<String>) {
     }
     if (gitResult("rev-parse", "--show-toplevel").second != 0) git("init")
 
-    val prompt = """
+    val context = """
         Read the seed at "$seed".
-        Keep your plan at "$plan".
-        If no plan exists, write a plan without implementing any tasks.
-        Otherwise, implement the first unfinished task and mark it done.
+        The plan is at "$plan".
         Work only in the current target directory. The factory handles commits.
         End your answer with a single line of JSON.
-        Include a boolean field "complete": true when no unfinished tasks
-        remain, false otherwise. If you implemented a task, also include
-        its description in a "task" field.
     """.trimIndent()
 
-    do {
-        val role = if (plan.exists()) "doer" else "planner"
+    fun runMachine(role: String, harness: String, job: String): String {
         val process = try {
             ProcessBuilder(buildList {
-                add(if (role == "doer") doer else agent)
+                add(harness)
                 addAll(listOf("--print", "--no-session"))
                 option("--model")?.let { addAll(listOf("--model", it)) }
-                add(prompt)
+                add("You are the $role.\n$context\n$job")
             })
                 .directory(target)
                 .redirectError(ProcessBuilder.Redirect.INHERIT)
@@ -64,22 +58,53 @@ fun main(args: Array<String>) {
         // The prompt is an argument; signal EOF so pi doesn't wait for piped input.
         process.outputStream.close()
         val answer = process.inputStream.bufferedReader().use { it.readText() }
-        if (process.waitFor() != 0) fail("Agent exited unsuccessfully\n$answer")
+        if (process.waitFor() != 0) fail("The $role exited unsuccessfully\n$answer")
+        return answer
+    }
+
+    fun runPlanner(job: String): Boolean {
+        val answer = runMachine("planner", agent, """
+            $job
+            Do not implement product work.
+            Include a boolean field "complete": true when no unfinished tasks remain,
+            false otherwise.
+        """.trimIndent())
         val result = answer.lineSequence().mapNotNull { line ->
             runCatching { Json.parseToJsonElement(line) }.getOrNull()
         }.lastOrNull()
         val complete = (result as? JsonObject)?.get("complete") as? JsonPrimitive
         if (complete == null || complete.isString || complete.booleanOrNull == null) {
-            fail("Could not read the agent's result")
+            fail("Could not read the planner's result")
         }
+        println(result)
+        return complete.boolean
+    }
 
+    fun commitChanges() {
         // Both staging and committing are limited to this target, including its plan.
         if (git("status", "--porcelain", "--", ".").isNotBlank()) {
             git("add", "--", ".")
             git("commit", "--only", "-m", "Record factory pass", "--", ".")
         }
-        println(result)
-        if (complete.boolean || "--all" !in args) break
+    }
+
+    do {
+        val hadPlan = plan.exists()
+        val complete = runPlanner("If no plan exists, write one from the seed. Otherwise, report its status without changing it.")
+        if (!hadPlan || complete) {
+            commitChanges()
+            if (complete || "--all" !in args) break
+            continue
+        }
+        runMachine("doer", doer, """
+            Implement the first unfinished task in the plan.
+            Do not mark the task done; the planner will do that after the work is committed.
+            Include the task description in a "task" field in your result.
+        """.trimIndent())
+        commitChanges()
+        val finished = runPlanner("The task's work has been committed. Mark the first unfinished task done and report whether the plan is complete.")
+        commitChanges()
+        if (finished || "--all" !in args) break
     } while (true)
     println("factory stopped")
 }

@@ -21,6 +21,8 @@ plan = Path(".factory/plan.md")
 plan.parent.mkdir(exist_ok=True)
 
 prose_plan = (Path(__file__).parent / "prose-plan").exists()
+prompt = sys.argv[-1]
+planner = "You are the planner." in prompt
 if not plan.exists():
     if prose_plan:
         plan.write_text("First make alpha; afterward make beta. Neither is ready.\n")
@@ -47,12 +49,19 @@ else:
 
     if task is None:
         result = {"complete": True}
+    elif planner:
+        if "The task's work has been committed." in prompt:
+            plan.write_text(next_plan)
+            complete = ("Both alpha and beta are ready." in next_plan if prose_plan
+                        else "- [ ] " not in next_plan)
+            result = {"complete": complete}
+        else:
+            result = {"complete": False}
     else:
         name_file = Path(__file__).parent / "product-name.txt"
         product = name_file.read_text().strip() if name_file.exists() else f"{task}.txt"
         Path(product).write_text(f"Work for {task}\n")
-        plan.write_text(next_plan)
-        result = {"complete": False, "task": task}
+        result = {"task": task}
 
 message_file = Path(__file__).parent / "before-result.txt"
 if message_file.exists():
