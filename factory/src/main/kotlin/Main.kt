@@ -47,9 +47,10 @@ fun main(args: Array<String>) {
     """.trimIndent()
 
     do {
+        val role = if (plan.exists()) "doer" else "planner"
         val process = try {
             ProcessBuilder(buildList {
-                add(if (plan.exists()) doer else agent)
+                add(if (role == "doer") doer else agent)
                 addAll(listOf("--print", "--no-session"))
                 option("--model")?.let { addAll(listOf("--model", it)) }
                 add(prompt)
@@ -58,7 +59,7 @@ fun main(args: Array<String>) {
                 .redirectError(ProcessBuilder.Redirect.INHERIT)
                 .start()
         } catch (error: IOException) {
-            fail("Could not run the agent: ${error.message}")
+            fail("Could not run the $role: ${error.message}")
         }
         // The prompt is an argument; signal EOF so pi doesn't wait for piped input.
         process.outputStream.close()

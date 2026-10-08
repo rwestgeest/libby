@@ -162,14 +162,14 @@ class FactorySteps {
         agentArgs = agentArgs + listOf("--validator", validator.toString())
     }
 
-    @Given("the agent writes a file called SENTINEL")
-    fun agentWritesSentinel() {
-        Files.writeString(workspace.resolve("product-name.txt"), "SENTINEL")
+    @Given("the doer writes a file called SENTINEL")
+    fun doerWritesSentinel() {
+        Files.writeString(workspace.resolve("doer/product-name.txt"), "SENTINEL")
     }
 
-    @Given("the agent says {string} before its result")
-    fun agentSaysBeforeResult(message: String) {
-        Files.writeString(workspace.resolve("before-result.txt"), message)
+    @Given("the validator says {string} before its result")
+    fun validatorSaysBeforeResult(message: String) {
+        Files.writeString(workspace.resolve("validator/before-result.txt"), message)
     }
 
     @Given("the doer cannot be run")
@@ -295,22 +295,23 @@ class FactorySteps {
         }
     }
 
-    @Then("the agent was pointed at the plan and at the seed")
-    fun agentReceivedPlanAndSeed() {
-        val arguments = Files.readString(workspace.resolve("calls/0.txt"))
+    @Then("the doer was pointed at the plan and at the seed")
+    fun doerReceivedPlanAndSeed() {
+        val arguments = Files.readString(workspace.resolve("doer/calls/0.txt"))
         val plan = target.resolve(".factory/plan.md").toAbsolutePath()
         val seedPath = seed.toAbsolutePath()
 
         check(arguments.contains(plan.toString())) {
-            "Agent was not given the plan path: $plan\n$arguments"
+            "Doer was not given the plan path: $plan\n$arguments"
         }
         check(arguments.contains(seedPath.toString())) {
-            "Agent was not given the seed path: $seedPath\n$arguments"
+            "Doer was not given the seed path: $seedPath\n$arguments"
         }
     }
 
-    @Then("the agent was asked for a result with the field {string}")
-    fun agentWasAskedForResult(field: String) {
+    @Then("the planner was asked for a result with the field {string}")
+    fun plannerWasAskedForResult(field: String) {
+        check(Files.exists(workspace.resolve("calls/0.txt"))) { "Planner was not called.\n$output" }
         val arguments = Files.readString(workspace.resolve("calls/0.txt"))
 
         check(arguments.contains("JSON", ignoreCase = true) &&
@@ -319,14 +320,25 @@ class FactorySteps {
         }
     }
 
-    @Then("the agent has been called once")
-    fun agentCalledOnce() {
-        val calls = workspace.resolve("calls")
-        check(Files.isDirectory(calls)) { "No agent calls recorded.\n$output" }
-        Files.list(calls).use { files ->
-            check(files.filter { it.toString().endsWith(".json") }.count() == 1L)
+    private fun assertDoerCalls(expected: Long) {
+        val calls = workspace.resolve("doer/calls")
+        val actual = if (!Files.isDirectory(calls)) 0L else Files.list(calls).use { files ->
+            files.filter { it.toString().endsWith(".json") }.count()
         }
+        check(actual == expected) { "Expected $expected doer calls, found $actual.\n$output" }
     }
+
+    @Then("the doer has been called once")
+    fun doerCalledOnce() = assertDoerCalls(1)
+
+    @Then("the doer has been called twice")
+    fun doerCalledTwice() = assertDoerCalls(2)
+
+    @Then("the doer has been called three times")
+    fun doerCalledThreeTimes() = assertDoerCalls(3)
+
+    @Then("the doer has not been called")
+    fun doerNotCalled() = assertDoerCalls(0)
 
     @Then("the factory has stopped")
     fun factoryStopped() {
@@ -374,12 +386,12 @@ class FactorySteps {
     @Then("there are three new work commits")
     fun threeWorkCommits() { check(repo.logSince(headBeforeRun, target).size == 3) }
 
-    @Given("the agent answers in prose, with no result")
-    fun agentAnswersInProse() { Files.writeString(workspace.resolve("no-result"), "yes") }
+    @Given("the validator answers in prose, with no result")
+    fun validatorAnswersInProse() { Files.writeString(workspace.resolve("validator/no-result"), "yes") }
 
-    @Then("it reports that it could not read the agent's result")
+    @Then("it reports that it could not read the validator's result")
     fun unreadableResult() {
-        check(exitCode != 0 && output.contains("could not read the agent's result", true)) { output }
+        check(exitCode != 0 && output.contains("could not read the validator's result", true)) { output }
     }
 
     @Given("no seed is chosen")
@@ -394,6 +406,8 @@ class FactorySteps {
     @Then("no agent has been called")
     fun noAgentCalled() {
         check(!Files.exists(workspace.resolve("calls")))
+        check(!Files.exists(workspace.resolve("doer/calls")))
+        check(!Files.exists(workspace.resolve("validator/calls")))
         check(!Files.exists(workspace.resolve("bin/calls")))
     }
 
@@ -430,8 +444,11 @@ class FactorySteps {
         check(!Files.exists(workspace.resolve("factory/plan.md")))
     }
 
-    @Given("the agent keeps its plan in prose")
-    fun prosePlan() { Files.writeString(workspace.resolve("prose-plan"), "yes") }
+    @Given("the planner keeps its plan in prose")
+    fun plannerProsePlan() { Files.writeString(workspace.resolve("prose-plan"), "yes") }
+
+    @Given("the doer keeps its plan in prose")
+    fun doerProsePlan() { Files.writeString(workspace.resolve("doer/prose-plan"), "yes") }
 
     @Then("the work for alpha and beta has been committed")
     fun alphaBetaCommitted() {

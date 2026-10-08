@@ -14,4 +14,10 @@ number = len(list(calls.glob("*.json")))
 }))
 (calls / f"{number}.txt").write_text("\n".join(sys.argv[1:]))
 
-print(json.dumps({"satisfied": True, "findings": []}))
+message_file = Path(__file__).parent / "before-result.txt"
+if message_file.exists():
+    print(message_file.read_text())
+if (Path(__file__).parent / "no-result").exists():
+    print("I checked the work, but have no structured result.")
+else:
+    print(json.dumps({"satisfied": True, "findings": []}))
