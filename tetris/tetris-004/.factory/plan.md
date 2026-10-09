@@ -7,7 +7,7 @@
 - Packages may be installed for terminal rendering or controls.
 
 ## Tasks
-- [ ] Set up a Node.js project with an `npm start` entry point and automated test command.
+- [x] Set up a Node.js project with an `npm start` entry point and automated test command.
 - [ ] Implement game state: a 10-column, 20-row board, seven tetrominoes, randomized piece spawning, movement, rotation, collision detection, and locking.
 - [ ] Implement automatic falling, soft and hard drop, completed-line clearing, scoring, and game-over detection when a piece cannot spawn.
 - [ ] Implement terminal rendering with the board, score, control hints, and game-over message, always fitting within 24 rows. Use a fixed layout (22 board/border rows plus two status/control rows) and update it in place without accumulating output.
