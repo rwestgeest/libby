@@ -18,7 +18,7 @@
   - [x] Add soft/hard drop (1/2 points per descended cell), completed-line collapse, cumulative line count, and fixed-level line scoring (100/300/500/800).
   - [x] Detect blocked spawning as game over and stop movement, rotation, drops, and gravity afterward.
   - [x] Add nine progression regression tests; `npm test` passes all 20 tests. No validator findings were supplied.
-- [ ] Implement terminal rendering with the board, score, control hints, and game-over message, always fitting within 24 rows. Use a fixed layout (22 board/border rows plus two status/control rows) and update it in place without accumulating output.
+- [x] Implement terminal rendering with the board, score, control hints, and game-over message, always fitting within 24 rows. Use a fixed layout (22 board/border rows plus two status/control rows) and update it in place without accumulating output.
   - [x] Fix validator finding (`src/render.js:13-22`): renderer reconstructed occupied cells from active-piece geometry. Moved non-mutating cell projection into `Game.visibleCells()`; renderer only translates that snapshot into glyphs. Added regression tests for independent snapshots, movement/rotation, clipping, and rendering without board/active access. `npm test` passes all 29 tests.
   - [x] Add `src/render.js` with a non-mutating 24-row snapshot showing active/locked cells, score, lines, control hints, and an inline game-over message.
   - [x] Update TTY frames at fixed cursor positions, erase stale row content, and omit trailing newlines to avoid scrolling; shorten status/hints for narrow terminals and show a bounded resize prompt for terminals smaller than 22x24.
