@@ -8,7 +8,7 @@
 
 ## Tasks
 - [x] Set up a Node.js project with an `npm start` entry point and automated test command.
-- [ ] Implement game state: a 10-column, 20-row board, seven tetrominoes, randomized piece spawning, movement, rotation, collision detection, and locking.
+- [x] Implement game state: a 10-column, 20-row board, seven tetrominoes, randomized piece spawning, movement, rotation, collision detection, and locking.
   - [x] Add `src/game.js` with independent board rows, seven immutable shape templates, and randomized seven-bag spawning.
   - [x] Implement collision-checked movement, clockwise rotation (without wall kicks), and resting-piece locking.
   - [x] Verify state behavior with automated tests; `npm test` passes all 10 tests. No validator findings were supplied.
