@@ -3,7 +3,7 @@ import { PassThrough } from 'node:stream';
 import test from 'node:test';
 import { Game } from '../src/game.js';
 import { startGravity } from '../src/gravity.js';
-import { CONTROLS, render, startTerminal } from '../src/terminal.js';
+import { CONTROLS, DISPLAY_ROWS, render, startTerminal } from '../src/terminal.js';
 
 for (const state of ['playing', 'game-over']) {
   test(`complete ${state} display fits within 24 terminal rows`, () => {
@@ -21,7 +21,12 @@ for (const state of ['playing', 'game-over']) {
     const display = render(game);
     const rows = display.split('\n');
     assert.ok(rows.length <= 24, `complete display uses ${rows.length} rows`);
-    assert.equal(rows.length, 24);
+    assert.equal(DISPLAY_ROWS, 24);
+    assert.equal(rows.length, DISPLAY_ROWS);
+    assert.ok(!display.endsWith('\n'), 'last row must not scroll the display');
+    for (const row of rows) {
+      assert.ok(Array.from(row).length <= 80, 'rows do not wrap in an 80-column terminal');
+    }
     assert.equal(rows[0], '+--------------------+');
     assert.equal(rows[21], rows[0]);
     assert.equal(rows.slice(1, 21).length, 20);
@@ -64,6 +69,28 @@ function setup() {
     get quits() { return quits; },
   };
 }
+
+test('redraws keep board, status and controls in the same 24 rows', () => {
+  const s = setup();
+  try {
+    s.key('down');
+    s.terminal.game.gameOver = true;
+    s.terminal.game.active = null;
+    s.timers[0].onUpdate();
+    const frames = s.screen.split('\x1b[H\x1b[2J').slice(1);
+    assert.equal(frames.length, 3);
+    for (const frame of frames) {
+      const rows = frame.split('\r\n');
+      assert.equal(rows.length, 24);
+      assert.equal(rows[0], '+--------------------+');
+      assert.equal(rows[21], rows[0]);
+      assert.match(rows[22], /^Score: 0  Lines: 0/);
+      assert.equal(rows[23], CONTROLS);
+      assert.ok(!frame.replaceAll('\r\n', '').includes('\n'), 'every newline returns to column one');
+    }
+    assert.match(frames[2].split('\r\n')[22], /GAME OVER — R restart/);
+  } finally { s.terminal.quit(); }
+});
 
 test('arrow keys move, rotate and soft drop; screen lists controls', () => {
   const s = setup();

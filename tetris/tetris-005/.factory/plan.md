@@ -18,6 +18,8 @@ Status: in progress; first four tasks completed.
   - [x] Resolve validator finding in `test/terminal.test.js`: inject rendering or game-operation errors after raw mode is enabled; ensure exception cleanup stops gravity, restores input settings, and shows the cursor. Added coverage for initial rendering, keypress operations, gravity rendering/operations, and restart failures with both prior raw-mode states. Verified with `npm test` (35 tests passed).
   - [x] Resolve validator finding in `test/terminal.test.js`: add automated render assertions that the complete playing and game-over displays stay within 24 rows, including board, borders, status, controls, and game-over information. Verified with `npm test` (25 tests passed).
 - [ ] Render the board and all supporting information in a fixed layout of at most 24 rows: 22 rows for board and borders, one for score/status, and one for controls. Show game-over information in the status row rather than adding rows.
+  - [x] Make layout dimensions explicit and use carriage-return/newline pairs for aligned raw-terminal redraws without a trailing newline.
+  - [x] Verify playing and game-over layouts, 80-column fit, and successive terminal redraws with status and controls in fixed rows. `npm test`: 36 tests passed.
 - [ ] Restore terminal input settings and cursor visibility on quit, interruption, and errors; handle unsupported non-interactive input clearly.
 - [ ] Add automated tests for movement and rotation collisions, locking, line clearing, scoring, spawning/game over, and the display's 24-row limit in both playing and game-over states.
 - [ ] Document launch requirements and controls; run automated tests and manually smoke-test `npm start` in an interactive terminal.

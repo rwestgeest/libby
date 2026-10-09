@@ -1,10 +1,13 @@
 import { emitKeypressEvents } from 'node:readline';
-import { Game } from './game.js';
+import { BOARD_HEIGHT, BOARD_WIDTH, Game } from './game.js';
 import { startGravity } from './gravity.js';
 
 export const CONTROLS = '←/→ move  ↑ rotate  ↓ drop  Space slam  R restart  Q quit';
 
-// A compact initial display; board, status and controls share one screen.
+// Twenty board rows, two borders, one status row and one controls row.
+export const DISPLAY_ROWS = BOARD_HEIGHT + 4;
+
+// No trailing newline: the controls occupy the last row without scrolling.
 export function render(game) {
   const cells = game.board.map(row => row.map(cell => cell ? '[]' : '  '));
   if (game.active) {
@@ -13,7 +16,7 @@ export function render(game) {
       if (cell) cells[y + dy][x + dx] = '[]';
     }));
   }
-  const border = `+${'-'.repeat(20)}+`;
+  const border = `+${'-'.repeat(BOARD_WIDTH * 2)}+`;
   return [
     border,
     ...cells.map(row => `|${row.join('')}|`),
@@ -32,7 +35,9 @@ export function startTerminal({
 } = {}) {
   let game = createGame();
   let stopped = false;
-  const draw = () => output.write(`\x1b[H\x1b[2J${render(game)}`);
+  // Explicit carriage returns also keep rows aligned when raw-mode output
+  // does not translate newlines. Do not advance past the 24th row.
+  const draw = () => output.write(`\x1b[H\x1b[2J${render(game).replaceAll('\n', '\r\n')}`);
   let stopGravity = () => {};
   const previousRaw = Boolean(input.isRaw);
   const previousFlowing = input.readableFlowing;
