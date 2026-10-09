@@ -49,6 +49,39 @@ test('TTY redraws return to origin and erase stale content without a final newli
   }
 });
 
+test('every frame in deterministic gameplay through a blocked spawn fits 24 rows', () => {
+  const game = new Game({ random: () => 0.5 });
+  let frames = 0;
+  const checkFrame = () => {
+    const before = JSON.stringify(game);
+    const frame = renderFrame(game);
+    const rows = frame.split('\n');
+    assert.equal(rows.length, 24);
+    assert.ok(rows.every(row => row.length <= 80), 'no wrapping on an 80-column terminal');
+    assert.equal(frame.endsWith('\n'), false);
+    assert.match(rows[0], new RegExp(`Score: ${game.score} \\| Lines: ${game.lines}`));
+    assert.match(rows[23], /Q: quit/);
+    assert.equal(JSON.stringify(game), before);
+    frames++;
+    return rows;
+  };
+  for (let piece = 0; piece < 100 && !game.gameOver; piece++) {
+    checkFrame();
+    game.rotate();
+    checkFrame();
+    game.move(piece % 2 ? 1 : -1);
+    checkFrame();
+    game.softDrop();
+    checkFrame();
+    game.hardDrop();
+    checkFrame();
+  }
+  assert.ok(frames > 5, 'exercise multiple pieces');
+  assert.equal(game.gameOver, true, 'stack eventually blocks spawning');
+  assert.equal(game.active, null);
+  assert.match(checkFrame()[0], /GAME OVER/);
+});
+
 test('non-TTY output is a plain frame with no escape sequences', () => {
   const game = new Game();
   let text = '';

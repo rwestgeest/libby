@@ -16,6 +16,30 @@ test('empty 10 by 20 board and all seven spawn shapes contain four cells', () =>
   }
 });
 
+test('each tetromino collides at occupied-cell boundaries, not its matrix padding', () => {
+  for (const type of Object.keys(TETROMINOES)) {
+    const game = newGame();
+    game.spawn(type);
+    const occupied = game.active.shape.flatMap((row, y) =>
+      row.flatMap((cell, x) => cell ? [{ x, y }] : []));
+    const minX = Math.min(...occupied.map(cell => cell.x));
+    const maxX = Math.max(...occupied.map(cell => cell.x));
+    const minY = Math.min(...occupied.map(cell => cell.y));
+    const maxY = Math.max(...occupied.map(cell => cell.y));
+    for (const [x, y, dx, dy] of [
+      [-minX, 0, -1, 0],
+      [WIDTH - 1 - maxX, 0, 1, 0],
+      [3, -minY, 0, -1],
+      [3, HEIGHT - 1 - maxY, 0, 1],
+    ]) {
+      const piece = { ...game.active, x, y };
+      assert.equal(game.canPlace(piece), true, `${type} at boundary`);
+      assert.equal(game.canPlace({ ...piece, x: x + dx, y: y + dy }), false,
+        `${type} outside boundary`);
+    }
+  }
+});
+
 test('seven-bag generation includes each piece once per bag', () => {
   const game = newGame();
   const first = [game.active.type, ...Array.from({ length: 6 }, () => game.nextType())];
@@ -72,6 +96,18 @@ test('rotation kicks away from a wall and fails when every candidate is blocked'
   assert.equal(game.active, before);
 });
 
+test('rotation kicks up from the floor without modifying locked cells', () => {
+  const game = newGame();
+  game.spawn('I');
+  game.move(0, 18);
+  game.board[19][0] = 'J';
+  const board = structuredClone(game.board);
+  assert.equal(game.rotate(), true);
+  assert.equal(game.active.y, 16);
+  assert.equal(game.canPlace(game.active), true);
+  assert.deepEqual(game.board, board);
+});
+
 test('gravity moves down, then locks four cells at the floor and spawns', () => {
   const game = newGame();
   game.spawn('O');
@@ -92,6 +128,43 @@ test('drop scoring rewards soft and hard drop distance and locks on landing', ()
   assert.equal(game.hardDrop(), 17);
   assert.equal(game.score, 35);
   assert.equal(game.board.flat().filter(Boolean).length, 4);
+});
+
+test('blocked soft drop locks onto a stack without awarding movement points', () => {
+  const game = newGame();
+  game.spawn('O');
+  game.board[19][4] = 'J';
+  game.move(0, 17);
+  game.bag = ['T'];
+  assert.equal(game.softDrop(), true);
+  assert.equal(game.score, 0);
+  assert.deepEqual(game.board[17].slice(4, 6), ['O', 'O']);
+  assert.deepEqual(game.board[18].slice(4, 6), ['O', 'O']);
+  assert.equal(game.board[19][4], 'J');
+  assert.equal(game.board.flat().filter(Boolean).length, 5);
+  assert.equal(game.active.type, 'T');
+  assert.equal(game.active.y, 0);
+});
+
+test('non-adjacent full rows compact in order and scoring accumulates', () => {
+  const game = newGame();
+  game.score = 7;
+  game.lines = 1;
+  game.board[16][0] = 'T';
+  game.board[17].fill('I');
+  game.board[18][1] = 'L';
+  game.board[19].fill('J');
+  assert.equal(game.clearLines(), 2);
+  assert.equal(game.score, 307);
+  assert.equal(game.lines, 3);
+  assert.equal(game.board[18][0], 'T');
+  assert.equal(game.board[19][1], 'L');
+  assert.equal(game.board.flat().filter(Boolean).length, 2);
+  game.board[19].fill('O');
+  assert.equal(game.clearLines(), 1);
+  assert.equal(game.score, 407);
+  assert.equal(game.lines, 4);
+  assert.equal(game.board[19][0], 'T');
 });
 
 test('clearing one through four rows awards points and preserves remaining rows', () => {
