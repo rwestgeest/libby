@@ -6,7 +6,7 @@ Build a playable terminal Tetris game launched with `npm start`. The complete di
 ## Tasks
 - [x] Set up a Node.js project with an `npm start` entry point and a test command.
 - [x] Implement the board, seven tetrominoes, piece spawning, movement, rotation, collision detection, and locking.
-- [ ] Implement gravity, line clearing, scoring, and game-over detection.
+- [x] Implement gravity, line clearing, scoring, and game-over detection.
 - [ ] Implement terminal rendering with a fixed layout of at most 24 rows, including the board, score, controls, borders, and game-over messages.
 - [ ] Add keyboard controls for movement, rotation, dropping, and quitting; safely restore terminal state on exit or interruption.
 - [ ] Add automated tests for core game rules and the rendering row limit, including game-over output.
