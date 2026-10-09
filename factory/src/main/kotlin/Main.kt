@@ -3,7 +3,7 @@ import java.io.IOException
 import kotlinx.serialization.json.*
 import kotlin.system.exitProcess
 
-private fun fail(message: String): Nothing {
+internal fun fail(message: String): Nothing {
     System.err.println(message)
     exitProcess(1)
 }
@@ -99,18 +99,8 @@ fun main(args: Array<String>) {
             .getOrElse { fail("Could not read the configuration for $name") }
     }
 
-    fun gitResult(vararg arguments: String): Pair<String, Int> {
-        val process = ProcessBuilder(listOf("git") + arguments)
-            .directory(target).redirectErrorStream(true).start()
-        val output = process.inputStream.bufferedReader().use { it.readText() }
-        return output to process.waitFor()
-    }
-    fun git(vararg arguments: String): String {
-        val (output, status) = gitResult(*arguments)
-        if (status != 0) fail(output.trim())
-        return output
-    }
-    if (gitResult("rev-parse", "--show-toplevel").second != 0) git("init")
+    val repository = TargetRepository(target)
+    repository.prepare()
 
     val context = """
         Read the seed at "$seed".
@@ -155,23 +145,6 @@ fun main(args: Array<String>) {
             fields.joinToString(" and ") { "\"$it\"" } + " in your JSON result."
     }
 
-    fun productDiff(): String = buildString {
-        append(git("diff", "--no-ext-diff", "HEAD", "--", ".", ":(exclude).factory"))
-        val newFiles = git("ls-files", "--others", "--exclude-standard", "-z", "--", ".", ":(exclude).factory")
-        for (path in newFiles.split('\u0000').filter { it.isNotEmpty() }) {
-            val (diff, status) = gitResult("diff", "--no-ext-diff", "--no-index", "--", "/dev/null", path)
-            if (status > 1) fail(diff.trim())
-            append(diff)
-        }
-    }
-
-    fun commitChanges() {
-        if (git("status", "--porcelain", "--", ".").isNotBlank()) {
-            git("add", "--", ".")
-            git("commit", "--only", "-m", "Record factory task", "--", ".")
-        }
-    }
-
     var node = assemblyLine.next("start", null)
     var taskInProgress = false
     var taskAccepted = false
@@ -180,7 +153,7 @@ fun main(args: Array<String>) {
 
     while (node != "finish") {
         if (node == "planner" && taskInProgress) {
-            commitChanges()
+            repository.recordTaskChanges()
             taskAccepted = true
         }
 
@@ -211,7 +184,7 @@ fun main(args: Array<String>) {
                     Report findings only. Change neither the plan nor the product files.
                     ${resultRequest(node)} Include an array "findings" in your JSON result.
                     Product changes:
-                    ${productDiff()}
+                    ${repository.uncommittedProductChanges()}
                 """.trimIndent()
             }
             else -> resultRequest(node)
@@ -233,7 +206,7 @@ fun main(args: Array<String>) {
             fail("The task hit its limit of $maxAttempts attempts. Findings: $findings")
         }
         if (node == "planner") {
-            if (taskAccepted) commitChanges()
+            if (taskAccepted) repository.recordTaskChanges()
             taskInProgress = false
             taskAccepted = false
             attempts = 0
@@ -241,6 +214,6 @@ fun main(args: Array<String>) {
         }
         node = next
     }
-    commitChanges()
+    repository.recordTaskChanges()
     println("factory stopped")
 }
