@@ -19,7 +19,7 @@ Build a playable terminal Tetris game launched with `npm start`. The complete di
   - [x] Test deterministic gravity through actual game over, checking every frame's 24-row limit and final output.
   - [x] Run `npm test`: all 39 tests passed.
   - Validator findings: none.
-- [ ] Run tests and manually verify `npm start`, playable controls, scoring, game over, clean exit, and the 24-row display limit.
+- [x] Run tests and manually verify `npm start`, playable controls, scoring, game over, clean exit, and the 24-row display limit.
   - [x] Run `npm test`: all 39 tests passed.
   - [x] Exercise `npm start` in a 48×24 pseudo-terminal with arrow movement, rotation, soft drop, timed gravity, and Space hard drop; repeated drops reached GAME OVER.
   - [x] Verify scoring through the production keyboard loop using a controlled single-line-gap fixture: Space cleared one line and displayed Score: 100 and Lines: 1.
