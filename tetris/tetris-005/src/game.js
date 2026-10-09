@@ -1,5 +1,7 @@
 export const BOARD_WIDTH = 10;
 export const BOARD_HEIGHT = 20;
+export const GRAVITY_INTERVAL_MS = 500;
+const LINE_SCORES = [0, 100, 300, 500, 800];
 
 // Square matrices keep rotation around a stable pivot. O never changes shape.
 export const TETROMINOES = Object.freeze(Object.fromEntries(
@@ -27,13 +29,16 @@ export class Game {
     this.board = createBoard();
     this.active = null;
     this.random = random;
+    this.score = 0;
+    this.lines = 0;
+    this.gameOver = false;
+    this.gravityElapsed = 0;
     this.spawn();
   }
 
-  // Returns false when the spawn area is blocked. The lifecycle controller
-  // decides whether to end the game; a failed spawn never replaces a piece.
+  // A blocked spawn ends the game without changing the settled board.
   spawn(type) {
-    if (this.active) return false;
+    if (this.gameOver || this.active) return false;
     const types = Object.keys(TETROMINOES);
     type ??= types[Math.floor(this.random() * types.length)];
     if (!Object.hasOwn(TETROMINOES, type)) throw new RangeError(`Unknown piece: ${type}`);
@@ -44,7 +49,11 @@ export class Game {
       x: Math.floor((BOARD_WIDTH - matrix.length) / 2),
       y: 0,
     };
-    if (this.collides(piece)) return false;
+    if (this.collides(piece)) {
+      this.gameOver = true;
+      this.gravityElapsed = 0;
+      return false;
+    }
     this.active = piece;
     return true;
   }
@@ -78,6 +87,45 @@ export class Game {
     if (this.collides(candidate)) return false;
     this.active = candidate;
     return true;
+  }
+
+  // Remove full rows together, preserving the order of surviving rows.
+  clearRows() {
+    const remaining = this.board.filter(row => row.some(cell => cell === null));
+    const cleared = BOARD_HEIGHT - remaining.length;
+    if (cleared === 0) return 0;
+    this.board = [
+      ...Array.from({ length: cleared }, () => Array(BOARD_WIDTH).fill(null)),
+      ...remaining,
+    ];
+    this.lines += cleared;
+    this.score += LINE_SCORES[cleared] ?? cleared * 200;
+    return cleared;
+  }
+
+  // One downward step; landing locks, clears, scores, then attempts a spawn.
+  step() {
+    if (this.gameOver || !this.active) return false;
+    if (this.move(0, 1)) return true;
+    if (!this.lock()) return false;
+    this.clearRows();
+    this.spawn();
+    return true;
+  }
+
+  // The clock supplies elapsed milliseconds; retain partial gravity intervals.
+  advance(elapsedMs) {
+    if (!Number.isFinite(elapsedMs) || elapsedMs < 0) {
+      throw new RangeError('Elapsed time must be a finite non-negative number');
+    }
+    if (this.gameOver || !this.active) return false;
+    this.gravityElapsed += elapsedMs;
+    let changed = false;
+    while (this.gravityElapsed >= GRAVITY_INTERVAL_MS && !this.gameOver) {
+      this.gravityElapsed -= GRAVITY_INTERVAL_MS;
+      changed = this.step() || changed;
+    }
+    return changed;
   }
 
   // Only grounded pieces can lock. Spawning and line clearing are separate.
