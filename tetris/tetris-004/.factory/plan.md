@@ -9,6 +9,10 @@
 ## Tasks
 - [x] Set up a Node.js project with an `npm start` entry point and automated test command.
 - [ ] Implement game state: a 10-column, 20-row board, seven tetrominoes, randomized piece spawning, movement, rotation, collision detection, and locking.
+  - [x] Add `src/game.js` with independent board rows, seven immutable shape templates, and randomized seven-bag spawning.
+  - [x] Implement collision-checked movement, clockwise rotation (without wall kicks), and resting-piece locking.
+  - [x] Verify state behavior with automated tests; `npm test` passes all 10 tests. No validator findings were supplied.
+  - [x] Fix validator finding (`src/game.js:48-49`): rejected spawning with an active piece consumes a random tetromino. Moved `nextType()` after the active-piece guard; regression test verifies unchanged active piece, bag, random-call count (including an empty bag), and next successfully spawned piece across two seven-bags. `npm test` passes all 11 tests.
 - [ ] Implement automatic falling, soft and hard drop, completed-line clearing, scoring, and game-over detection when a piece cannot spawn.
 - [ ] Implement terminal rendering with the board, score, control hints, and game-over message, always fitting within 24 rows. Use a fixed layout (22 board/border rows plus two status/control rows) and update it in place without accumulating output.
 - [ ] Connect keyboard controls for horizontal movement, rotation, soft drop, hard drop, restart after game over, and quitting. Manage raw input and restore terminal state on exit or interruption.
