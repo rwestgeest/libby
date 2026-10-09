@@ -13,7 +13,7 @@ Build a playable terminal Tetris game launched with `npm start`. The complete di
   - [x] Restore raw mode, input state, and cursor visibility; remove timers/listeners on exit, interruption, or rendering failure.
   - [x] Test controls, game-over quitting, and cleanup paths (`npm test`: 30 tests passed).
   - Validator findings: none.
-- [ ] Add automated tests for core game rules and the rendering row limit, including game-over output.
+- [x] Add automated tests for core game rules and the rendering row limit, including game-over output.
   - [x] Test all seven pieces in all four orientations against boundaries and settled cells.
   - [x] Test a four-line clear through gravity and verify the rendered score and cleared board.
   - [x] Test deterministic gravity through actual game over, checking every frame's 24-row limit and final output.
