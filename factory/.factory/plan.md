@@ -34,7 +34,7 @@ Use cohesive collaborators and intention-revealing messages, not a class per fun
   - Keep role-specific prompt selection simple; do not introduce an extensible role hierarchy merely to replace a small `when` expression.
   - Acceptance: focused tests cover configuration defaults, invocation failures, prompt context and last-JSON-result behavior; the orchestration loop no longer owns process/configuration/JSON parsing details; the baseline suite has no regressions.
 
-- [ ] Make assembly-line responsibilities explicit.
+- [x] Make assembly-line responsibilities explicit.
   - [x] Moved loading into `readAssemblyLine` in `src/main/kotlin/AssemblyLine.kt`: permissive file parsing and factory-directory availability checks remain outside graph decisions. `AssemblyLine` owns structural validation, private edges/machines, next-machine selection and result-field requests; validation invokes availability checks in the original diagnostic order.
   - [x] Added 16 focused graph scenarios for permissive parsing/blank labels, structural diagnostic order, first unavailable/last unreachable machines, finish reachability, non-boolean fields, unmatched labels, unconditional-edge precedence and first matching labeled edges. Focused graph/characterization/invocation run: 32 scenarios / 407 steps passed.
   - [x] Ran `./test`: 34 passed, the same 45 baseline undefined scenarios, no failing assertions (exit 1 due to undefined steps). Repository coverage is included. No real-agent examples or commits; no validator findings were supplied. Requested `spec/refactoring-seed.md` was missing, so the plan's explicit preservation constraints guided this task; fetched specs were not edited.
