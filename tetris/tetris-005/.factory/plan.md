@@ -1,6 +1,6 @@
 # Terminal Tetris plan
 
-Status: in progress; first task completed.
+Status: in progress; first two tasks completed.
 
 ## Seed requirements
 
@@ -12,7 +12,7 @@ Status: in progress; first task completed.
 ## Implementation tasks
 
 - [x] Create a Node.js project with an `npm start` entry point and an automated test command.
-- [ ] Implement a 10-column, 20-row board, the seven tetrominoes, piece spawning, movement, rotation, collision detection, and piece locking.
+- [x] Implement a 10-column, 20-row board, the seven tetrominoes, piece spawning, movement, rotation, collision detection, and piece locking.
 - [ ] Implement timed gravity, completed-row clearing, score updates, and game over when a new piece cannot spawn.
 - [ ] Implement terminal keyboard input for left/right movement, rotation, soft drop, hard drop, restart, and quit; show the controls on screen.
 - [ ] Render the board and all supporting information in a fixed layout of at most 24 rows: 22 rows for board and borders, one for score/status, and one for controls. Show game-over information in the status row rather than adding rows.
