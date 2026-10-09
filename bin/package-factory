@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+default_output="$repo_root/dist/factory.zip"
+
+usage() {
+  printf 'Usage: %s [OUTPUT.zip]\n' "${0##*/}"
+  printf 'Build a self-contained factory distribution (default: %s).\n' "$default_output"
+}
+
+case "${1:-}" in
+  -h|--help)
+    usage
+    exit 0
+    ;;
+esac
+
+if (( $# > 1 )); then
+  usage >&2
+  exit 2
+fi
+
+output="${1:-$default_output}"
+case "$output" in
+  /*) ;;
+  *) output="$PWD/$output" ;;
+esac
+
+for command in mvn java zip; do
+  if ! command -v "$command" >/dev/null 2>&1; then
+    printf 'Required command not found: %s\n' "$command" >&2
+    exit 1
+  fi
+done
+
+work_dir="$(mktemp -d)"
+trap 'rm -rf -- "$work_dir"' EXIT
+package_root="$work_dir/factory-distribution"
+mkdir -p "$package_root/bin" "$package_root/factory/lib" "$package_root/factory/target"
+
+printf 'Compiling factory and collecting runtime dependencies...\n'
+mvn -q -f "$repo_root/factory/pom.xml" compile dependency:copy-dependencies \
+  -DincludeScope=runtime \
+  -DoutputDirectory="$package_root/factory/lib"
+
+cp -R "$repo_root/factory/target/classes" "$package_root/factory/target/classes"
+
+# Copy runtime configuration while leaving development and local state behind.
+shopt -s nullglob
+for item in "$repo_root/factory"/*; do
+  name="${item##*/}"
+  case "$name" in
+    src|spec|target|runs|jobs|pom.xml|test|README.md|DISTRIBUTION.md|ITERATION)
+      continue
+      ;;
+  esac
+  cp -R "$item" "$package_root/factory/$name"
+done
+shopt -u nullglob
+
+cp "$repo_root/factory/DISTRIBUTION.md" "$package_root/README.md"
+chmod +x "$package_root/factory/factory"
+ln -s ../factory/factory "$package_root/bin/factory"
+
+mkdir -p "$(dirname "$output")"
+archive="$work_dir/factory.zip"
+(
+  cd "$work_dir"
+  zip -qry "$archive" factory-distribution
+)
+mv -f "$archive" "$output"
+
+printf 'Created %s\n' "$output"
+printf 'Recipients can unzip it and run factory-distribution/bin/factory.\n'

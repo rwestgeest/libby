@@ -22,6 +22,20 @@ The launcher builds the Kotlin entry point in a source checkout and preserves
 the caller's working folder. A compiled distribution without `pom.xml` runs
 directly through the same launcher.
 
+## Create a distribution
+
+From the repository root, build a ZIP containing the compiled factory and its
+runtime dependencies:
+
+```sh
+bin/package-factory
+```
+
+This creates `dist/factory.zip`. Pass a different ZIP path as the first
+argument to choose another destination. The archive excludes source, tests,
+homework specs, build logs, and local run/job state. Its recipient needs Bash,
+JDK 21, Git, and the configured agent harnesses, but does not need Maven.
+
 The suite compiles the factory once before running examples. Each example gets
 its own copy of `target/classes`, the runtime classpath file, and the launcher.
 No factory classes are symlinked or shared between examples. Only dependency

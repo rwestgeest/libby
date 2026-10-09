@@ -6,4 +6,20 @@ if [[ -f "$factory_dir/pom.xml" ]]; then
   mvn -q -f "$factory_dir/pom.xml" compile dependency:build-classpath \
     -Dmdep.includeScope=runtime -Dmdep.outputFile="$factory_dir/target/runtime-classpath.txt"
 fi
-FACTORY_DIR="$factory_dir" exec java -cp "$factory_dir/target/classes:$(cat "$factory_dir/target/runtime-classpath.txt")" MainKt "$@"
+
+if [[ ! -d "$factory_dir/target/classes" ]]; then
+  printf 'Factory classes are missing. Rebuild or reinstall the distribution.\n' >&2
+  exit 1
+fi
+
+if [[ -d "$factory_dir/lib" ]]; then
+  runtime_classpath="$factory_dir/lib/*"
+elif [[ -f "$factory_dir/target/runtime-classpath.txt" ]]; then
+  runtime_classpath="$(cat "$factory_dir/target/runtime-classpath.txt")"
+else
+  printf 'Factory runtime dependencies are missing. Rebuild or reinstall the distribution.\n' >&2
+  exit 1
+fi
+
+FACTORY_DIR="$factory_dir" exec java \
+  -cp "$factory_dir/target/classes:$runtime_classpath" MainKt "$@"
