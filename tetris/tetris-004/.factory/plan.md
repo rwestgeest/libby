@@ -13,7 +13,7 @@
   - [x] Implement collision-checked movement, clockwise rotation (without wall kicks), and resting-piece locking.
   - [x] Verify state behavior with automated tests; `npm test` passes all 10 tests. No validator findings were supplied.
   - [x] Fix validator finding (`src/game.js:48-49`): rejected spawning with an active piece consumes a random tetromino. Moved `nextType()` after the active-piece guard; regression test verifies unchanged active piece, bag, random-call count (including an empty bag), and next successfully spawned piece across two seven-bags. `npm test` passes all 11 tests.
-- [ ] Implement automatic falling, soft and hard drop, completed-line clearing, scoring, and game-over detection when a piece cannot spawn.
+- [x] Implement automatic falling, soft and hard drop, completed-line clearing, scoring, and game-over detection when a piece cannot spawn.
   - [x] Add elapsed-time gravity (`update`/`tick`) with a default 1000 ms interval; blocked descent locks and spawns the next piece. Terminal-loop wiring remains in the controls task.
   - [x] Add soft/hard drop (1/2 points per descended cell), completed-line collapse, cumulative line count, and fixed-level line scoring (100/300/500/800).
   - [x] Detect blocked spawning as game over and stop movement, rotation, drops, and gravity afterward.
