@@ -31,6 +31,10 @@ Status: in progress; first seven tasks completed.
   - [x] Add a render regression for an actual lock-to-blocked-spawn game-over transition, preserving the locked piece, borders, controls, and 24-row limit.
   - [x] Run `npm test`: all 87 tests passed. Leave the parent task unchecked for planner review after commit.
 - [ ] Document launch requirements and controls; run automated tests and manually smoke-test `npm start` in an interactive terminal.
+  - [x] Add `README.md` with Node.js/npm requirements, interactive terminal size/support, launch/test commands, controls, scoring, and smoke-test steps. No validator findings were supplied.
+  - [x] Run `npm test`: all 87 tests passed.
+  - [x] Exercise real `npm start` in an interactive 80×24 pseudo-terminal: gravity, arrow input, soft/hard drop, blocked-spawn game over, restart, Q and Ctrl+C. Both launches exited successfully, restored cursor visibility and original terminal settings; all 19 rendered frames per launch fit 24 rows. This was a tool-driven PTY smoke test, not a human visual terminal inspection.
+  - [x] Leave the parent task unchecked for planner review after commit.
 
 ## Completion criteria
 
