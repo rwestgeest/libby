@@ -20,6 +20,12 @@ Build a playable terminal Tetris game launched with `npm start`. The complete di
   - [x] Run `npm test`: all 39 tests passed.
   - Validator findings: none.
 - [ ] Run tests and manually verify `npm start`, playable controls, scoring, game over, clean exit, and the 24-row display limit.
+  - [x] Run `npm test`: all 39 tests passed.
+  - [x] Exercise `npm start` in a 48×24 pseudo-terminal with arrow movement, rotation, soft drop, timed gravity, and Space hard drop; repeated drops reached GAME OVER.
+  - [x] Verify scoring through the production keyboard loop using a controlled single-line-gap fixture: Space cleared one line and displayed Score: 100 and Lines: 1.
+  - [x] Verify Q after game over exits with code 0 and Ctrl-C during play exits with code 130; both restored original terminal settings and cursor visibility.
+  - [x] Check all 23 captured terminal frames across the live and fixture sessions: each used exactly 24 rows and no more than 48 columns.
+  - Validator findings: none. Verification used scripted pseudo-terminal interaction, not a human visual playthrough.
 
 ## Completion criteria
 All tasks above are finished, tests pass, and the game can be played in a terminal using `npm start` without exceeding 24 display rows.
