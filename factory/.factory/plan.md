@@ -11,7 +11,7 @@ Use cohesive collaborators and intention-revealing messages, not a class per fun
 
 ## Tasks
 
-- [ ] Establish behavior-preserving refactoring coverage.
+- [x] Establish behavior-preserving refactoring coverage.
   - [x] Run `./test` and record the baseline, including any existing failures or undefined scenarios. Recorded in `src/test/REFACTORING-BASELINE.md`: 45 undefined scenarios, no failing assertions.
   - [x] Examine existing step definitions and doubles before adding coverage. Add focused characterization tests only where missing for last-JSON-line result selection, labeled routing, retry exhaustion, accepted-task commit ordering, and target-only diff/commit behavior. Seven characterization scenarios pass (97 steps).
   - [x] Preserve existing behavior rather than implementing currently unsupported spec requirements. Do not modify fetched feature files. Production source and fetched specs are unchanged; `./test` retains the same 45 undefined scenarios with seven additional passing scenarios.
