@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Responsibility lens — Tetris 001 vs 004</title>
+  <style>
+    :root {
+      --ink: #18232d;
+      --muted: #5e6d75;
+      --paper: #f4f0e5;
+      --panel: #fffdf8;
+      --line: #d4cdbd;
+      --old: #cb5438;
+      --old-soft: #f8dfd6;
+      --new: #087f73;
+      --new-soft: #d9efea;
+      --lens: #e2a62b;
+      --lens-soft: #fff1c9;
+    }
+
+    * { box-sizing: border-box; }
+    html { background: #d8d2c5; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(255,255,255,.85) 0 1px, transparent 1.5px) 0 0 / 20px 20px,
+        var(--paper);
+      font: 13px/1.34 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { max-width: 1180px; margin: 0 auto; padding: 27px 32px 23px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 7px; font: 800 34px/1.02 Georgia, serif; letter-spacing: -.025em; }
+    h2 { margin-bottom: 9px; font-size: 11px; letter-spacing: .13em; text-transform: uppercase; }
+    h3 { margin-bottom: 4px; font-size: 13px; }
+    p { margin-bottom: 7px; }
+    code { font: 11px/1.25 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .eyebrow { margin-bottom: 7px; color: var(--new); font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
+    .lede { max-width: 830px; margin: 0; color: var(--muted); font-size: 15px; }
+    .head { display: grid; grid-template-columns: 1fr 305px; gap: 24px; align-items: end; }
+    .stamp { padding: 13px 15px; border: 1px solid #ba8b29; border-left: 6px solid var(--lens); border-radius: 9px; background: var(--lens-soft); }
+    .stamp b { display: block; margin-bottom: 3px; font: 800 18px/1.1 Georgia, serif; }
+    .stamp span { color: #62501e; font-size: 11px; }
+
+    .hypothesis {
+      display: grid;
+      grid-template-columns: 115px 1fr;
+      gap: 15px;
+      margin: 18px 0 14px;
+      padding: 11px 15px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(255,253,248,.87);
+    }
+    .hypothesis h2 { margin: 2px 0 0; color: var(--new); }
+    .hypothesis p { margin: 0; }
+
+    .architecture { display: grid; grid-template-columns: 1fr 56px 1fr; gap: 10px; align-items: stretch; }
+    .arch { padding: 13px 14px 12px; border-radius: 11px; }
+    .arch.old { background: var(--old-soft); color: #873621; }
+    .arch.new { background: var(--new-soft); color: #075f57; }
+    .arch-title { display: flex; justify-content: space-between; margin-bottom: 11px; color: var(--ink); font-weight: 850; }
+    .arch-title small { color: var(--muted); font-weight: 650; }
+    .nodes { display: grid; grid-template-columns: 1fr 20px 1.45fr 20px 1fr; align-items: center; }
+    .node { min-height: 58px; display: grid; place-items: center; padding: 7px; border: 1.5px solid currentColor; border-radius: 8px; background: rgba(255,255,255,.82); font: 750 10px/1.28 ui-monospace, monospace; text-align: center; }
+    .node.hot { box-shadow: inset 0 -5px 0 rgba(203,84,56,.2); }
+    .node.good { box-shadow: inset 0 -5px 0 rgba(8,127,115,.19); }
+    .edge { font-size: 17px; font-weight: 900; text-align: center; }
+    .arch-caption { margin: 9px 0 0; color: var(--muted); font-size: 10px; text-align: center; }
+    .change-arrow { display: grid; place-items: center; color: var(--lens); font-size: 27px; font-weight: 900; }
+    .change-arrow small { display: block; margin-top: -12px; color: #7c6429; font-size: 8px; letter-spacing: .08em; text-transform: uppercase; }
+
+    .body-grid { display: grid; grid-template-columns: 1.16fr .84fr; gap: 14px; margin-top: 14px; }
+    .panel { padding: 13px 14px; border: 1px solid var(--line); border-radius: 11px; background: rgba(255,253,248,.91); }
+    .causal-flow { display: grid; grid-template-columns: 1fr 22px 1fr 22px 1fr; align-items: stretch; }
+    .step { min-height: 75px; padding: 9px; border-radius: 8px; background: white; border: 1px solid var(--line); font-size: 10px; }
+    .step b { display: block; margin-bottom: 4px; color: var(--new); font-size: 11px; }
+    .step.before b { color: var(--old); }
+    .step.validator { background: var(--lens-soft); border-color: #ddc16f; }
+    .step.validator b { color: #7a5b0c; }
+    .mini-arrow { display: grid; place-items: center; color: var(--lens); font-size: 18px; font-weight: 900; }
+    .refs { margin-top: 4px; color: var(--muted); font: 9px/1.28 ui-monospace, monospace; }
+
+    .evidence { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 9px; }
+    .finding { padding: 9px 10px; border-left: 3px solid var(--new); border-radius: 5px; background: #f0f7f4; font-size: 10px; }
+    .finding b { display: block; margin-bottom: 3px; font-size: 11px; }
+    .finding.caution { border-left-color: var(--lens); background: #fff7df; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 10px; }
+    th, td { padding: 6px 5px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-size: 9px; letter-spacing: .07em; text-align: left; text-transform: uppercase; }
+    th:nth-child(n+2), td:nth-child(n+2) { text-align: center; }
+    td:first-child { width: 46%; font-weight: 700; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .old-text { color: var(--old); font-weight: 850; }
+    .new-text { color: var(--new); font-weight: 850; }
+    .mark { display: inline-block; min-width: 18px; padding: 1px 4px; border-radius: 999px; background: var(--new-soft); color: var(--new); font-weight: 900; }
+
+    .residual { margin-top: 10px; padding-top: 9px; border-top: 1px dashed var(--line); }
+    .residual h3 { color: var(--old); }
+    .residual p { margin: 0; font-size: 10px; }
+
+    footer { display: grid; grid-template-columns: 1fr auto; gap: 22px; margin-top: 14px; padding-top: 11px; border-top: 2px solid var(--ink); color: var(--muted); font-size: 10px; }
+    footer strong { color: var(--ink); }
+    .method { max-width: 410px; text-align: right; }
+
+    @media (max-width: 820px) {
+      main { padding: 20px 16px; }
+      .head, .body-grid { grid-template-columns: 1fr; }
+      .architecture { grid-template-columns: 1fr; }
+      .change-arrow { transform: rotate(90deg); min-height: 35px; }
+      .change-arrow small { display: none; }
+      .hypothesis { grid-template-columns: 1fr; gap: 4px; }
+      .method { text-align: left; }
+    }
+    @media (max-width: 560px) {
+      .nodes, .causal-flow { grid-template-columns: 1fr; gap: 5px; }
+      .edge, .mini-arrow { transform: rotate(90deg); min-height: 18px; }
+      .evidence { grid-template-columns: 1fr; }
+      footer { grid-template-columns: 1fr; }
+    }
+    @media print {
+      @page { size: A4 landscape; margin: 7mm; }
+      html, body { background: white; }
+      body { font-size: 10px; }
+      main { max-width: none; padding: 0; }
+      h1 { font-size: 28px; }
+      .lede { font-size: 12px; }
+      .head { grid-template-columns: 1fr 280px; }
+      .hypothesis { margin: 11px 0 9px; padding: 8px 12px; }
+      .arch { padding: 9px 11px; }
+      .body-grid { margin-top: 9px; gap: 9px; }
+      .panel { padding: 9px 11px; }
+      footer { margin-top: 8px; padding-top: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="head">
+      <div>
+        <p class="eyebrow">Responsibility-driven object design · evidence report</p>
+        <h1>Who knows what? Tetris 001 → 004</h1>
+        <p class="lede">A hypothesis-first review using the validator lens: cohesive responsibilities, behavior beside its knowledge, narrow collaborations, and the simplest design needed today.</p>
+      </div>
+      <aside class="stamp" aria-label="Verdict">
+        <b>Supported—with one open seam</b>
+        <span>004 improves knowledge placement and boundary collaboration. Its mutable game state remains broadly exposed.</span>
+      </aside>
+    </header>
+
+    <section class="hypothesis">
+      <h2>Hypothesis</h2>
+      <p>If the lens shaped 004, presentation should stop reconstructing game state; gravity rules should live with the game rather than the terminal; and terminal work should be split into collaborators with narrow messages. Expect <code>visibleCells()</code>, <code>update(deltaMs)</code>, and a renderer/session boundary—not extra classes for their own sake.</p>
+    </section>
+
+    <section class="architecture" aria-label="Responsibility map comparing the two implementations">
+      <div class="arch old">
+        <div class="arch-title">tetris-001 <small>knowledge leaks outward</small></div>
+        <div class="nodes">
+          <div class="node">main<br><small>launch</small></div><div class="edge">→</div>
+          <div class="node hot">terminal.js<br><small>overlay geometry · render<br>keys · clock · cleanup</small></div><div class="edge">⇄</div>
+          <div class="node">Game<br><small>rules + mutable state</small></div>
+        </div>
+        <p class="arch-caption">Renderer reads <code>board</code>, <code>active.shape</code>, x/y and board bounds.</p>
+      </div>
+      <div class="change-arrow" aria-hidden="true">→<small>lens pressure</small></div>
+      <div class="arch new">
+        <div class="arch-title">tetris-004 <small>intentional messages</small></div>
+        <div class="nodes">
+          <div class="node">Session<br><small>elapsed time + lifecycle</small></div><div class="edge">→</div>
+          <div class="node good">Game<br><small><code>update()</code><br><code>visibleCells()</code></small></div><div class="edge">→</div>
+          <div class="node good">Renderer<br><small>snapshot → glyphs</small></div>
+        </div>
+        <p class="arch-caption">The session supplies time; the game decides falling; the renderer translates a view.</p>
+      </div>
+    </section>
+
+    <div class="body-grid">
+      <section class="panel">
+        <h2>Direct trace · finding → repair → proof</h2>
+        <div class="causal-flow" aria-label="Validator finding led to a responsibility move and a regression test">
+          <div class="step before">
+            <b>001: foreign knowledge</b>
+            <code>render(game)</code> copies the board, walks the active shape, clips coordinates, then overlays cells.
+            <div class="refs">001 terminal.js:8–17</div>
+          </div>
+          <div class="mini-arrow">→</div>
+          <div class="step validator">
+            <b>004 validator finding</b>
+            “Renderer reconstructed occupied cells from active-piece geometry.” The plan records a responsibility move.
+            <div class="refs">004 plan.md:21–23</div>
+          </div>
+          <div class="mini-arrow">→</div>
+          <div class="step">
+            <b>004: owned knowledge</b>
+            <code>Game.visibleCells()</code> returns a snapshot. A test installs throwing <code>board</code>/<code>active</code> getters to police the boundary.
+            <div class="refs">004 game.js:80–93 · render.js:9–31 · render.test.js:42–56</div>
+          </div>
+        </div>
+
+        <div class="evidence">
+          <div class="finding">
+            <b>Time policy moved inward</b>
+            001’s terminal schedules from <code>game.gravityMs</code>. In 004, the session sends elapsed milliseconds and <code>Game.update()</code> owns accumulation and fall decisions.
+            <div class="refs">001 terminal.js:84–90 · 004 session.js:70–74 · game.js:126–137</div>
+          </div>
+          <div class="finding">
+            <b>Presentation became a collaborator</b>
+            004 extracts <code>TerminalRenderer</code>; the session only asks it to <code>render(game)</code>. A fake renderer isolates lifecycle/error tests.
+            <div class="refs">004 render.js:34–54 · session.js:7–17,66–68</div>
+          </div>
+          <div class="finding">
+            <b>Rejected commands preserve state</b>
+            Another recorded finding moved <code>nextType()</code> after the active-piece guard, so failed spawn no longer consumes hidden bag state.
+            <div class="refs">004 plan.md:14–15 · game.js:56–64</div>
+          </div>
+          <div class="finding caution">
+            <b>Caveat: the model is still porous</b>
+            <code>board</code>, <code>active</code>, <code>bag</code>, score and flags remain writable; many tests arrange scenarios by mutating them. The object owns more behavior, but not its full invariant boundary.
+            <div class="refs">004 game.js:32–40 · game.test.js · progression.test.js</div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <h2>Lens scorecard</h2>
+        <table aria-label="Responsibility lens scorecard">
+          <thead><tr><th>Question</th><th class="old-text">001</th><th class="new-text">004</th></tr></thead>
+          <tbody>
+            <tr><td>Who projects visible cells?</td><td>terminal</td><td class="new-text">Game</td></tr>
+            <tr><td>Who decides elapsed-time falls?</td><td>terminal timer</td><td class="new-text">Game</td></tr>
+            <tr><td>Rendering boundary</td><td>function inside terminal</td><td class="new-text">renderer object</td></tr>
+            <tr><td>Session collaborators injectable?</td><td>4 boundary values</td><td class="new-text">9 collaborators</td></tr>
+            <tr><td>Recorded lens-driven repairs</td><td>—</td><td><span class="mark">2</span></td></tr>
+            <tr><td>Fresh automated run</td><td>39 pass</td><td class="new-text">50 pass</td></tr>
+            <tr><td>Game state encapsulated?</td><td class="old-text">no</td><td class="old-text">not yet</td></tr>
+          </tbody>
+        </table>
+
+        <div class="residual">
+          <h3>Small next improvement</h3>
+          <p>Add intention-revealing scenario methods or a narrow state/snapshot builder for tests, then stop exposing writable <code>active</code>, <code>board</code>, and <code>bag</code>. Do this only where it removes real test setup coupling; the lens explicitly rejects speculative class-making.</p>
+        </div>
+
+        <div class="residual">
+          <h3>Interpretation</h3>
+          <p>The architectural claim is stronger than “004 has more files/tests.” One validator finding names misplaced knowledge, the repair moves it to the owner, and a boundary test prevents regression. That is responsibility-driven change with traceable evidence.</p>
+        </div>
+      </aside>
+    </div>
+
+    <footer>
+      <div><strong>Conclusion.</strong> The hypothesis holds at two important seams: presentation no longer understands piece geometry, and the terminal no longer owns gravity policy. 004 is more intention-revealing and change-local than 001, while its public mutable state remains the clearest design debt.</div>
+      <div class="method"><strong>Method.</strong> Read <code>validator-lens.md</code>, both implementations, tests, plans and verification notes; then ran both suites on 9 Oct 2026: 001 = 39/39, 004 = 50/50.</div>
+    </footer>
+  </main>
+</body>
+</html>
