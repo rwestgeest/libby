@@ -1,6 +1,6 @@
 # Terminal Tetris plan
 
-Status: in progress; first five tasks completed.
+Status: in progress; first six tasks completed.
 
 ## Seed requirements
 
@@ -20,7 +20,7 @@ Status: in progress; first five tasks completed.
 - [x] Render the board and all supporting information in a fixed layout of at most 24 rows: 22 rows for board and borders, one for score/status, and one for controls. Show game-over information in the status row rather than adding rows.
   - [x] Make layout dimensions explicit and use carriage-return/newline pairs for aligned raw-terminal redraws without a trailing newline.
   - [x] Verify playing and game-over layouts, 80-column fit, and successive terminal redraws with status and controls in fixed rows. `npm test`: 36 tests passed.
-- [ ] Restore terminal input settings and cursor visibility on quit, interruption, and errors; handle unsupported non-interactive input clearly.
+- [x] Restore terminal input settings and cursor visibility on quit, interruption, and errors; handle unsupported non-interactive input clearly.
   - [x] Resolve validator finding in `test/lifecycle.test.js`: add a real subprocess regression combining an uncaught exception with failed raw-mode restoration, and preserve the original exception report rather than replacing it with the cleanup failure. Reproduced exit status 7 before the fix; both prior raw-mode states now report the original exception with exit status 1 and complete remaining cleanup. `npm test`: 65 tests passed.
   - [x] Add cleanup for SIGINT, SIGTERM, SIGHUP, input EOF, stream errors, and uncaught exceptions without suppressing the original error; remove lifecycle listeners on shutdown.
   - [x] Attempt all cleanup steps even if one fails, restoring prior raw/flowing settings, stopping gravity, and showing the cursor; keep shutdown idempotent.
