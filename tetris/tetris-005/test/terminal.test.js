@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { PassThrough } from 'node:stream';
+import { EventEmitter } from 'node:events';
 import test from 'node:test';
 import { Game } from '../src/game.js';
 import { startGravity } from '../src/gravity.js';
@@ -45,15 +46,22 @@ for (const state of ['playing', 'game-over']) {
   });
 }
 
-function setup() {
+function setup({ previousRaw = false, flowing = false } = {}) {
   const input = new PassThrough();
+  input.isRaw = previousRaw;
   input.setRawMode = raw => { input.isRaw = raw; };
+  if (flowing) input.resume();
+  else input.pause();
+  const signals = new EventEmitter();
+  const output = new EventEmitter();
+  output.write = text => { screen += text; };
   let screen = '';
   const timers = [];
   let quits = 0;
   const terminal = startTerminal({
     input,
-    output: { write: text => { screen += text; } },
+    output,
+    signals,
     createGame: () => new Game({ random: () => 0.2 }),
     gravity: (game, { onUpdate }) => {
       const timer = { game, onUpdate, stopped: false };
@@ -63,7 +71,7 @@ function setup() {
     onQuit: () => { quits++; },
   });
   return {
-    terminal, input, timers,
+    terminal, input, output, signals, timers,
     key: name => input.emit('keypress', '', { name }),
     get screen() { return screen; },
     get quits() { return quits; },

@@ -31,6 +31,7 @@ export function startTerminal({
   output = process.stdout,
   createGame = () => new Game(),
   gravity = startGravity,
+  signals = process,
   onQuit = () => {},
 } = {}) {
   let game = createGame();
@@ -45,18 +46,42 @@ export function startTerminal({
   const quit = () => {
     if (stopped) return;
     stopped = true;
-    stopGravity();
-    input.removeListener('keypress', onKey);
-    input.setRawMode(previousRaw);
-    if (previousFlowing) input.resume();
-    else input.pause();
-    output.write('\x1b[?25h\n');
-    onQuit();
+    // Attempt every restoration even if a stream or timer cleanup fails.
+    let cleanupError;
+    for (const restore of [
+      () => stopGravity(),
+      () => input.removeListener('keypress', onKey),
+      () => input.removeListener('end', quit),
+      () => input.removeListener('error', fail),
+      () => output.removeListener?.('error', fail),
+      () => {
+        for (const event of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
+          signals.removeListener(event, quit);
+        }
+        signals.removeListener('uncaughtExceptionMonitor', cleanupUncaught);
+      },
+      () => input.setRawMode(previousRaw),
+      () => previousFlowing ? input.resume() : input.pause(),
+      () => output.write('\x1b[?25h\n'),
+      () => onQuit(),
+    ]) {
+      try { restore(); }
+      catch (error) { cleanupError ??= error; }
+    }
+    if (cleanupError) throw cleanupError;
   };
 
+  function cleanupUncaught() {
+    // Node is already reporting a fatal error. Never throw from its monitor:
+    // a cleanup failure would replace the original exception and exit status.
+    try { quit(); }
+    catch { /* Leave the original exception to Node's default handler. */ }
+  }
+
   function fail(error) {
-    quit();
-    throw error;
+    // Preserve the original error if cleanup itself also fails.
+    try { quit(); }
+    finally { throw error; }
   }
 
   function guarded(action) {
@@ -109,6 +134,13 @@ export function startTerminal({
   guarded(() => {
     emitKeypressEvents(input);
     input.on('keypress', onKey);
+    input.on('end', quit);
+    input.on('error', fail);
+    output.on?.('error', fail);
+    for (const event of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
+      signals.on(event, quit);
+    }
+    signals.on('uncaughtExceptionMonitor', cleanupUncaught);
     input.setRawMode(true);
     input.resume();
     output.write('\x1b[?25l');

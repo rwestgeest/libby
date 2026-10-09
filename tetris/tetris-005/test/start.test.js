@@ -20,5 +20,7 @@ test('the npm start entry point launches successfully', () => {
   assert.ifError(result.error);
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stderr, '');
-  assert.match(result.stdout, /Terminal Tetris/);
+  assert.match(result.stdout, /Terminal Tetris requires an interactive terminal/);
+  assert.match(result.stdout, /Run npm start in a terminal to play/);
+  assert.ok(!result.stdout.includes('\x1b'), 'non-interactive launch must not modify terminal settings');
 });
