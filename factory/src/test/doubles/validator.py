@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -13,6 +14,11 @@ number = len(list(calls.glob("*.json")))
     "cwd": str(Path.cwd()),
 }))
 (calls / f"{number}.txt").write_text("\n".join(sys.argv[1:]))
+
+workspace = os.environ.get("FACTORY_TEST_WORKSPACE")
+if workspace:
+    with (Path(workspace) / "call-order.txt").open("a") as order:
+        order.write("validator\n")
 
 message_file = Path(__file__).parent / "before-result.txt"
 if message_file.exists():

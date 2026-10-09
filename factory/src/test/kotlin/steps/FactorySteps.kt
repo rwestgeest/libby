@@ -87,7 +87,7 @@ class FactorySteps {
     private lateinit var target: Path
     private lateinit var seed: Path
     private lateinit var agent: Path
-    private lateinit var agentArgs: List<String>
+    private var agentArgs: List<String> = emptyList()
     private var output = ""
     private var exitCode = -1
     private lateinit var headBeforeRun: String
@@ -114,6 +114,9 @@ class FactorySteps {
             .copyTo(copy.resolve("target/runtime-classpath.txt"))
         source.resolve("factory").copyTo(copy.resolve("factory"))
         copy.resolve("factory").setExecutable(true)
+        for (name in listOf("assembly-line", "planner", "doer", "validator")) {
+            source.resolve(name).copyRecursively(copy.resolve(name))
+        }
         repo = GitRepo(workspace)
         repo.init()
         repo.commit("Initial test state")
@@ -142,7 +145,7 @@ class FactorySteps {
         val doer = folder.resolve("agent.py")
         Files.copy(Path.of("src/test/doubles/agent.py"), doer)
         doer.toFile().setExecutable(true)
-        agentArgs = agentArgs + listOf("--doer", doer.toString())
+        configureMachine("doer", "harness", doer.toString())
     }
 
     @Given("the planner plans the tasks alpha and beta")
@@ -150,7 +153,8 @@ class FactorySteps {
         agent = workspace.resolve("agent.py")
         Files.copy(Path.of("src/test/doubles/agent.py"), agent)
         agent.toFile().setExecutable(true)
-        agentArgs = listOf("--agent", agent.toString())
+        agentArgs = listOf()
+        configureMachine("planner", "harness", agent.toString())
     }
 
     @Given("the validator is always satisfied")
@@ -159,13 +163,34 @@ class FactorySteps {
         val validator = folder.resolve("validator.py")
         Files.copy(Path.of("src/test/doubles/validator.py"), validator)
         validator.toFile().setExecutable(true)
-        agentArgs = agentArgs + listOf("--validator", validator.toString())
+        configureMachine("validator", "harness", validator.toString())
+    }
+
+    private fun configureMachine(name: String, key: String, value: String?) {
+        val file = workspace.resolve("factory/$name/config.json")
+        val entries = if (Files.exists(file)) {
+            Regex("\"([^\"]+)\"\\s*:\\s*\"([^\"]*)\"").findAll(Files.readString(file))
+                .associate { it.groupValues[1] to it.groupValues[2] }.toMutableMap()
+        } else mutableMapOf()
+        if (value == null) entries.remove(key) else entries[key] = value
+        Files.createDirectories(file.parent)
+        Files.writeString(file, entries.entries.joinToString(",\n", "{\n", "\n}\n") {
+            "  \"${it.key}\": \"${it.value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+        })
+        if (::factoryBefore.isInitialized) {
+            factoryBefore = snapshot(workspace.resolve("factory"))
+            stagedBefore = repo.git("diff", "--cached", "--binary", "--", "factory")
+            unstagedBefore = repo.git("diff", "--binary", "--", "factory")
+        }
     }
 
     @Given("the factory allows at most three attempts per pass")
     fun threeAttemptsPerPass() {
         agentArgs = agentArgs + listOf("--max-attempts", "3")
     }
+
+    @Given("the factory allows at most three attempts at a task")
+    fun threeAttemptsAtTask() = threeAttemptsPerPass()
 
     @Given("the validator is never satisfied")
     fun validatorNeverSatisfied() {
@@ -180,6 +205,11 @@ class FactorySteps {
     @Then("it reports that the pass hit its limit")
     fun passHitLimit() {
         check(exitCode != 0 && output.contains("pass hit its limit", true)) { output }
+    }
+
+    @Then("it reports that a task hit its limit")
+    fun taskHitLimit() {
+        check(exitCode != 0 && output.contains("task hit its limit", true)) { output }
     }
 
     @Then("the doer was given the validator's findings")
@@ -230,6 +260,13 @@ class FactorySteps {
     fun noHarnessChosen() {
         agentArgs = listOf()
     }
+
+    @Given("no harness is chosen for the validator")
+    fun noValidatorHarness() = configureMachine("validator", "harness", null)
+
+    @When("the factory runs")
+    fun runAssemblyLine() = runFactory()
+
     @When("the factory runs one pass")
     fun runOnePass() = runFactory()
 
@@ -238,11 +275,12 @@ class FactorySteps {
 
     private fun runFactory(vararg options: String) {
         val environment = setupTestEnvironment()
+        val checkingLine = "--check-line" in options
         val targetArgument = if (absoluteTarget) target.toString()
             else workspace.relativize(target).toString()
         val command = listOf(workspace.resolve("factory/factory").toString()) +
-            (if (seedChosen) listOf("--seed", workspace.relativize(seed).toString()) else emptyList()) +
-            (if (targetChosen) listOf("--target", targetArgument) else emptyList()) +
+            (if (!checkingLine && seedChosen) listOf("--seed", workspace.relativize(seed).toString()) else emptyList()) +
+            (if (!checkingLine && targetChosen) listOf("--target", targetArgument) else emptyList()) +
             agentArgs + options
 
         headBeforeRun = repo.head()
@@ -253,6 +291,65 @@ class FactorySteps {
         )
         output = result.first
         exitCode = result.second
+    }
+
+    private fun linePath(): Path = workspace.resolve("factory/assembly-line/line.dot")
+
+    @Given("this assembly line:")
+    fun thisAssemblyLine(line: String) {
+        Files.createDirectories(linePath().parent)
+        Files.writeString(linePath(), line)
+    }
+
+    @Given("the validator has been taken out, so the doer goes straight to the planner")
+    fun removeValidator() {
+        val line = Files.readString(linePath())
+            .lineSequence()
+            .filterNot { it.contains("validator") }
+            .toMutableList()
+        val closing = line.indexOfLast { it.trim() == "}" }
+        line.add(if (closing < 0) line.size else closing, "  doer -> planner")
+        Files.writeString(linePath(), line.joinToString("\n"))
+    }
+
+    @Given("{string} is misspelt {string} throughout the assembly line")
+    fun misspellMachine(correct: String, misspelling: String) {
+        Files.writeString(linePath(), Files.readString(linePath()).replace(correct, misspelling))
+    }
+
+    @Given("the edge from validator to planner has been taken out")
+    fun removeValidatorToPlanner() {
+        val lines = Files.readAllLines(linePath()).filterNot {
+            it.contains("validator -> planner")
+        }
+        Files.write(linePath(), lines)
+    }
+
+    @Given("the edges from validator are labelled {string} and {string}")
+    fun relabelValidatorEdges(positive: String, negative: String) {
+        val changed = Files.readString(linePath())
+            .replace("label=\"not satisfied\"", "label=\"$negative\"")
+            .replace("label=\"satisfied\"", "label=\"$positive\"")
+        Files.writeString(linePath(), changed)
+    }
+
+    @When("the factory reads the assembly line")
+    fun readAssemblyLine() = runFactory("--check-line")
+
+    @Then("it accepts it")
+    fun lineAccepted() { check(exitCode == 0) { output } }
+
+    @Then("it refuses it")
+    fun lineRefused() { check(exitCode != 0) { output } }
+
+    @Then("it reports that it has no machine called {string}")
+    fun missingMachineReported(name: String) {
+        check(output.contains("no machine called \"$name\"", true)) { output }
+    }
+
+    @Then("it reports that finish cannot be reached from validator")
+    fun unreachableFinishReported() {
+        check(output.contains("finish cannot be reached from validator", true)) { output }
     }
 
     @Then("pi has been called")
@@ -300,7 +397,10 @@ class FactorySteps {
     }
 
     @Then("the plan has the tasks {string} and {string}, and no others")
-    fun planHasExactlyTwoTasks(first: String, second: String) = check(Plan(target.resolve(".factory/plan.md")).tasks() == listOf(first, second)) { "Expected only unfinished tasks $first and $second.\n$output" }
+    fun planHasExactlyTwoTasks(first: String, second: String) =
+        check(Plan(target.resolve(".factory/plan.md")).entries().map { it.name } == listOf(first, second)) {
+            "Expected only tasks $first and $second.\n$output"
+        }
 
     @Then("there is one new work commit")
     fun oneNewWorkCommit() {
@@ -362,9 +462,15 @@ class FactorySteps {
             prompt.contains("\"$second\"")) { prompt }
     }
 
+    @Then("the validator was asked for a result with the field {string}")
+    fun validatorResultField(field: String) {
+        val prompt = validatorPrompt()
+        check(prompt.contains("JSON", true) && prompt.contains("\"$field\"")) { prompt }
+    }
+
     @Given("the validator's lens is testability")
     fun testabilityLens() {
-        agentArgs = agentArgs + listOf("--lens", "testability")
+        configureMachine("validator", "lens", "testability")
     }
 
     @Then("the validator was given {string}")
@@ -400,6 +506,9 @@ class FactorySteps {
 
     @Then("the doer has been called three times")
     fun doerCalledThreeTimes() = assertDoerCalls(3)
+
+    @Then("the doer has been called four times")
+    fun doerCalledFourTimes() = assertDoerCalls(4)
 
     @Then("the doer has not been called")
     fun doerNotCalled() = assertDoerCalls(0)
@@ -454,6 +563,46 @@ class FactorySteps {
 
     @Then("there are three new work commits")
     fun threeWorkCommits() { check(repo.logSince(headBeforeRun, target).size == 3) }
+
+    @Then("there are two new work commits")
+    fun twoWorkCommits() { check(repo.logSince(headBeforeRun, target).size == 2) }
+
+    @Then("each new work commit contains the work for one task")
+    fun eachCommitContainsOneTask() {
+        val commits = repo.logSince(headBeforeRun, target)
+        check(commits.isNotEmpty()) { "Expected work commits.\n$output" }
+        val targetPath = workspace.relativize(target).toString()
+        commits.forEach { commit ->
+            val products = repo.diffTree(commit).filterNot { it.startsWith("$targetPath/.factory/") }
+            check(products.size == 1 && products.single().endsWith(".txt")) {
+                "Expected one product file in $commit, found $products"
+            }
+        }
+    }
+
+    @Then("no new commit contains the work for the first task")
+    fun noCommitContainsFirstTask() {
+        val alpha = workspace.relativize(target.resolve("alpha.txt")).toString()
+        check(repo.logSince(headBeforeRun, target).none { alpha in repo.diffTree(it) })
+    }
+
+    @Then("the validator has not been called")
+    fun validatorNotCalled() {
+        check(!Files.exists(workspace.resolve("validator/calls"))) { output }
+    }
+
+    @Then("it reports that the result of validator has no field {string}")
+    fun missingValidatorResultField(field: String) {
+        check(exitCode != 0 && output.contains("result of validator has no field \"$field\"", true)) {
+            output
+        }
+    }
+
+    @Then("the planner was called before the doer")
+    fun plannerCalledBeforeDoer() {
+        val order = Files.readAllLines(workspace.resolve("call-order.txt"))
+        check(order.indexOf("planner") in 0 until order.indexOf("doer")) { order }
+    }
 
     @Given("the validator answers in prose, with no result")
     fun validatorAnswersInProse() { Files.writeString(workspace.resolve("validator/no-result"), "yes") }
@@ -627,10 +776,13 @@ class FactorySteps {
 
     private fun setupTestEnvironment(): Map<String, String> {
         val bin = Files.createDirectories(workspace.resolve("bin"))
-        val pi = Files.copy(agent, bin.resolve("pi"), StandardCopyOption.REPLACE_EXISTING)
-        pi.toFile().setExecutable(true)
+        if (::agent.isInitialized) {
+            val pi = Files.copy(agent, bin.resolve("pi"), StandardCopyOption.REPLACE_EXISTING)
+            pi.toFile().setExecutable(true)
+        }
         return mapOf(
             "PATH" to "$bin:${System.getenv("PATH")}",
+            "FACTORY_TEST_WORKSPACE" to workspace.toString(),
             "GIT_CONFIG_COUNT" to "2",
             "GIT_CONFIG_KEY_0" to "user.name", "GIT_CONFIG_VALUE_0" to "Factory Test",
             "GIT_CONFIG_KEY_1" to "user.email", "GIT_CONFIG_VALUE_1" to "factory-test@example.invalid"

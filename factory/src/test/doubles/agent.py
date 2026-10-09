@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -23,6 +24,17 @@ plan.parent.mkdir(exist_ok=True)
 prose_plan = (Path(__file__).parent / "prose-plan").exists()
 prompt = sys.argv[-1]
 planner = "You are the planner." in prompt
+validator = "You are the validator." in prompt
+workspace = os.environ.get("FACTORY_TEST_WORKSPACE")
+if workspace:
+    role = "planner" if planner else "validator" if validator else "doer"
+    with (Path(workspace) / "call-order.txt").open("a") as order:
+        order.write(role + "\n")
+
+if validator:
+    print(json.dumps({"satisfied": True, "findings": []}))
+    sys.exit(0)
+
 if not plan.exists():
     if prose_plan:
         plan.write_text("First make alpha; afterward make beta. Neither is ready.\n")
