@@ -14,6 +14,11 @@ Build a playable terminal Tetris game launched with `npm start`. The complete di
   - [x] Test controls, game-over quitting, and cleanup paths (`npm test`: 30 tests passed).
   - Validator findings: none.
 - [ ] Add automated tests for core game rules and the rendering row limit, including game-over output.
+  - [x] Test all seven pieces in all four orientations against boundaries and settled cells.
+  - [x] Test a four-line clear through gravity and verify the rendered score and cleared board.
+  - [x] Test deterministic gravity through actual game over, checking every frame's 24-row limit and final output.
+  - [x] Run `npm test`: all 39 tests passed.
+  - Validator findings: none.
 - [ ] Run tests and manually verify `npm start`, playable controls, scoring, game over, clean exit, and the 24-row display limit.
 
 ## Completion criteria
