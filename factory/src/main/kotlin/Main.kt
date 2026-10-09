@@ -1,5 +1,4 @@
 import java.io.File
-import java.io.IOException
 import kotlinx.serialization.json.*
 import kotlin.system.exitProcess
 
@@ -92,58 +91,12 @@ fun main(args: Array<String>) {
     val plan = File(target, ".factory/plan.md")
     val maxAttempts = option("--max-attempts")?.toInt() ?: 3
 
-    fun machineConfig(name: String): JsonObject {
-        val file = File(factoryDir, "$name/config.json")
-        if (!file.isFile) return JsonObject(emptyMap())
-        return runCatching { Json.parseToJsonElement(file.readText()).jsonObject }
-            .getOrElse { fail("Could not read the configuration for $name") }
-    }
-
     val repository = TargetRepository(target)
     repository.prepare()
 
-    val context = """
-        Read the seed at "$seed".
-        The plan is at "$plan".
-        Work only in the current target directory. The factory handles commits.
-        End your answer with a single line of JSON.
-    """.trimIndent()
-
-    fun runMachine(name: String, job: String): String {
-        val config = machineConfig(name)
-        val harness = (config["harness"] as? JsonPrimitive)?.contentOrNull ?: "pi"
-        val process = try {
-            ProcessBuilder(buildList {
-                add(harness)
-                addAll(listOf("--print", "--no-session"))
-                option("--model")?.let { addAll(listOf("--model", it)) }
-                add("You are the $name.\n$context\n$job")
-            })
-                .directory(target)
-                .redirectError(ProcessBuilder.Redirect.INHERIT)
-                .start()
-        } catch (error: IOException) {
-            fail("Could not run the $name: ${error.message}")
-        }
-        process.outputStream.close()
-        val answer = process.inputStream.bufferedReader().use { it.readText() }
-        if (process.waitFor() != 0) fail("The $name exited unsuccessfully\n$answer")
-        return answer
-    }
-
-    fun readResult(answer: String, machine: String): JsonObject {
-        val result = answer.lineSequence().mapNotNull { line ->
-            runCatching { Json.parseToJsonElement(line) }.getOrNull()
-        }.lastOrNull()
-        return result as? JsonObject ?: fail("Could not read the $machine's result")
-    }
-
-    fun resultRequest(machine: String): String {
-        val fields = assemblyLine.resultFields(machine)
-        if (fields.isEmpty()) return "Include an empty JSON object as your result."
-        return "Include boolean ${if (fields.size == 1) "field" else "fields"} " +
-            fields.joinToString(" and ") { "\"$it\"" } + " in your JSON result."
-    }
+    val configuration = MachineConfiguration(factoryDir)
+    val runner = MachineRunner(target, configuration, option("--model"))
+    val jobs = MachineJobs(seed, plan, configuration, assemblyLine::resultFields, repository)
 
     var node = assemblyLine.next("start", null)
     var taskInProgress = false
@@ -157,45 +110,14 @@ fun main(args: Array<String>) {
             taskAccepted = true
         }
 
-        val job = when (node) {
-            "planner" -> if (taskAccepted) """
-                The task's work has been committed. Mark the first unfinished task done and report whether the plan is complete.
-                Do not implement product work.
-                ${resultRequest(node)}
-            """.trimIndent() else """
-                If no plan exists, write one from the seed. Otherwise, report its status without changing it.
-                Do not implement product work.
-                ${resultRequest(node)}
-            """.trimIndent()
-            "doer" -> """
-                Implement the first unfinished task in the plan.
-                Validator findings from the previous attempt: $findings
-                Record each finding as a subtask of the task in progress, then fix it.
-                Mark resolved subtasks done. Do not create new top-level tasks for findings.
-                Do not mark the task itself done; the planner will do that after the work is committed.
-                ${resultRequest(node)}
-            """.trimIndent()
-            "validator" -> {
-                val lens = (machineConfig(node)["lens"] as? JsonPrimitive)?.contentOrNull ?: "testability"
-                """
-                    Check the doer's uncommitted product work in this target, including new files.
-                    Review the supplied changes only; do not recheck previously committed work.
-                    Your validation lens is: $lens.
-                    Report findings only. Change neither the plan nor the product files.
-                    ${resultRequest(node)} Include an array "findings" in your JSON result.
-                    Product changes:
-                    ${repository.uncommittedProductChanges()}
-                """.trimIndent()
-            }
-            else -> resultRequest(node)
-        }
+        val prompt = jobs.prompt(node, taskAccepted, findings)
 
         if (node == "doer") {
             taskInProgress = true
             taskAccepted = false
             attempts++
         }
-        val result = readResult(runMachine(node, job), node)
+        val result = runner.run(node, prompt)
         println(result)
         if (node == "validator") {
             findings = result["findings"] as? JsonArray

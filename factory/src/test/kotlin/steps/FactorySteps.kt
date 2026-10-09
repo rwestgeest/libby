@@ -296,6 +296,51 @@ class FactorySteps {
         }
     }
 
+    @Given("the {word} configuration is {string}")
+    fun rawMachineConfiguration(machine: String, content: String) {
+        Files.writeString(workspace.resolve("factory/$machine/config.json"), content)
+    }
+
+    @Given("the {word} configuration is absent")
+    fun absentMachineConfiguration(machine: String) {
+        Files.deleteIfExists(workspace.resolve("factory/$machine/config.json"))
+    }
+
+    @Given("the chosen model is {string}")
+    fun chosenModel(model: String) {
+        agentArgs = agentArgs + listOf("--model", model)
+    }
+
+    @Given("the validator uses the lens {string}")
+    fun validatorLens(lens: String) = configureMachine("validator", "lens", lens)
+
+    @Given("the doer exits unsuccessfully with output")
+    fun unsuccessfulDoer() {
+        Files.writeString(workspace.resolve("doer/agent.py"),
+            "#!/usr/bin/env python3\nimport sys\nprint('failure stdout')\nprint('failure stderr', file=sys.stderr)\nsys.exit(7)\n")
+    }
+
+    @Then("it reports the diagnostic {string}")
+    fun diagnosticReported(message: String) {
+        check(exitCode != 0 && output.contains(message)) { output }
+    }
+
+    @Then("every machine receives the model {string} and the target context")
+    fun machineInvocationContext(model: String) {
+        for (call in listOf("calls/0.json", "doer/calls/0.json", "validator/calls/0.json")) {
+            val record = Json.parseToJsonElement(Files.readString(workspace.resolve(call))).jsonObject
+            val args = record.getValue("args").jsonArray.map { it.jsonPrimitive.content }
+            check(args.take(4) == listOf("--print", "--no-session", "--model", model)) { args }
+            check(args.size == 5) { args }
+            check(record.getValue("cwd").jsonPrimitive.content == target.toString()) { record }
+            val prompt = args.last()
+            check(prompt.contains("Read the seed at \"$seed\".")) { prompt }
+            check(prompt.contains("The plan is at \"${target.resolve(".factory/plan.md")}\".")) { prompt }
+            check(prompt.contains("Work only in the current target directory. The factory handles commits.")) { prompt }
+            check(prompt.contains("End your answer with a single line of JSON.")) { prompt }
+        }
+    }
+
     @Given("the doer cannot be run")
     fun doerCannotBeRun() {
         check(workspace.resolve("doer/agent.py").toFile().setExecutable(false, false)) {
