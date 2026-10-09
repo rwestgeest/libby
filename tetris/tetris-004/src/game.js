@@ -77,6 +77,21 @@ export class Game {
     return true;
   }
 
+  // Return an independent snapshot of locked and active cells for presentation.
+  visibleCells() {
+    const cells = this.board.map(row => [...row]);
+    if (this.active) {
+      const { shape, x, y, type } = this.active;
+      shape.forEach((row, dy) => row.forEach((filled, dx) => {
+        if (filled && y + dy >= 0 && y + dy < BOARD_HEIGHT &&
+            x + dx >= 0 && x + dx < BOARD_WIDTH) {
+          cells[y + dy][x + dx] = type;
+        }
+      }));
+    }
+    return cells;
+  }
+
   collides(piece) {
     return piece.shape.some((row, y) => row.some((filled, x) => {
       if (!filled) return false;

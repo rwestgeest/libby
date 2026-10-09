@@ -19,6 +19,11 @@
   - [x] Detect blocked spawning as game over and stop movement, rotation, drops, and gravity afterward.
   - [x] Add nine progression regression tests; `npm test` passes all 20 tests. No validator findings were supplied.
 - [ ] Implement terminal rendering with the board, score, control hints, and game-over message, always fitting within 24 rows. Use a fixed layout (22 board/border rows plus two status/control rows) and update it in place without accumulating output.
+  - [x] Fix validator finding (`src/render.js:13-22`): renderer reconstructed occupied cells from active-piece geometry. Moved non-mutating cell projection into `Game.visibleCells()`; renderer only translates that snapshot into glyphs. Added regression tests for independent snapshots, movement/rotation, clipping, and rendering without board/active access. `npm test` passes all 29 tests.
+  - [x] Add `src/render.js` with a non-mutating 24-row snapshot showing active/locked cells, score, lines, control hints, and an inline game-over message.
+  - [x] Update TTY frames at fixed cursor positions, erase stale row content, and omit trailing newlines to avoid scrolling; shorten status/hints for narrow terminals and show a bounded resize prompt for terminals smaller than 22x24.
+  - [x] Connect the initial frame to `src/index.js`; interactive loop and terminal lifecycle remain in the next task.
+  - [x] Add six rendering regression tests covering layout, cells, game over, narrow/undersized terminals, and in-place updates. `npm test` passes all 26 tests. No validator findings were supplied.
 - [ ] Connect keyboard controls for horizontal movement, rotation, soft drop, hard drop, restart after game over, and quitting. Manage raw input and restore terminal state on exit or interruption.
 - [ ] Add automated tests for movement and collision, rotation, locking, line clearing, scoring, spawning/game over, and the 24-row display limit across normal and game-over states.
 - [ ] Document launch instructions and controls, then manually verify `npm start`, responsive input, automatic falling, line clearing, game over, restart, quitting, and terminal cleanup.

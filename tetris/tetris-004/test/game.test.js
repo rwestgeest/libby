@@ -35,6 +35,44 @@ test('all seven shapes spawn centered with four cells and independent matrices',
   }
 });
 
+test('visible cells project active and locked cells into an independent snapshot', () => {
+  const game = withPiece('O');
+  game.board[19][0] = 'T';
+  const before = JSON.stringify(game);
+  const snapshot = game.visibleCells();
+  assert.equal(snapshot.length, BOARD_HEIGHT);
+  assert.ok(snapshot.every(row => row.length === BOARD_WIDTH));
+  assert.equal(snapshot[0][4], 'O');
+  assert.equal(snapshot[1][5], 'O');
+  assert.equal(snapshot[19][0], 'T');
+  assert.equal(cells(snapshot).length, 5);
+  assert.equal(JSON.stringify(game), before);
+  snapshot[0][4] = 'Z';
+  snapshot[19][0] = null;
+  assert.equal(JSON.stringify(game), before);
+  assert.equal(game.visibleCells()[0][4], 'O');
+
+  game.active = null;
+  game.gameOver = true;
+  assert.deepEqual(game.visibleCells(), game.board);
+  assert.notEqual(game.visibleCells()[19], game.board[19]);
+});
+
+test('visible cells reflect movement and rotation and clip off-board geometry', () => {
+  const game = withPiece('T');
+  game.move(1, 2);
+  game.rotate();
+  const snapshot = game.visibleCells();
+  assert.deepEqual(snapshot[2].slice(4, 7), [null, 'T', null]);
+  assert.deepEqual(snapshot[3].slice(4, 7), [null, 'T', 'T']);
+  assert.deepEqual(snapshot[4].slice(4, 7), [null, 'T', null]);
+
+  game.active = { type: 'O', shape: [[1, 1], [1, 1]], x: -1, y: -1 };
+  const clipped = game.visibleCells();
+  assert.equal(clipped[0][0], 'O');
+  assert.equal(cells(clipped).length, 1);
+});
+
 test('random spawning uses shuffled bags with each type exactly once per bag', () => {
   const game = new Game({ random: () => 0.25 });
   const types = [game.active.type];
