@@ -1,5 +1,3 @@
-import { Game } from './game.js';
-import { TerminalRenderer } from './render.js';
+import { startSession } from './session.js';
 
-// The interactive loop and terminal lifecycle are connected in the next task.
-new TerminalRenderer().render(new Game());
+startSession();

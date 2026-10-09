@@ -25,6 +25,10 @@
   - [x] Connect the initial frame to `src/index.js`; interactive loop and terminal lifecycle remain in the next task.
   - [x] Add six rendering regression tests covering layout, cells, game over, narrow/undersized terminals, and in-place updates. `npm test` passes all 26 tests. No validator findings were supplied.
 - [ ] Connect keyboard controls for horizontal movement, rotation, soft drop, hard drop, restart after game over, and quitting. Manage raw input and restore terminal state on exit or interruption.
+  - [x] Add `src/session.js` and wire `src/index.js` to a 50 ms elapsed-time gravity loop with arrow keys, Space, R (only after game over), Q, and Ctrl-C; retain a single snapshot for non-TTY execution.
+  - [x] Manage raw mode, alternate screen, cursor visibility, resize events, and idempotent cleanup on quit, input end, process exit, SIGINT/SIGTERM/SIGHUP, and runtime errors; restore prior input state and remove session listeners/timers.
+  - [x] Add 11 session regression tests for controls, gravity, restart, actual escape-sequence decoding, lifecycle cleanup, resize, rendering failures, and prior raw-mode restoration. Fix the restart test to compare the original spawn position rather than assuming every shape starts at column 3.
+  - [x] Verify `npm test` passes all 40 tests and a 24x80 pseudo-terminal `npm start` smoke check accepts input and quits with terminal attributes and cursor/screen restored. No validator findings were supplied.
 - [ ] Add automated tests for movement and collision, rotation, locking, line clearing, scoring, spawning/game over, and the 24-row display limit across normal and game-over states.
 - [ ] Document launch instructions and controls, then manually verify `npm start`, responsive input, automatic falling, line clearing, game over, restart, quitting, and terminal cleanup.
 
