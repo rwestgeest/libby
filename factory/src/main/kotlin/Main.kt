@@ -22,6 +22,7 @@ fun main(args: Array<String>) {
     val doer = option("--doer") ?: agent
     val validator = option("--validator") ?: agent
     val lens = option("--lens") ?: "testability"
+    val maxAttempts = option("--max-attempts")?.toInt() ?: 3
 
     fun gitResult(vararg arguments: String): Pair<String, Int> {
         val process = ProcessBuilder(listOf("git") + arguments)
@@ -87,13 +88,24 @@ fun main(args: Array<String>) {
         return complete.boolean
     }
 
-    fun validateWork() {
+    fun validateWork(): Pair<Boolean, JsonArray> {
+        val work = buildString {
+            append(git("diff", "--no-ext-diff", "HEAD", "--", ".", ":(exclude).factory"))
+            val newFiles = git("ls-files", "--others", "--exclude-standard", "-z", "--", ".", ":(exclude).factory")
+            for (path in newFiles.split('\u0000').filter { it.isNotEmpty() }) {
+                val (diff, status) = gitResult("diff", "--no-ext-diff", "--no-index", "--", "/dev/null", path)
+                if (status > 1) fail(diff.trim())
+                append(diff)
+            }
+        }
         val answer = runMachine("validator", validator, """
             Check the doer's uncommitted product work in this target, including new files.
-            Use Git to inspect the changes; do not recheck previously committed work.
+            Review the supplied changes only; do not recheck previously committed work.
             Your validation lens is: $lens.
             Report findings only. Change neither the plan nor the product files.
             Include a boolean field "satisfied" and an array "findings" in your JSON result.
+            Product changes:
+            $work
         """.trimIndent())
         val result = readResult(answer, "validator")
         val satisfied = result["satisfied"] as? JsonPrimitive
@@ -101,7 +113,7 @@ fun main(args: Array<String>) {
         if (satisfied == null || satisfied.isString || satisfied.booleanOrNull == null || findings == null) {
             fail("Could not read the validator's result")
         }
-        if (!satisfied.boolean) fail("Validation not satisfied: $findings")
+        return satisfied.boolean to findings
     }
 
     fun commitChanges() {
@@ -120,12 +132,23 @@ fun main(args: Array<String>) {
             if (complete || "--all" !in args) break
             continue
         }
-        runMachine("doer", doer, """
-            Implement the first unfinished task in the plan.
-            Do not mark the task done; the planner will do that after the work is committed.
-            Include the task description in a "task" field in your result.
-        """.trimIndent())
-        validateWork()
+        var findings = JsonArray(emptyList())
+        var satisfied = false
+        for (attempt in 1..maxAttempts) {
+            runMachine("doer", doer, """
+                Implement the first unfinished task in the plan.
+                Validator findings from the previous attempt: $findings
+                Record each finding as a subtask of the task in progress, then fix it.
+                Mark resolved subtasks done. Do not create new top-level tasks for findings.
+                Do not mark the task itself done; the planner will do that after the work is committed.
+                Include the task description in a "task" field in your result.
+            """.trimIndent())
+            val verdict = validateWork()
+            satisfied = verdict.first
+            findings = verdict.second
+            if (satisfied) break
+        }
+        if (!satisfied) fail("The pass hit its limit of $maxAttempts attempts. Findings: $findings")
         commitChanges()
         val finished = runPlanner("The task's work has been committed. Mark the first unfinished task done and report whether the plan is complete.")
         commitChanges()

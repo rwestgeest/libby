@@ -20,4 +20,11 @@ if message_file.exists():
 if (Path(__file__).parent / "no-result").exists():
     print("I checked the work, but have no structured result.")
 else:
-    print(json.dumps({"satisfied": True, "findings": []}))
+    folder = Path(__file__).parent
+    rejected = (folder / "never-satisfied").exists() or (
+        (folder / "reject-first").exists() and number == 0
+    )
+    print(json.dumps({
+        "satisfied": not rejected,
+        "findings": ["Separate game logic from terminal input so it can be tested."] if rejected else [],
+    }))

@@ -162,6 +162,35 @@ class FactorySteps {
         agentArgs = agentArgs + listOf("--validator", validator.toString())
     }
 
+    @Given("the factory allows at most three attempts per pass")
+    fun threeAttemptsPerPass() {
+        agentArgs = agentArgs + listOf("--max-attempts", "3")
+    }
+
+    @Given("the validator is never satisfied")
+    fun validatorNeverSatisfied() {
+        Files.writeString(workspace.resolve("validator/never-satisfied"), "yes")
+    }
+
+    @Given("the validator is not satisfied the first time")
+    fun validatorRejectsFirst() {
+        Files.writeString(workspace.resolve("validator/reject-first"), "yes")
+    }
+
+    @Then("it reports that the pass hit its limit")
+    fun passHitLimit() {
+        check(exitCode != 0 && output.contains("pass hit its limit", true)) { output }
+    }
+
+    @Then("the doer was given the validator's findings")
+    fun doerReceivedFindings() {
+        val retry = workspace.resolve("doer/calls/1.txt")
+        check(Files.exists(retry)) { "The doer was not retried.\n$output" }
+        check(Files.readString(retry).contains(
+            "Separate game logic from terminal input so it can be tested."
+        )) { "The retry did not include the validator's finding." }
+    }
+
     @Given("the doer writes a file called SENTINEL")
     fun doerWritesSentinel() {
         Files.writeString(workspace.resolve("doer/product-name.txt"), "SENTINEL")
@@ -320,6 +349,41 @@ class FactorySteps {
         }
     }
 
+    private fun validatorPrompt(): String {
+        val call = workspace.resolve("validator/calls/0.txt")
+        check(Files.exists(call)) { "Validator was not called.\n$output" }
+        return Files.readString(call)
+    }
+
+    @Then("the validator was asked for a result with the fields {string} and {string}")
+    fun validatorResultFields(first: String, second: String) {
+        val prompt = validatorPrompt()
+        check(prompt.contains("JSON", true) && prompt.contains("\"$first\"") &&
+            prompt.contains("\"$second\"")) { prompt }
+    }
+
+    @Given("the validator's lens is testability")
+    fun testabilityLens() {
+        agentArgs = agentArgs + listOf("--lens", "testability")
+    }
+
+    @Then("the validator was given {string}")
+    fun validatorGiven(value: String) {
+        check(validatorPrompt().contains(value)) { "Validator was not given $value" }
+    }
+
+    @Then("the validator was given the work for the second task")
+    fun validatorGivenSecondTask() {
+        val prompt = validatorPrompt()
+        check(prompt.contains("beta.txt") && prompt.contains("Work for beta")) { prompt }
+    }
+
+    @Then("it was not given the work for the first task")
+    fun validatorNotGivenFirstTask() {
+        val prompt = validatorPrompt()
+        check(!prompt.contains("alpha.txt") && !prompt.contains("Work for alpha")) { prompt }
+    }
+
     private fun assertDoerCalls(expected: Long) {
         val calls = workspace.resolve("doer/calls")
         val actual = if (!Files.isDirectory(calls)) 0L else Files.list(calls).use { files ->
@@ -347,8 +411,13 @@ class FactorySteps {
     }
 
     @Given("a plan whose first task is done")
-    fun firstTaskDone() = Plan(target.resolve(".factory/plan.md"))
-        .write(listOf(Task("alpha", true), Task("beta"), Task("gamma")))
+    fun firstTaskDone() {
+        Plan(target.resolve(".factory/plan.md"))
+            .write(listOf(Task("alpha", true), Task("beta"), Task("gamma")))
+        Files.writeString(target.resolve("alpha.txt"), "Work for alpha\n")
+        repo.git("add", "--", workspace.relativize(target).toString())
+        repo.commit("Completed first task fixture")
+    }
 
     private fun tasks() = Plan(target.resolve(".factory/plan.md")).entries()
 
