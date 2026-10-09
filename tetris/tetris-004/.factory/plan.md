@@ -35,6 +35,9 @@
   - [x] Assert 24-row snapshots and in-place TTY cursor positions at widths 22, 30, and 80 throughout play and after game over; verify controls and gravity cannot mutate the final state.
   - [x] Run `npm test`: all 50 tests pass. No validator findings were supplied.
 - [ ] Document launch instructions and controls, then manually verify `npm start`, responsive input, automatic falling, line clearing, game over, restart, quitting, and terminal cleanup.
+  - [x] Add `README.md` with requirements, `npm start`, terminal dimensions, controls, scoring, game-over/restart behavior, terminal cleanup, and `npm test`.
+  - [x] Exercise `npm start` in an 80x24 real pseudo-terminal with scripted keyboard input: movement, rotation, gravity, soft/hard drop, actual line clearing, blocked-spawn game over, restart, and Q. Verify all rendered cursor rows remain within 1–24 and original terminal attributes/cursor/screen are restored.
+  - [x] Verify terminal restoration on separate Ctrl-C and SIGTERM launches; run `npm test` (50 passing tests). Record scope and results in `.factory/verification.md`. No validator findings were supplied.
 
 ## Completion criteria
 All tasks are checked off, automated tests pass, and a manual terminal session confirms playable Tetris launched by `npm start` with the complete display never exceeding 24 rows.
