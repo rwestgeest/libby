@@ -3,6 +3,7 @@ import { GRAVITY_INTERVAL_MS } from './game.js';
 // Return a cleanup function so the terminal controller can stop on exit/restart.
 export function startGravity(game, {
   onUpdate = () => {},
+  onError = error => { throw error; },
   now = () => performance.now(),
   schedule = setInterval,
   cancel = clearInterval,
@@ -18,11 +19,16 @@ export function startGravity(game, {
   if (!stopped) {
     timer = schedule(() => {
       if (stopped) return;
-      const current = now();
-      const changed = game.advance(Math.max(0, current - previous));
-      previous = current;
-      if (game.gameOver) stop();
-      if (changed) onUpdate(game);
+      try {
+        const current = now();
+        const changed = game.advance(Math.max(0, current - previous));
+        previous = current;
+        if (game.gameOver) stop();
+        if (changed) onUpdate(game);
+      } catch (error) {
+        stop();
+        onError(error);
+      }
     }, GRAVITY_INTERVAL_MS);
   }
   return stop;
