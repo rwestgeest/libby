@@ -29,7 +29,7 @@
   - [x] Manage raw mode, alternate screen, cursor visibility, resize events, and idempotent cleanup on quit, input end, process exit, SIGINT/SIGTERM/SIGHUP, and runtime errors; restore prior input state and remove session listeners/timers.
   - [x] Add 11 session regression tests for controls, gravity, restart, actual escape-sequence decoding, lifecycle cleanup, resize, rendering failures, and prior raw-mode restoration. Fix the restart test to compare the original spawn position rather than assuming every shape starts at column 3.
   - [x] Verify `npm test` passes all 40 tests and a 24x80 pseudo-terminal `npm start` smoke check accepts input and quits with terminal attributes and cursor/screen restored. No validator findings were supplied.
-- [ ] Add automated tests for movement and collision, rotation, locking, line clearing, scoring, spawning/game over, and the 24-row display limit across normal and game-over states.
+- [x] Add automated tests for movement and collision, rotation, locking, line clearing, scoring, spawning/game over, and the 24-row display limit across normal and game-over states.
   - [x] Review existing unit coverage for movement/collision, rotation, locking, one-to-four-line clears, scoring, seven-bag spawning, and blocked-spawn game over.
   - [x] Add `test/acceptance.test.js` with boundary and four-cell locking checks for every rotated tetromino, successive clears with cumulative line/drop scores, and a deterministic play-through from a Tetris clear to actual blocked-spawn game over.
   - [x] Assert 24-row snapshots and in-place TTY cursor positions at widths 22, 30, and 80 throughout play and after game over; verify controls and gravity cannot mutate the final state.
