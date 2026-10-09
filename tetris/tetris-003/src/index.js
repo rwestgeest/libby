@@ -1,5 +1,3 @@
-import { Game } from './game.js';
-import { drawFrame } from './render.js';
+import { startSession } from './session.js';
 
-// Interactive input and the gravity loop are added in the next task.
-drawFrame(new Game());
+startSession();
