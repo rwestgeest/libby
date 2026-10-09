@@ -2,6 +2,7 @@
 import json
 import os
 import sys
+import subprocess
 from pathlib import Path
 
 # Like pi, wait for piped input to finish before processing the prompt.
@@ -25,6 +26,19 @@ prose_plan = (Path(__file__).parent / "prose-plan").exists()
 prompt = sys.argv[-1]
 planner = "You are the planner." in prompt
 validator = "You are the validator." in prompt
+if planner:
+    def git(*args):
+        return subprocess.check_output(["git", *args], text=True).strip()
+
+    committed_plan = subprocess.run(
+        ["git", "show", "HEAD:./.factory/plan.md"],
+        text=True, capture_output=True,
+    )
+    (calls / f"{number}.git-state").write_text(json.dumps({
+        "head": git("rev-parse", "HEAD"),
+        "status": git("status", "--porcelain", "--", "."),
+        "committed_plan": committed_plan.stdout,
+    }))
 workspace = os.environ.get("FACTORY_TEST_WORKSPACE")
 if workspace:
     role = "planner" if planner else "validator" if validator else "doer"

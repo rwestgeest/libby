@@ -8,6 +8,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
+import kotlinx.serialization.json.*
 
 private data class Task(val name: String, val done: Boolean = false)
 
@@ -229,6 +230,70 @@ class FactorySteps {
     @Given("the validator says {string} before its result")
     fun validatorSaysBeforeResult(message: String) {
         Files.writeString(workspace.resolve("validator/before-result.txt"), message)
+    }
+
+    @Given("the validator appends the JSON line {string} after its result")
+    fun validatorTrailingJson(line: String) {
+        Files.writeString(workspace.resolve("validator/after-result.txt"), line)
+    }
+
+    @Given("the validator returns its decision in {string}")
+    fun validatorDecisionField(field: String) {
+        Files.writeString(workspace.resolve("validator/result-field.txt"), field)
+    }
+
+    @Given("the target has tracked product changes and private factory metadata")
+    fun targetProductFixture() {
+        Files.writeString(target.resolve("existing.txt"), "original product\n")
+        repo.git("add", "--", "target/existing.txt")
+        repo.commit("Tracked product fixture")
+        Files.writeString(target.resolve("existing.txt"), "changed product\n")
+        Files.createDirectories(target.resolve(".factory"))
+        Files.writeString(target.resolve(".factory/private.txt"), "PRIVATE_METADATA_SENTINEL\n")
+    }
+
+    @Then("the validator sees tracked and untracked target product changes only")
+    fun validatorTargetOnlyDiff() {
+        val diff = validatorPrompt().substringAfter("Product changes:")
+        check(diff.contains("existing.txt") && diff.contains("+changed product")) { diff }
+        check(diff.contains("alpha.txt") && diff.contains("+Work for alpha")) { diff }
+        for (excluded in listOf(".factory", "PRIVATE_METADATA_SENTINEL", "unrelated.txt", "untracked.txt")) {
+            check(!diff.contains(excluded)) { "Unexpected $excluded in product diff:\n$diff" }
+        }
+    }
+
+    @Then("all new commits touch only the target")
+    fun commitsTargetOnly() {
+        val commits = repo.git("rev-list", "$headBeforeRun..HEAD").lines().filter { it.isNotBlank() }
+        check(commits.isNotEmpty()) { output }
+        val prefix = workspace.relativize(target).toString() + "/"
+        commits.forEach { commit ->
+            val paths = repo.diffTree(commit)
+            check(paths.isNotEmpty() && paths.all { it.startsWith(prefix) }) { "$commit: $paths" }
+        }
+    }
+
+    @Then("accepted task commits bracket the planner's completion changes")
+    fun acceptedCommitOrdering() {
+        val commits = repo.git("rev-list", "--reverse", "$headBeforeRun..HEAD").lines()
+        check(commits.size == 4) { "Expected work/plan commits for two tasks: $commits\n$output" }
+        fun state(call: Int) = Json.parseToJsonElement(
+            Files.readString(workspace.resolve("calls/$call.git-state"))
+        ).jsonObject
+        val initial = state(0)
+        check(initial.getValue("head").jsonPrimitive.content == headBeforeRun)
+        for ((call, workIndex) in listOf(1 to 0, 2 to 2)) {
+            val snapshot = state(call)
+            check(snapshot.getValue("head").jsonPrimitive.content == commits[workIndex]) { snapshot }
+            check(snapshot.getValue("status").jsonPrimitive.content.isEmpty()) { snapshot }
+            val beforeCompletion = snapshot.getValue("committed_plan").jsonPrimitive.content
+            val task = if (call == 1) "alpha" else "beta"
+            check(beforeCompletion.contains("- [ ] $task")) { beforeCompletion }
+            val afterCompletion = repo.git("show", "${commits[workIndex + 1]}:target/.factory/plan.md")
+            check(afterCompletion.contains("- [x] $task")) { afterCompletion }
+            check(repo.diffTree(commits[workIndex + 1]) == listOf("target/.factory/plan.md"))
+            check("target/$task.txt" in repo.diffTree(commits[workIndex]))
+        }
     }
 
     @Given("the doer cannot be run")

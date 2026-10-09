@@ -74,6 +74,7 @@
                 <argument>--plugin</argument><argument>summary</argument>
                 <argument>--tags</argument><argument>${cucumber.tags}</argument>
                 <argument>spec/features</argument>
+                <argument>src/test/features</argument>
               </arguments>
             </configuration>
           </execution>
