@@ -1,5 +1,4 @@
 import java.io.File
-import kotlinx.serialization.json.*
 import kotlin.system.exitProcess
 
 internal fun fail(message: String): Nothing {
@@ -36,44 +35,6 @@ fun main(args: Array<String>) {
     val runner = MachineRunner(target, configuration, option("--model"))
     val jobs = MachineJobs(seed, plan, configuration, assemblyLine::resultFields, repository)
 
-    var node = assemblyLine.next("start", null)
-    var taskInProgress = false
-    var taskAccepted = false
-    var attempts = 0
-    var findings = JsonArray(emptyList())
-
-    while (node != "finish") {
-        if (node == "planner" && taskInProgress) {
-            repository.recordTaskChanges()
-            taskAccepted = true
-        }
-
-        val prompt = jobs.prompt(node, taskAccepted, findings)
-
-        if (node == "doer") {
-            taskInProgress = true
-            taskAccepted = false
-            attempts++
-        }
-        val result = runner.run(node, prompt)
-        println(result)
-        if (node == "validator") {
-            findings = result["findings"] as? JsonArray
-                ?: fail("Could not read the validator's result")
-        }
-        val next = assemblyLine.next(node, result)
-        if (node == "validator" && next == "doer" && attempts >= maxAttempts) {
-            fail("The task hit its limit of $maxAttempts attempts. Findings: $findings")
-        }
-        if (node == "planner") {
-            if (taskAccepted) repository.recordTaskChanges()
-            taskInProgress = false
-            taskAccepted = false
-            attempts = 0
-            findings = JsonArray(emptyList())
-        }
-        node = next
-    }
-    repository.recordTaskChanges()
-    println("factory stopped")
+    val lifecycle = TaskLifecycle(maxAttempts, jobs, repository)
+    runFactory(assemblyLine, runner, lifecycle, repository)
 }

@@ -29,6 +29,8 @@ else:
     folder = Path(__file__).parent
     rejected = (folder / "never-satisfied").exists() or (
         (folder / "reject-first").exists() and number == 0
+    ) or (
+        (folder / "reject-alternate").exists() and number % 2 == 0
     )
     field_file = folder / "result-field.txt"
     field = field_file.read_text().strip() if field_file.exists() else "satisfied"

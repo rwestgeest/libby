@@ -193,6 +193,53 @@ class FactorySteps {
     @Given("the factory allows at most three attempts at a task")
     fun threeAttemptsAtTask() = threeAttemptsPerPass()
 
+    @Given("the factory allows at most one attempt at a task")
+    fun oneAttemptAtTask() {
+        agentArgs = agentArgs + listOf("--max-attempts", "1")
+    }
+
+    @Given("the factory allows at most two attempts at a task")
+    fun twoAttemptsAtTask() {
+        agentArgs = agentArgs + listOf("--max-attempts", "2")
+    }
+
+    @Given("the validator rejects the first attempt of each task")
+    fun rejectEachFirstAttempt() {
+        Files.writeString(workspace.resolve("validator/reject-alternate"), "yes")
+    }
+
+    @Given("a custom machine called inspector")
+    fun customInspector() {
+        val script = workspace.resolve("inspector.py")
+        Files.writeString(script, "#!/usr/bin/env python3\nprint('{}')\n")
+        script.toFile().setExecutable(true)
+        configureMachine("inspector", "harness", script.toString())
+    }
+
+    @Then("each task starts without previous findings")
+    fun findingsReset() {
+        for (call in 0..3) {
+            val prompt = Files.readString(workspace.resolve("doer/calls/$call.txt"))
+            if (call % 2 == 0) {
+                check(prompt.contains("Validator findings from the previous attempt: []")) { prompt }
+            } else {
+                check(prompt.contains("Separate game logic from terminal input so it can be tested.")) { prompt }
+            }
+        }
+    }
+
+    @Then("the initial planner is asked only for plan status")
+    fun initialPlannerStatus() {
+        val prompt = Files.readString(workspace.resolve("calls/0.txt"))
+        check(prompt.contains("Otherwise, report its status without changing it.")) { prompt }
+        check(!prompt.contains("The task's work has been committed.")) { prompt }
+    }
+
+    @Then("it prints the stop message")
+    fun stopMessage() {
+        check(output.trimEnd().endsWith("factory stopped")) { output }
+    }
+
     @Given("the validator is never satisfied")
     fun validatorNeverSatisfied() {
         Files.writeString(workspace.resolve("validator/never-satisfied"), "yes")
