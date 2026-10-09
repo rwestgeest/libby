@@ -25,7 +25,7 @@ Use cohesive collaborators and intention-revealing messages, not a class per fun
   - Preserve inclusion of untracked files, exclusion of `.factory` from validator diffs, containing-repository behavior, unrelated staged work, error handling, and commit messages.
   - Acceptance: focused repository tests and the baseline suite show no new failures; orchestration no longer builds Git commands.
 
-- [ ] Separate machine invocation and job construction from orchestration.
+- [x] Separate machine invocation and job construction from orchestration.
   - [x] Extracted on-demand `MachineConfiguration` for harness/lens defaults and configuration diagnostics, `MachineRunner` for target-bound process execution/model forwarding/inherited stderr/last-JSON decoding, and `MachineJobs` for shared context and simple role-specific prompts. Orchestration sends a complete prompt and receives a JSON object; validator lens lookup still precedes product-diff collection and harness lookup.
   - [x] Added nine focused invocation scenarios for absent/null configuration, malformed/non-object configuration, default/custom lenses, shared prompt context, model forwarding, startup failure and nonzero exit with stdout/inherited stderr. Existing characterization tests retain routing-field requests, last-JSON selection, retry behavior and commit ordering. Focused run: 16 scenarios / 220 steps passed.
   - [x] Ran `./test`: 18 passed, the same 45 baseline undefined scenarios, no failing assertions (exit 1 for undefined steps). Repository scenarios also pass. No fetched specs changed, no real-agent examples run, and no previous validator findings were supplied.
