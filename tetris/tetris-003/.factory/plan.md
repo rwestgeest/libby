@@ -12,6 +12,10 @@ Build a playable terminal Tetris game launched with `npm start`. Keep the entire
 - [x] Add interactive keyboard controls for moving, rotating, dropping pieces, and quitting. Run gravity on a timer and restore terminal state on exit or interruption.
 - [x] Add automated tests covering collision boundaries, rotation, piece locking, line clearing, scoring, game over, and the 24-row display limit across gameplay and game-over states.
 - [ ] Verify `npm start` in an interactive terminal, confirm controls and gameplay work, and document startup and controls.
+  - [x] Exercise `npm start` in an 80×24 pseudo-terminal: movement, rotation, soft/hard drop, gravity, locking, scoring, and game over; verify every captured frame has 24 rows.
+  - [x] Verify Q and Ctrl-C exits restore input mode and emit screen/cursor restoration sequences.
+  - [x] Document prerequisites, startup, terminal size, controls, scoring, game over, and tests in `README.md`.
+  - [x] Run `npm test`: all 30 tests pass.
 
 ## Completion criteria
 
