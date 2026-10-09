@@ -4,7 +4,7 @@
 Build a playable terminal Tetris game launched with `npm start`. The complete display, including board, score, controls, borders, and game-over messages, must fit within 24 terminal rows.
 
 ## Tasks
-- [ ] Set up a Node.js project with an `npm start` entry point and a test command.
+- [x] Set up a Node.js project with an `npm start` entry point and a test command.
 - [ ] Implement the board, seven tetrominoes, piece spawning, movement, rotation, collision detection, and locking.
 - [ ] Implement gravity, line clearing, scoring, and game-over detection.
 - [ ] Implement terminal rendering with a fixed layout of at most 24 rows, including the board, score, controls, borders, and game-over messages.
