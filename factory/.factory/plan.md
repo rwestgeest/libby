@@ -17,7 +17,7 @@ Use cohesive collaborators and intention-revealing messages, not a class per fun
   - [x] Preserve existing behavior rather than implementing currently unsupported spec requirements. Do not modify fetched feature files. Production source and fetched specs are unchanged; `./test` retains the same 45 undefined scenarios with seven additional passing scenarios.
   - Acceptance: the baseline is documented and new characterization tests pass against the existing implementation.
 
-- [ ] Give target repository operations a cohesive owner.
+- [x] Give target repository operations a cohesive owner.
   - [x] Extracted `TargetRepository` with `prepare`, `uncommittedProductChanges`, and `recordTaskChanges`; raw Git commands/results and exclusions remain private. Orchestration delegates without constructing Git commands; existing command arguments, order, diagnostics, and commit messages are unchanged.
   - [x] Added two focused repository scenarios for repeatable standalone preparation, containing-repository reuse, staged and untracked products (including spaced filenames), metadata/ignored-file exclusions, target-only commits, clean-target no-op, and preservation of unrelated staged/unstaged changes. Focused run: 9 scenarios / 117 steps passed including characterization coverage. `./test`: 9 passed, the same 45 baseline undefined scenarios, no failing assertions (exit 1 due to undefined steps). No real-agent examples run.
   - Extract the nested Git/process helpers, initialization, product-diff collection, and commit operation from `src/main/kotlin/Main.kt` into a target-bound collaborator.
