@@ -26,6 +26,10 @@ Status: in progress; first six tasks completed.
   - [x] Attempt all cleanup steps even if one fails, restoring prior raw/flowing settings, stopping gravity, and showing the cursor; keep shutdown idempotent.
   - [x] Verify lifecycle cleanup across prior input states and assert a clear non-interactive launch message without terminal escape sequences. `npm test`: 63 tests passed. No validator findings were supplied.
 - [ ] Add automated tests for movement and rotation collisions, locking, line clearing, scoring, spawning/game over, and the display's 24-row limit in both playing and game-over states.
+  - [x] Audit existing coverage for wall/floor/settled-cell rotation collisions, one-to-four-row clearing, cumulative scoring, spawn ordering, and fixed 24-row playing/game-over layouts. No validator findings were supplied.
+  - [x] Add per-tetromino tests for atomic lateral collisions, exact locked coordinates, and every occupied/padding spawn cell; verify blocked spawns preserve the board.
+  - [x] Add a render regression for an actual lock-to-blocked-spawn game-over transition, preserving the locked piece, borders, controls, and 24-row limit.
+  - [x] Run `npm test`: all 87 tests passed. Leave the parent task unchecked for planner review after commit.
 - [ ] Document launch requirements and controls; run automated tests and manually smoke-test `npm start` in an interactive terminal.
 
 ## Completion criteria

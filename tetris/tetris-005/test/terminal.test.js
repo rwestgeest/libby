@@ -46,6 +46,25 @@ for (const state of ['playing', 'game-over']) {
   });
 }
 
+test('a locking/spawn failure transitions to game over without adding display rows', () => {
+  const game = new Game({ random: () => 1 / 7 });
+  while (game.move(0, 1)) {}
+  game.board[0][4] = 'J';
+  const playing = render(game).split('\n');
+  assert.equal(game.step(), true);
+  assert.equal(game.gameOver, true);
+  assert.equal(game.active, null);
+  const ended = render(game).split('\n');
+  assert.equal(playing.length, 24);
+  assert.equal(ended.length, 24);
+  assert.doesNotMatch(playing[22], /GAME OVER/);
+  assert.match(ended[22], /GAME OVER/);
+  assert.equal(ended[23], playing[23]);
+  assert.equal(ended[21], playing[21]);
+  assert.ok(ended.slice(19, 21).every(row => row.includes('[][]')),
+    'the last locked piece remains visible after game over');
+});
+
 function setup({ previousRaw = false, flowing = false } = {}) {
   const input = new PassThrough();
   input.isRaw = previousRaw;

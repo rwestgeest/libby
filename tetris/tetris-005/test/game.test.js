@@ -128,3 +128,51 @@ test('a piece can lock on a stack and a blocked spawn is rejected', () => {
   assert.equal(game.active, null);
   assert.deepEqual(game.board, before);
 });
+
+for (const type of Object.keys(TETROMINOES)) {
+  test(`${type}: lateral settled-cell collisions leave piece and board unchanged`, () => {
+    for (const direction of [-1, 1]) {
+      const game = gameWith(type);
+      const { matrix, x, y } = game.active;
+      const row = matrix.findIndex(cells => cells.some(Boolean));
+      const cells = matrix[row];
+      const edge = direction < 0 ? cells.indexOf(1) : cells.lastIndexOf(1);
+      game.board[y + row][x + edge + direction] = 'J';
+      const piece = structuredClone(game.active);
+      const board = structuredClone(game.board);
+      assert.equal(game.collides(game.active), false);
+      assert.equal(game.move(direction, 0), false);
+      assert.deepEqual(game.active, piece);
+      assert.deepEqual(game.board, board);
+    }
+  });
+
+  test(`${type}: locking writes only the four occupied coordinates`, () => {
+    const game = gameWith(type);
+    while (game.move(0, 1)) {}
+    const expected = createBoard();
+    const { matrix, x, y } = game.active;
+    matrix.forEach((row, dy) => row.forEach((cell, dx) => {
+      if (cell) expected[y + dy][x + dx] = type;
+    }));
+    assert.equal(game.lock(), true);
+    assert.deepEqual(game.board, expected);
+    assert.equal(game.active, null);
+  });
+
+  test(`${type}: every occupied spawn cell blocks spawning, but matrix padding does not`, () => {
+    const initial = gameWith(type).active;
+    initial.matrix.forEach((row, dy) => row.forEach((cell, dx) => {
+      const game = gameWith(type);
+      game.active = null;
+      game.board[initial.y + dy][initial.x + dx] = 'J';
+      const board = structuredClone(game.board);
+      assert.equal(game.spawn(type), !Boolean(cell));
+      assert.equal(game.gameOver, Boolean(cell));
+      assert.deepEqual(game.board, board);
+      if (cell) assert.equal(game.active, null);
+      else assert.equal(game.active.type, type);
+    }));
+  });
+}
+
