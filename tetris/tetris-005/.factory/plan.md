@@ -1,6 +1,6 @@
 # Terminal Tetris plan
 
-Status: planned; implementation not started.
+Status: in progress; first task completed.
 
 ## Seed requirements
 
@@ -11,7 +11,7 @@ Status: planned; implementation not started.
 
 ## Implementation tasks
 
-- [ ] Create a Node.js project with an `npm start` entry point and an automated test command.
+- [x] Create a Node.js project with an `npm start` entry point and an automated test command.
 - [ ] Implement a 10-column, 20-row board, the seven tetrominoes, piece spawning, movement, rotation, collision detection, and piece locking.
 - [ ] Implement timed gravity, completed-row clearing, score updates, and game over when a new piece cannot spawn.
 - [ ] Implement terminal keyboard input for left/right movement, rotation, soft drop, hard drop, restart, and quit; show the controls on screen.
