@@ -47,6 +47,9 @@ export class Game {
     this.active = null;
     this.random = random;
     this.bag = [];
+    this.score = 0;
+    this.lines = 0;
+    this.gameOver = false;
   }
 
   nextType() {
@@ -60,14 +63,19 @@ export class Game {
     return this.bag.pop();
   }
 
-  // A blocked spawn returns false; the game loop can use this for game over.
+  // A blocked spawn ends the game without overwriting settled cells.
   spawn(type) {
-    if (this.active) return false;
+    if (type != null && !Object.hasOwn(TETROMINOES, type)) {
+      throw new RangeError(`Unknown piece: ${type}`);
+    }
+    if (this.gameOver || this.active) return false;
     type ??= this.nextType();
-    if (!Object.hasOwn(TETROMINOES, type)) throw new RangeError(`Unknown piece: ${type}`);
     const shape = TETROMINOES[type].map(row => [...row]);
     const piece = { type, shape, x: Math.floor((BOARD_WIDTH - shape.length) / 2), y: 0 };
-    if (collides(this.board, piece)) return false;
+    if (collides(this.board, piece)) {
+      this.gameOver = true;
+      return false;
+    }
     this.active = piece;
     return true;
   }
@@ -76,7 +84,7 @@ export class Game {
     if (!Number.isInteger(dx) || !Number.isInteger(dy)) {
       throw new TypeError('Movement must use integer cell offsets');
     }
-    if (!this.active) return false;
+    if (this.gameOver || !this.active) return false;
     // Walk each cell so large offsets cannot tunnel through occupied cells.
     if (dx !== 0 && dy !== 0) return false;
     const steps = Math.max(Math.abs(dx), Math.abs(dy));
@@ -91,7 +99,7 @@ export class Game {
 
   rotate(direction = 1) {
     if (direction !== 1 && direction !== -1) throw new RangeError('Rotation must be 1 or -1');
-    if (!this.active) return false;
+    if (this.gameOver || !this.active) return false;
     const shape = rotateShape(this.active.shape, direction);
     // Simple horizontal wall kicks, not the full guideline SRS kick table.
     for (const dx of [0, -1, 1, -2, 2]) {
@@ -104,9 +112,35 @@ export class Game {
     return false;
   }
 
+  // One gravity interval: descend, or settle, clear rows, and spawn the next piece.
+  // The terminal loop will call this method on its timer.
+  tick() {
+    if (this.gameOver) return false;
+    if (!this.active) return this.spawn();
+    if (this.move(0, 1)) return true;
+    this.lock();
+    this.clearLines();
+    return this.spawn();
+  }
+
+  clearLines() {
+    if (this.gameOver) return 0;
+    const remaining = this.board.filter(row => row.some(cell => cell === null));
+    const cleared = BOARD_HEIGHT - remaining.length;
+    if (cleared === 0) return 0;
+    this.board = [
+      ...Array.from({ length: cleared }, () => Array(BOARD_WIDTH).fill(null)),
+      ...remaining,
+    ];
+    this.lines += cleared;
+    // Single/double/triple/Tetris points, at a fixed gravity speed.
+    this.score += [0, 100, 300, 500, 800][cleared] ?? cleared * 200;
+    return cleared;
+  }
+
   // Lock only grounded pieces. Spawning and line clearing are separate steps.
   lock() {
-    if (!this.active || !collides(this.board, { ...this.active, y: this.active.y + 1 })) {
+    if (this.gameOver || !this.active || !collides(this.board, { ...this.active, y: this.active.y + 1 })) {
       return false;
     }
     for (const { x, y } of pieceCells(this.active)) this.board[y][x] = this.active.type;
