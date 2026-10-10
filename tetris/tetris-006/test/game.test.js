@@ -132,6 +132,38 @@ test('locking above the board tops out without partial writes', () => {
   assert.ok(game.board.flat().every(cell => cell === null));
 });
 
+test('one- and three-line clears preserve board size and use level scoring', () => {
+  for (const [count, points] of [[1, 100], [3, 500]]) {
+    const game = makeGame();
+    game.lines = 10;
+    game.board[HEIGHT - count - 1][4] = 'T';
+    for (let y = HEIGHT - count; y < HEIGHT; y++) game.board[y].fill('I');
+    assert.equal(game.clearLines(), count);
+    assert.equal(game.score, points * 2);
+    assert.equal(game.lines, 10 + count);
+    assert.equal(game.board[HEIGHT - 1][4], 'T');
+    assert.equal(game.board.length, HEIGHT);
+    assert.ok(game.board.slice(0, count).every(row => row.every(cell => cell === null)));
+    assert.notEqual(game.board[0], game.board[1]);
+  }
+});
+
+test('grounded soft drop locks without awarding movement points', () => {
+  const game = makeGame();
+  setPiece(game, 'O', 0, 18);
+  assert.equal(game.softDrop(), false);
+  assert.equal(game.score, 0);
+  assert.equal(game.board[19][0], 'O');
+  assert.equal(game.active.y, 0);
+});
+
+test('gravity accelerates with level but never below its minimum interval', () => {
+  const game = makeGame();
+  assert.equal(game.gravityMs, 800);
+  game.lines = 1000;
+  assert.equal(game.gravityMs, 80);
+});
+
 test('display board overlays the active piece without mutating locked cells', () => {
   const game = makeGame();
   setPiece(game, 'O', 0, 0);

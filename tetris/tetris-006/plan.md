@@ -2,7 +2,7 @@
 
 ## Status
 
-Project/game logic and terminal input/bounded rendering tasks are completed. Tests/documentation and final validation remain unfinished. The target now has a Node.js project, terminal-independent game engine, and interactive terminal interface. This plan was derived from `/home/rob/dev/libby/tetris/spec.md`. The designated factory plan does not exist; this local copy stays within the permitted target directory.
+Project/game logic and terminal input/bounded rendering tasks are completed. Tests/documentation implementation is ready for planner review; final validation remains unfinished. The target now has a Node.js project, terminal-independent game engine, and interactive terminal interface. This plan was derived from `/home/rob/dev/libby/tetris/spec.md`. The designated factory plan does not exist; this local copy stays within the permitted target directory.
 
 ## Requirements
 
@@ -46,4 +46,10 @@ Project/game logic and terminal input/bounded rendering tasks are completed. Tes
   - [x] Verify `npm start` through a real PTY: 24-row frame, raw input, arrow sequences, hard drop, restart, small-size warning, clean quit, and original terminal attributes restored.
   - Validator findings: none supplied.
 - [ ] Add tests and documentation.
+  - [x] Extend engine coverage for single/triple clears, level-scaled scoring, grounded soft drops, and gravity speed bounds.
+  - [x] Extend terminal coverage for actual key-sequence decoding, automatic gravity and resize pauses, stream-error cleanup, preservation of prior input state, and large-score frame bounds.
+  - [x] Add `README.md` with launch requirements, controls, scoring, terminal sizing/lifecycle behavior, test command, and interactive smoke-test instructions.
+  - [x] Run `npm test`: all 26 tests pass.
+  - [x] Smoke-test `npm start` through a real 61×24 PTY: bounded frame, raw input, arrows/rotation/drops, restart, clean quit, and original terminal attributes restored.
+  - Validator findings: none supplied; no finding subtasks needed.
 - [ ] Validate all completion criteria.

@@ -91,6 +91,94 @@ test('signals and runtime errors restore the terminal', () => {
   }
 });
 
+test('actual input bytes decode arrow keys, rotation, drops, restart and quit', () => {
+  const env = terminal();
+  const game = new Game({ random: () => 0 });
+  const session = startTerminal({ ...env, game });
+  try {
+    const x = game.active.x;
+    env.input.write('\x1b[D');
+    assert.equal(game.active.x, x - 1);
+    env.input.write('\x1b[C');
+    assert.equal(game.active.x, x);
+    const matrix = structuredClone(game.active.matrix);
+    env.input.write('\x1b[A');
+    assert.notDeepEqual(game.active.matrix, matrix);
+    env.input.write('z');
+    assert.deepEqual(game.active.matrix, matrix);
+    env.input.write('\x1b[B');
+    assert.equal(game.score, 1);
+    env.input.write(' ');
+    assert.ok(game.board.flat().some(Boolean));
+    env.input.write('r');
+    assert.equal(game.score, 0);
+    assert.ok(game.board.flat().every(cell => cell === null));
+    env.input.write('q');
+    assert.equal(env.input.isRaw, false);
+    assert.ok(env.output.text.endsWith(LEAVE_SCREEN));
+  } finally { session.stop(); }
+});
+
+test('gravity advances automatically and pauses when the terminal is too small', async () => {
+  const env = terminal();
+  const game = new Game();
+  Object.defineProperty(game, 'gravityMs', { value: 10 });
+  const session = startTerminal({ ...env, game });
+  try {
+    await new Promise(resolve => setTimeout(resolve, 35));
+    assert.ok(game.active.y > 0);
+    env.output.rows = 23;
+    env.output.emit('resize');
+    const y = game.active.y;
+    await new Promise(resolve => setTimeout(resolve, 35));
+    assert.equal(game.active.y, y);
+    env.output.rows = 24;
+    env.output.emit('resize');
+    await new Promise(resolve => setTimeout(resolve, 35));
+    assert.ok(game.active.y > y);
+  } finally { session.stop(); }
+});
+
+test('stream errors restore terminal state and remove session listeners', () => {
+  for (const stream of ['input', 'output']) {
+    const env = terminal();
+    const session = startTerminal(env);
+    try {
+      env[stream].emit('error', new Error('stream failure'));
+      assert.equal(env.runtime.exitCode, 1);
+      assert.match(env.runtime.error, /stream failure/);
+      assert.equal(env.input.isRaw, false);
+      assert.equal(env.input.listenerCount('keypress'), 0);
+      assert.equal(env.output.listenerCount('resize'), 0);
+      assert.equal(env.runtime.listenerCount('uncaughtException'), 0);
+      assert.ok(env.output.text.endsWith(LEAVE_SCREEN));
+    } finally { session.stop(); }
+  }
+});
+
+test('cleanup preserves an already raw, flowing input stream', () => {
+  const env = terminal();
+  env.input.isRaw = true;
+  env.input.resume();
+  const session = startTerminal(env);
+  session.stop();
+  assert.equal(env.input.isRaw, true);
+  assert.equal(env.input.readableFlowing, true);
+  env.input.pause();
+});
+
+test('large scores and game-over messages remain within the minimum width', () => {
+  const game = new Game();
+  game.score = Number.MAX_SAFE_INTEGER;
+  game.lines = 100000;
+  game.gameOver = true;
+  const rows = renderRows(game, MIN_COLUMNS, 24);
+  assert.equal(rows.length, 24);
+  assert.ok(rows.every(row => row.length <= MIN_COLUMNS));
+  assert.match(rows[0], /GAME OVER/);
+  assert.match(rows[23], /R:restart/);
+});
+
 test('non-interactive streams are rejected without entering raw mode', () => {
   const env = terminal();
   env.input.isTTY = false;
