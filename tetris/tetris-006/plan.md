@@ -2,7 +2,7 @@
 
 ## Status
 
-Project/game logic, terminal input/bounded rendering, and tests/documentation tasks are completed. Final validation remains unfinished. The target now has a Node.js project, terminal-independent game engine, and interactive terminal interface. This plan was derived from `/home/rob/dev/libby/tetris/spec.md`. The designated factory plan does not exist; this local copy stays within the permitted target directory.
+Project/game logic, terminal input/bounded rendering, and tests/documentation tasks are completed. Final validation checks passed; the validation task remains open for planner sign-off after commit. The target now has a Node.js project, terminal-independent game engine, and interactive terminal interface. This plan was derived from `/home/rob/dev/libby/tetris/spec.md`. The designated factory plan does not exist; this local copy stays within the permitted target directory.
 
 ## Requirements
 
@@ -53,3 +53,10 @@ Project/game logic, terminal input/bounded rendering, and tests/documentation ta
   - [x] Smoke-test `npm start` through a real 61×24 PTY: bounded frame, raw input, arrows/rotation/drops, restart, clean quit, and original terminal attributes restored.
   - Validator findings: none supplied; no finding subtasks needed.
 - [ ] Validate all completion criteria.
+  - [x] Run `npm test`: all 26 tests pass, covering movement, rotation, collision, gravity, locking, drops, line clears, scoring, game over, restart, rendering, and cleanup.
+  - [x] Launch `npm start` in a real 61×24 PTY; verify raw input and bounded 24-row frames during play, game over, and restart, with no row wider than 61 columns.
+  - [x] Exercise arrow sequences, clockwise/reverse rotation, soft/hard drops, and restart; repeated hard drops reach game over with restart instructions in the existing frame.
+  - [x] Resize the PTY to 30×12 and back; verify the compact warning and restored full frame.
+  - [x] Verify both Q and Ctrl-C exit cleanly, restore cursor/wrapping/alternate screen, and restore the original terminal attributes.
+  - [x] Verify non-interactive `npm start` exits with status 1 and an interactive-terminal diagnostic.
+  - Validator findings: none supplied; no finding subtasks needed. No implementation defects found during validation.
