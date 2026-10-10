@@ -2,7 +2,7 @@
 
 ## Status
 
-Project/game logic and terminal input/bounded rendering tasks are completed. Tests/documentation implementation is ready for planner review; final validation remains unfinished. The target now has a Node.js project, terminal-independent game engine, and interactive terminal interface. This plan was derived from `/home/rob/dev/libby/tetris/spec.md`. The designated factory plan does not exist; this local copy stays within the permitted target directory.
+Project/game logic, terminal input/bounded rendering, and tests/documentation tasks are completed. Final validation remains unfinished. The target now has a Node.js project, terminal-independent game engine, and interactive terminal interface. This plan was derived from `/home/rob/dev/libby/tetris/spec.md`. The designated factory plan does not exist; this local copy stays within the permitted target directory.
 
 ## Requirements
 
@@ -45,7 +45,7 @@ Project/game logic and terminal input/bounded rendering tasks are completed. Tes
   - [x] Fix PTY smoke finding: quitting restored the screen but initially left stdin flowing, preventing process exit. Restore previously inactive stdin and assert it is paused after quit.
   - [x] Verify `npm start` through a real PTY: 24-row frame, raw input, arrow sequences, hard drop, restart, small-size warning, clean quit, and original terminal attributes restored.
   - Validator findings: none supplied.
-- [ ] Add tests and documentation.
+- [x] Add tests and documentation.
   - [x] Extend engine coverage for single/triple clears, level-scaled scoring, grounded soft drops, and gravity speed bounds.
   - [x] Extend terminal coverage for actual key-sequence decoding, automatic gravity and resize pauses, stream-error cleanup, preservation of prior input state, and large-score frame bounds.
   - [x] Add `README.md` with launch requirements, controls, scoring, terminal sizing/lifecycle behavior, test command, and interactive smoke-test instructions.
