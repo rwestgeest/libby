@@ -4,7 +4,7 @@ import kotlinx.serialization.json.*
 internal data class AssemblyEdge(val from: String, val to: String, val label: String?)
 
 /** File syntax and factory-directory availability belong to loading, not routing. */
-internal fun readAssemblyLine(file: File, factoryDir: File): AssemblyLine {
+internal fun readAssemblyLine(file: File, machinesDirectory: File): AssemblyLine {
     if (!file.isFile) fail("There is no assembly line")
     val edgePattern = Regex(
         """^\s*([A-Za-z][\w-]*)\s*->\s*([A-Za-z][\w-]*)\s*(?:\[\s*label\s*=\s*\"([^\"]+)\"\s*])?\s*;?\s*$"""
@@ -16,7 +16,7 @@ internal fun readAssemblyLine(file: File, factoryDir: File): AssemblyLine {
     }
     return AssemblyLine(edges).also { line ->
         line.validate { machine ->
-            if (!File(factoryDir, machine).isDirectory) {
+            if (!File(machinesDirectory, machine).isDirectory) {
                 fail("There is no machine called \"$machine\"")
             }
         }

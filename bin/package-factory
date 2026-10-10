@@ -40,7 +40,7 @@ package_root="$work_dir/factory-distribution"
 mkdir -p "$package_root/bin" "$package_root/factory/lib" "$package_root/factory/target"
 
 printf 'Compiling factory and collecting runtime dependencies...\n'
-mvn -q -f "$repo_root/factory/pom.xml" compile dependency:copy-dependencies \
+mvn -q -f "$repo_root/factory/pom.xml" clean compile dependency:copy-dependencies \
   -DincludeScope=runtime \
   -DoutputDirectory="$package_root/factory/lib"
 
@@ -51,7 +51,7 @@ shopt -s nullglob
 for item in "$repo_root/factory"/*; do
   name="${item##*/}"
   case "$name" in
-    src|spec|target|runs|jobs|pom.xml|test|README.md|DISTRIBUTION.md|ITERATION)
+    src|spec|target|runs|jobs|assembly-line|pom.xml|test|README.md|DISTRIBUTION.md|ITERATION)
       continue
       ;;
   esac

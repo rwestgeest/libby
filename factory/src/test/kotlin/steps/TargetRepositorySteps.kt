@@ -96,9 +96,12 @@ class TargetRepositorySteps {
         check(git(root, "rev-list", "--count", "$head..HEAD") == "1")
         check(git(root, "log", "-1", "--format=%s") == "Record factory task")
         val paths = git(root, "diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD").lines()
-        check(paths.toSet() == setOf("product/.factory/plan.md", "product/.gitignore",
+        check(paths.toSet() == setOf("product/.gitignore",
             "product/new product.txt", "product/tracked.txt")) { paths }
-        check(git(target, "status", "--porcelain", "--", ".").isEmpty())
+        check(git(
+            target, "status", "--porcelain", "--", ".",
+            ":(exclude).factory", ":(exclude).assembly-lines"
+        ).isEmpty())
     }
 
     @Then("outside staged and unstaged changes are preserved")

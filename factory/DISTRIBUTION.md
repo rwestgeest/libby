@@ -13,12 +13,17 @@ Requirements:
 Run the factory from any working directory after extracting the archive:
 
 ```sh
-path/to/factory-distribution/bin/factory --seed path/to/spec.md --target path/to/target
+path/to/factory-distribution/bin/factory \
+  --run product --target path/to/target --line careful --seed path/to/spec.md
+
+# Later invocations remember those settings.
+path/to/factory-distribution/bin/factory --run product
 ```
 
 Use this command to verify the packaged assembly line without invoking an
 agent:
 
 ```sh
-path/to/factory-distribution/bin/factory --check-line
+path/to/factory-distribution/bin/factory \
+  --run check --target path/to/target --line careful --seed path/to/spec.md --check-line
 ```

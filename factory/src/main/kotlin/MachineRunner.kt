@@ -3,9 +3,9 @@ import java.io.IOException
 import kotlinx.serialization.json.*
 
 /** Reads configuration on demand, so changes between machine calls remain visible. */
-internal class MachineConfiguration(private val factoryDir: File) {
+internal class MachineConfiguration(private val machinesDirectory: File) {
     private fun read(name: String): JsonObject {
-        val file = File(factoryDir, "$name/config.json")
+        val file = File(machinesDirectory, "$name/config.json")
         if (!file.isFile) return JsonObject(emptyMap())
         return runCatching { Json.parseToJsonElement(file.readText()).jsonObject }
             .getOrElse { fail("Could not read the configuration for $name") }

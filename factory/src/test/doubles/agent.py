@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import subprocess
+import re
 from pathlib import Path
 
 # Like pi, wait for piped input to finish before processing the prompt.
@@ -18,26 +19,27 @@ number = len(list(calls.glob("*.json")))
 }))
 (calls / f"{number}.txt").write_text("\n".join(sys.argv[1:]))
 
-# The factory must run the agent inside its target.
-plan = Path(".factory/plan.md")
+# The factory must run the agent inside its target, while the prompt points it
+# at the plan belonging to the named run.
+prompt = sys.argv[-1]
+plan_match = re.search(r'The plan is at "([^"]+)"\.', prompt)
+if not plan_match:
+    raise RuntimeError("The prompt did not name a plan")
+plan = Path(plan_match.group(1))
 plan.parent.mkdir(exist_ok=True)
 
 prose_plan = (Path(__file__).parent / "prose-plan").exists()
-prompt = sys.argv[-1]
 planner = "You are the planner." in prompt
 validator = "You are the validator." in prompt
 if planner:
     def git(*args):
-        return subprocess.check_output(["git", *args], text=True).strip()
+        return subprocess.run(
+            ["git", *args], text=True, capture_output=True,
+        ).stdout.strip()
 
-    committed_plan = subprocess.run(
-        ["git", "show", "HEAD:./.factory/plan.md"],
-        text=True, capture_output=True,
-    )
     (calls / f"{number}.git-state").write_text(json.dumps({
         "head": git("rev-parse", "HEAD"),
         "status": git("status", "--porcelain", "--", "."),
-        "committed_plan": committed_plan.stdout,
     }))
 workspace = os.environ.get("FACTORY_TEST_WORKSPACE")
 if workspace:

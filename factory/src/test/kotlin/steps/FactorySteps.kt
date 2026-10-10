@@ -11,6 +11,8 @@ import java.security.MessageDigest
 import kotlinx.serialization.json.*
 
 private data class Task(val name: String, val done: Boolean = false)
+private data class RunFixture(val target: Path, val seed: Path, val line: String)
+private data class InvocationCalls(val planner: Long, val doer: Long, val validator: Long)
 
 private class Plan(private val path: Path) {
     fun entries(): List<Task> = Files.readAllLines(path)
@@ -101,6 +103,12 @@ class FactorySteps {
     private lateinit var factoryBefore: Map<String, String>
     private var stagedBefore = ""
     private var unstagedBefore = ""
+    private var currentRun = "tetris"
+    private var currentLine = "careful"
+    private var targetNumber = 0
+    private var seedNumber = 0
+    private val runs = mutableMapOf<String, RunFixture>()
+    private val callsByRun = mutableMapOf<String, InvocationCalls>()
 
     @Given("a copy of the factory")
     fun copyFactory() {
@@ -115,9 +123,6 @@ class FactorySteps {
             .copyTo(copy.resolve("target/runtime-classpath.txt"))
         source.resolve("factory").copyTo(copy.resolve("factory"))
         copy.resolve("factory").setExecutable(true)
-        for (name in listOf("assembly-line", "planner", "doer", "validator")) {
-            source.resolve(name).copyRecursively(copy.resolve(name))
-        }
         repo = GitRepo(workspace)
         repo.init()
         repo.commit("Initial test state")
@@ -125,19 +130,46 @@ class FactorySteps {
 
     @Given("a new target")
     fun newTarget() {
-        target = Files.createDirectory(workspace.resolve("target"))
+        targetNumber++
+        val name = if (targetNumber == 1) "target" else "target-$targetNumber"
+        target = Files.createDirectory(workspace.resolve(name))
     }
 
     @Given("a seed describing a game of Tetris")
     fun createSeed() {
+        seedNumber++
+        val name = if (seedNumber == 1) "seed.md" else "seed-$seedNumber.md"
         seed = Files.writeString(
-            workspace.resolve("seed.md"),
+            workspace.resolve(name),
             """
             Build a game of Tetris that runs in the terminal.
             Start it with npm start.
             Keep the complete display within 24 terminal rows.
             """.trimIndent()
         )
+    }
+
+    @Given("a new target, with a seed describing a game of Tetris")
+    fun newTetrisTargetAndSeed() {
+        newTarget()
+        createSeed()
+    }
+
+    @Given("a new target, with a seed describing a game of Snake")
+    fun newSnakeTargetAndSeed() {
+        newTarget()
+        seedNumber++
+        seed = Files.writeString(
+            workspace.resolve("snake-seed-$seedNumber.md"),
+            "Build a game of Snake that runs in the terminal.\n"
+        )
+    }
+
+    @Given("the target has the machines planner, doer and validator")
+    fun targetHasStandardMachines() {
+        for (name in listOf("planner", "doer", "validator")) {
+            Files.createDirectories(machineDirectory(name))
+        }
     }
     
     @Given("the doer does the next task in the plan")
@@ -168,7 +200,7 @@ class FactorySteps {
     }
 
     private fun configureMachine(name: String, key: String, value: String?) {
-        val file = workspace.resolve("factory/$name/config.json")
+        val file = machineDirectory(name).resolve("config.json")
         val entries = if (Files.exists(file)) {
             Regex("\"([^\"]+)\"\\s*:\\s*\"([^\"]*)\"").findAll(Files.readString(file))
                 .associate { it.groupValues[1] to it.groupValues[2] }.toMutableMap()
@@ -184,6 +216,9 @@ class FactorySteps {
             unstagedBefore = repo.git("diff", "--binary", "--", "factory")
         }
     }
+
+    private fun machineDirectory(name: String): Path =
+        target.resolve(".assembly-lines/.machines/$name")
 
     @Given("the factory allows at most three attempts per pass")
     fun threeAttemptsPerPass() {
@@ -323,34 +358,29 @@ class FactorySteps {
     @Then("accepted task commits bracket the planner's completion changes")
     fun acceptedCommitOrdering() {
         val commits = repo.git("rev-list", "--reverse", "$headBeforeRun..HEAD").lines()
-        check(commits.size == 4) { "Expected work/plan commits for two tasks: $commits\n$output" }
+        check(commits.size == 2) { "Expected one product commit per task: $commits\n$output" }
         fun state(call: Int) = Json.parseToJsonElement(
             Files.readString(workspace.resolve("calls/$call.git-state"))
         ).jsonObject
         val initial = state(0)
         check(initial.getValue("head").jsonPrimitive.content == headBeforeRun)
-        for ((call, workIndex) in listOf(1 to 0, 2 to 2)) {
+        for ((call, workIndex) in listOf(1 to 0, 2 to 1)) {
             val snapshot = state(call)
             check(snapshot.getValue("head").jsonPrimitive.content == commits[workIndex]) { snapshot }
-            check(snapshot.getValue("status").jsonPrimitive.content.isEmpty()) { snapshot }
-            val beforeCompletion = snapshot.getValue("committed_plan").jsonPrimitive.content
             val task = if (call == 1) "alpha" else "beta"
-            check(beforeCompletion.contains("- [ ] $task")) { beforeCompletion }
-            val afterCompletion = repo.git("show", "${commits[workIndex + 1]}:target/.factory/plan.md")
-            check(afterCompletion.contains("- [x] $task")) { afterCompletion }
-            check(repo.diffTree(commits[workIndex + 1]) == listOf("target/.factory/plan.md"))
             check("target/$task.txt" in repo.diffTree(commits[workIndex]))
         }
     }
 
     @Given("the {word} configuration is {string}")
     fun rawMachineConfiguration(machine: String, content: String) {
-        Files.writeString(workspace.resolve("factory/$machine/config.json"), content)
+        Files.createDirectories(machineDirectory(machine))
+        Files.writeString(machineDirectory(machine).resolve("config.json"), content)
     }
 
     @Given("the {word} configuration is absent")
     fun absentMachineConfiguration(machine: String) {
-        Files.deleteIfExists(workspace.resolve("factory/$machine/config.json"))
+        Files.deleteIfExists(machineDirectory(machine).resolve("config.json"))
     }
 
     @Given("the chosen model is {string}")
@@ -382,7 +412,7 @@ class FactorySteps {
             check(record.getValue("cwd").jsonPrimitive.content == target.toString()) { record }
             val prompt = args.last()
             check(prompt.contains("Read the seed at \"$seed\".")) { prompt }
-            check(prompt.contains("The plan is at \"${target.resolve(".factory/plan.md")}\".")) { prompt }
+            check(prompt.contains("The plan is at \"${planPath()}\".")) { prompt }
             check(prompt.contains("Work only in the current target directory. The factory handles commits.")) { prompt }
             check(prompt.contains("End your answer with a single line of JSON.")) { prompt }
         }
@@ -397,20 +427,17 @@ class FactorySteps {
 
     @Given("no plan")
     fun noPlan() {
-        Files.deleteIfExists(target.resolve(".factory/plan.md"))
+        Files.deleteIfExists(planPath())
     }
 
     @Given("a plan with three tasks, none of them done")
-    fun planWithThreeTasks() = Plan(target.resolve(".factory/plan.md"))
+    fun planWithThreeTasks() = Plan(planPath())
         .write(listOf(Task("alpha"), Task("beta"), Task("gamma")))
 
     @Given("a plan in which every task is done")
     fun completedPlan() {
-        Plan(target.resolve(".factory/plan.md"))
+        Plan(planPath())
             .write(listOf(Task("alpha", done = true), Task("beta", done = true)))
-        // Already-finished work has an existing committed plan.
-        repo.git("add", "--", workspace.relativize(target).toString())
-        repo.commit("Completed plan fixture")
     }
 
     @Given("no harness is chosen")
@@ -430,17 +457,57 @@ class FactorySteps {
     @When("the factory runs to completion")
     fun runToCompletion() = runFactory("--all")
 
-    private fun runFactory(vararg options: String) {
+    @When("the factory runs the {string} run")
+    fun runNamed(name: String) {
+        currentRun = name
+        val fixture = runs.getValue(name)
+        target = fixture.target
+        seed = fixture.seed
+        currentLine = fixture.line
+        runFactory()
+    }
+
+    @When("the factory runs the {string} run, given only its name")
+    fun runNamedOnly(name: String) {
+        currentRun = name
+        val fixture = runs.getValue(name)
+        target = fixture.target
+        seed = fixture.seed
+        currentLine = fixture.line
+        runFactory(givenOnlyRunName = true)
+    }
+
+    @When("the factory runs the {string} run with that target")
+    fun runNamedWithCurrentTarget(name: String) {
+        currentRun = name
+        runFactory(targetOnly = true)
+    }
+
+    private fun runFactory(
+        vararg options: String,
+        givenOnlyRunName: Boolean = false,
+        targetOnly: Boolean = false
+    ) {
         val environment = setupTestEnvironment()
-        val checkingLine = "--check-line" in options
+        ensureDefaultRun()
+        val fixture = runs.getValue(currentRun)
         val targetArgument = if (absoluteTarget) target.toString()
             else workspace.relativize(target).toString()
-        val command = listOf(workspace.resolve("factory/factory").toString()) +
-            (if (!checkingLine && seedChosen) listOf("--seed", workspace.relativize(seed).toString()) else emptyList()) +
-            (if (!checkingLine && targetChosen) listOf("--target", targetArgument) else emptyList()) +
-            agentArgs + options
+        val settings = when {
+            givenOnlyRunName -> emptyList()
+            targetOnly -> if (targetChosen) listOf("--target", targetArgument) else emptyList()
+            else -> buildList {
+                if (targetChosen) addAll(listOf("--target", targetArgument))
+                addAll(listOf("--line", fixture.line))
+                if (seedChosen) addAll(listOf("--seed", workspace.relativize(seed).toString()))
+            }
+        }
+        val command = listOf(
+            workspace.resolve("factory/factory").toString(), "--run", currentRun
+        ) + settings + agentArgs + options
 
         headBeforeRun = repo.head()
+        val before = invocationCalls()
         val result = runProcess(
             command,
             workspace,
@@ -448,9 +515,49 @@ class FactorySteps {
         )
         output = result.first
         exitCode = result.second
+        val after = invocationCalls()
+        callsByRun[currentRun] = InvocationCalls(
+            after.planner - before.planner,
+            after.doer - before.doer,
+            after.validator - before.validator
+        )
     }
 
-    private fun linePath(): Path = workspace.resolve("factory/assembly-line/line.dot")
+    private fun ensureDefaultRun() {
+        if (!Files.exists(linePath())) writeValidatedLine(currentLine)
+        runs.putIfAbsent(currentRun, RunFixture(target, seed, currentLine))
+    }
+
+    private fun planPath(run: String = currentRun): Path =
+        workspace.resolve("factory/runs/$run/plan.md")
+
+    private fun linePath(line: String = currentLine, targetPath: Path = target): Path =
+        targetPath.resolve(".assembly-lines/$line.dot")
+
+    private fun writeValidatedLine(name: String) {
+        Files.createDirectories(linePath(name).parent)
+        Files.writeString(linePath(name), """
+            digraph assembly_line {
+              start -> planner
+              planner -> doer [label="not complete"]
+              planner -> finish [label="complete"]
+              doer -> validator
+              validator -> doer [label="not satisfied"]
+              validator -> planner [label="satisfied"]
+            }
+        """.trimIndent())
+    }
+
+    private fun invocationCalls(): InvocationCalls = InvocationCalls(
+        countCalls(workspace.resolve("calls")),
+        countCalls(workspace.resolve("doer/calls")),
+        countCalls(workspace.resolve("validator/calls"))
+    )
+
+    private fun countCalls(folder: Path): Long =
+        if (!Files.isDirectory(folder)) 0 else Files.list(folder).use { stream ->
+            stream.filter { it.toString().endsWith(".json") }.count()
+        }
 
     @Given("this assembly line:")
     fun thisAssemblyLine(line: String) {
@@ -458,8 +565,63 @@ class FactorySteps {
         Files.writeString(linePath(), line)
     }
 
+    @Given("the target has an assembly line {string} on which the doer's work is validated")
+    fun targetHasValidatedLine(name: String) {
+        currentLine = name
+        writeValidatedLine(name)
+    }
+
+    @Given("the target has an assembly line {string} on which the doer goes straight to the planner")
+    fun targetHasQuickLine(name: String) {
+        currentLine = name
+        Files.createDirectories(linePath(name).parent)
+        Files.writeString(linePath(name), """
+            digraph assembly_line {
+              start -> planner
+              planner -> doer [label="not complete"]
+              planner -> finish [label="complete"]
+              doer -> planner
+            }
+        """.trimIndent())
+    }
+
+    @Given("the {string} line has been copied into the target")
+    fun copyLineIntoTarget(name: String) {
+        val sourceTarget = runs.getValue("tetris").target
+        val source = linePath(name, sourceTarget)
+        Files.createDirectories(linePath(name).parent)
+        Files.copy(source, linePath(name), StandardCopyOption.REPLACE_EXISTING)
+        currentLine = name
+    }
+
+    @Given("a run named {string}, on the {string} line, with that seed and target")
+    fun namedRun(name: String, line: String) {
+        currentRun = name
+        currentLine = line
+        runs[name] = RunFixture(target, seed, line)
+    }
+
+    @Given("a plan for each run with three tasks of its own, none of them done")
+    fun planForEachRun() {
+        runs.keys.forEach { name ->
+            Plan(planPath(name)).write(listOf(Task("alpha"), Task("beta"), Task("gamma")))
+        }
+    }
+
+    @Given("the {string} run has been started")
+    fun runHasStarted(name: String) {
+        currentRun = name
+        val fixture = runs.getValue(name)
+        target = fixture.target
+        seed = fixture.seed
+        currentLine = fixture.line
+        runFactory("--check-line")
+        check(exitCode == 0) { output }
+    }
+
     @Given("the validator has been taken out, so the doer goes straight to the planner")
     fun removeValidator() {
+        if (!Files.exists(linePath())) writeValidatedLine(currentLine)
         val line = Files.readString(linePath())
             .lineSequence()
             .filterNot { it.contains("validator") }
@@ -469,9 +631,21 @@ class FactorySteps {
         Files.writeString(linePath(), line.joinToString("\n"))
     }
 
+    @Given("the validator has been taken out of the {string} line, so the doer goes straight to the planner")
+    fun removeValidatorFrom(line: String) {
+        currentLine = line
+        removeValidator()
+    }
+
     @Given("{string} is misspelt {string} throughout the assembly line")
     fun misspellMachine(correct: String, misspelling: String) {
         Files.writeString(linePath(), Files.readString(linePath()).replace(correct, misspelling))
+    }
+
+    @Given("{string} is misspelt {string} throughout the {string} line")
+    fun misspellMachineInLine(correct: String, misspelling: String, line: String) {
+        currentLine = line
+        misspellMachine(correct, misspelling)
     }
 
     @Given("the edge from validator to planner has been taken out")
@@ -484,6 +658,7 @@ class FactorySteps {
 
     @Given("the edges from validator are labelled {string} and {string}")
     fun relabelValidatorEdges(positive: String, negative: String) {
+        if (!Files.exists(linePath())) writeValidatedLine(currentLine)
         val changed = Files.readString(linePath())
             .replace("label=\"not satisfied\"", "label=\"$negative\"")
             .replace("label=\"satisfied\"", "label=\"$positive\"")
@@ -498,6 +673,14 @@ class FactorySteps {
 
     @Then("it refuses it")
     fun lineRefused() { check(exitCode != 0) { output } }
+
+    @Then("the factory refuses")
+    fun factoryRefuses() = lineRefused()
+
+    @Then("it says the {string} run already has a target")
+    fun runAlreadyHasTarget(name: String) {
+        check(output.contains("The \"$name\" run already has a target")) { output }
+    }
 
     @Then("it reports that it has no machine called {string}")
     fun missingMachineReported(name: String) {
@@ -539,9 +722,14 @@ class FactorySteps {
 
     @Then("there is no plan")
     fun thereIsNoPlan() {
-        check(!Files.exists(target.resolve(".factory/plan.md"))) {
+        check(!Files.exists(planPath())) {
             "Expected no plan after the factory ran.\n$output"
         }
+    }
+
+    @Then("there is no plan in the target")
+    fun noPlanInTarget() {
+        check(!Files.exists(target.resolve(".factory/plan.md")))
     }
 
     @Then("there are no new commits")
@@ -555,7 +743,7 @@ class FactorySteps {
 
     @Then("the plan has the tasks {string} and {string}, and no others")
     fun planHasExactlyTwoTasks(first: String, second: String) =
-        check(Plan(target.resolve(".factory/plan.md")).entries().map { it.name } == listOf(first, second)) {
+        check(Plan(planPath()).entries().map { it.name } == listOf(first, second)) {
             "Expected only tasks $first and $second.\n$output"
         }
 
@@ -584,7 +772,7 @@ class FactorySteps {
     @Then("the doer was pointed at the plan and at the seed")
     fun doerReceivedPlanAndSeed() {
         val arguments = Files.readString(workspace.resolve("doer/calls/0.txt"))
-        val plan = target.resolve(".factory/plan.md").toAbsolutePath()
+        val plan = planPath().toAbsolutePath()
         val seedPath = seed.toAbsolutePath()
 
         check(arguments.contains(plan.toString())) {
@@ -678,14 +866,14 @@ class FactorySteps {
 
     @Given("a plan whose first task is done")
     fun firstTaskDone() {
-        Plan(target.resolve(".factory/plan.md"))
+        Plan(planPath())
             .write(listOf(Task("alpha", true), Task("beta"), Task("gamma")))
         Files.writeString(target.resolve("alpha.txt"), "Work for alpha\n")
         repo.git("add", "--", workspace.relativize(target).toString())
         repo.commit("Completed first task fixture")
     }
 
-    private fun tasks() = Plan(target.resolve(".factory/plan.md")).entries()
+    private fun tasks() = Plan(planPath()).entries()
 
     @Then("the plan shows the first task as done")
     fun firstDone() { check(tasks().first().done) }
@@ -748,6 +936,21 @@ class FactorySteps {
         check(!Files.exists(workspace.resolve("validator/calls"))) { output }
     }
 
+    @Then("the validator was called for the {string} run")
+    fun validatorCalledForRun(name: String) {
+        check(callsByRun.getValue(name).validator > 0) { callsByRun.toString() }
+    }
+
+    @Then("the validator was not called for the {string} run")
+    fun validatorNotCalledForRun(name: String) {
+        check(callsByRun.getValue(name).validator == 0L) { callsByRun.toString() }
+    }
+
+    @Then("the validator has been called twice")
+    fun validatorCalledTwice() {
+        check(callsByRun.getValue(currentRun).validator == 2L) { callsByRun.toString() }
+    }
+
     @Then("it reports that the result of validator has no field {string}")
     fun missingValidatorResultField(field: String) {
         check(exitCode != 0 && output.contains("result of validator has no field \"$field\"", true)) {
@@ -787,7 +990,27 @@ class FactorySteps {
     }
 
     @Then("there is a plan")
-    fun thereIsAPlan() { check(Files.isRegularFile(target.resolve(".factory/plan.md"))) }
+    fun thereIsAPlan() { check(Files.isRegularFile(planPath())) }
+
+    @Then("the plan is plan.md in the factory's runs folder, under tetris")
+    fun planInRunsFolder() {
+        check(Files.isRegularFile(workspace.resolve("factory/runs/tetris/plan.md")))
+    }
+
+    @Then("each run has its own plan")
+    fun eachRunHasOwnPlan() {
+        val paths = runs.keys.map(::planPath)
+        check(paths.distinct().size == paths.size && paths.all(Files::isRegularFile)) { paths }
+    }
+
+    @Then("each target holds only its own run's work")
+    fun eachTargetHoldsOwnWork() {
+        for ((name, fixture) in runs) {
+            check(Files.isRegularFile(fixture.target.resolve("alpha.txt"))) { "$name has no alpha work" }
+            check(Files.isRegularFile(fixture.target.resolve("beta.txt"))) { "$name has no beta work" }
+            check(!Files.exists(fixture.target.resolve(".factory/plan.md")))
+        }
+    }
 
     @Then("there are no new work commits")
     fun noWorkCommits() { check(repo.logSince(headBeforeRun, target).isEmpty()) }
@@ -800,12 +1023,18 @@ class FactorySteps {
 
     @Then("the committed plan matches the plan on disk")
     fun committedPlanMatches() {
-        check(targetGit("show", "HEAD:./.factory/plan.md") ==
-            Files.readString(target.resolve(".factory/plan.md")).trim())
+        check(Files.isRegularFile(planPath()))
+        check(!Files.exists(target.resolve(".factory/plan.md")))
     }
 
     @Then("the target has no uncommitted changes")
-    fun targetClean() { check(targetGit("status", "--porcelain", "--", ".").isEmpty()) }
+    fun targetClean() {
+        val status = targetGit(
+            "status", "--porcelain", "--", ".",
+            ":(exclude).assembly-lines", ":(exclude).factory"
+        )
+        check(status.isEmpty()) { status }
+    }
 
     @Then("the plan still has those three tasks")
     fun sameThreeTasks() { check(tasks().map { it.name } == listOf("alpha", "beta", "gamma")) }
@@ -815,8 +1044,7 @@ class FactorySteps {
 
     @Then("there is no plan in the factory's folder")
     fun noFactoryPlan() {
-        check(!Files.exists(workspace.resolve("factory/.factory/plan.md")))
-        check(!Files.exists(workspace.resolve("factory/plan.md")))
+        check(!Files.exists(target.resolve(".factory/plan.md")))
     }
 
     @Given("the planner keeps its plan in prose")
@@ -830,7 +1058,11 @@ class FactorySteps {
         for (name in listOf("alpha", "beta")) {
             check(targetGit("show", "HEAD:./$name.txt") == "Work for $name")
         }
-        check(repo.logSince(headBeforeRun, target).size == 2)
+        if (Files.isDirectory(target.resolve(".git"))) {
+            check(targetGit("rev-list", "--count", "HEAD") == "2")
+        } else {
+            check(repo.logSince(headBeforeRun, target).size == 2)
+        }
     }
 
     @Given("no target is chosen")
@@ -844,9 +1076,12 @@ class FactorySteps {
 
     @Given("the target is outside any Git repository")
     fun standaloneTarget() {
+        val preparedTarget = target
         val outside = Files.createTempDirectory("standalone-target-")
         extraWorkspaces.add(outside)
         target = outside.resolve("product")
+        preparedTarget.toFile().copyRecursively(target.toFile())
+        runs[currentRun] = runs.getValue(currentRun).copy(target = target)
         absoluteTarget = true
     }
 
@@ -865,7 +1100,10 @@ class FactorySteps {
     private fun snapshot(folder: Path): Map<String, String> {
         if (!Files.exists(folder)) return emptyMap()
         return Files.walk(folder).use { files ->
-            files.filter { Files.isRegularFile(it) && !folder.relativize(it).startsWith(".git") }
+            files.filter {
+                val relative = folder.relativize(it)
+                Files.isRegularFile(it) && !relative.startsWith(".git") && !relative.startsWith("runs")
+            }
                 .toList().associate { file ->
                     folder.relativize(file).toString() to
                         MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(file))
@@ -920,14 +1158,13 @@ class FactorySteps {
     @Then("the targets {string} and {string} each have their own completed plan and committed work")
     fun independentTargets(first: String, second: String) {
         for (name in listOf(first, second)) {
-            val folder = workspace.resolve(name)
-            check(Plan(folder.resolve(".factory/plan.md")).entries().all { it.done })
+            val fixture = runs.getValue(name)
+            val folder = fixture.target
+            check(Plan(planPath(name)).entries().all { it.done })
             for (task in listOf("alpha", "beta")) {
-                check(repo.git("show", "HEAD:$name/$task.txt").trim() == "Work for $task")
+                val relative = workspace.relativize(folder.resolve("$task.txt")).toString()
+                check(repo.git("show", "HEAD:$relative").trim() == "Work for $task")
             }
-            check(repo.git("show", "HEAD:$name/.factory/plan.md").trim() ==
-                Files.readString(folder.resolve(".factory/plan.md")).trim())
-            check(repo.git("status", "--porcelain", "--", name).isEmpty())
         }
     }
 

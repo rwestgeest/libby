@@ -15,7 +15,8 @@ Build errors are displayed if Cucumber cannot run. Use `mvn test` for raw output
 From the repository root:
 
 ```sh
-bin/factory --seed tetris/spec.md --target tetris/tetris-001
+bin/factory --run tetris --target tetris/tetris-005 --line careful --seed tetris/spec.md
+bin/factory --run tetris
 ```
 
 The launcher builds the Kotlin entry point in a source checkout and preserves
@@ -52,14 +53,12 @@ and [Cucumber CLI](https://cucumber.io/docs/cucumber/api/).
 
 ## Current iteration behavior
 
-The factory calls an agent once, or repeatedly with `--all`, reads the last
-JSON line in its answer, commits the selected target's changes, and stops when
-`complete` is true. It never reads or writes the plan itself. `--seed` and
-`--target` are required. `--agent` selects an executable; it must accept the
-same `--print --no-session <prompt>` invocation as pi (use an adapter for a
-harness with a different interface). Optional `--model` is forwarded to the
-agent to select a model.
+The first invocation of a named run supplies its target, seed, and assembly
+line. Later invocations need only `--run`; settings are immutable and persist
+under `runs/<name>/`. Each run keeps its own `plan.md` there.
 
-Iteration 001 is complete. The non-real-agent suite passes, and the factory
-has generated Tetris with a real agent. Keep `tetris/tetris-001` for the next
-iteration, which adds validation of the generated work.
+Targets own their routes and machine configuration. Assembly lines are
+`.assembly-lines/<name>.dot`, and machine configuration is under
+`.assembly-lines/.machines/<machine>/config.json`. Product commits exclude
+`.assembly-lines` and preserve unrelated repository changes. Optional
+`--model` is forwarded to every machine harness.

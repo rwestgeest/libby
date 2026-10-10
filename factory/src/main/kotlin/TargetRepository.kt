@@ -2,13 +2,19 @@ import java.io.File
 
 /** Owns Git operations scoped to a target, even inside a containing repository. */
 internal class TargetRepository(private val target: File) {
+    private val productPathspec = arrayOf(".", ":(exclude).factory", ":(exclude).assembly-lines")
+
     fun prepare() {
         if (gitResult("rev-parse", "--show-toplevel").second != 0) git("init")
     }
 
     fun uncommittedProductChanges(): String = buildString {
-        append(git("diff", "--no-ext-diff", "HEAD", "--", ".", ":(exclude).factory"))
-        val newFiles = git("ls-files", "--others", "--exclude-standard", "-z", "--", ".", ":(exclude).factory")
+        if (gitResult("rev-parse", "--verify", "HEAD").second == 0) {
+            append(git("diff", "--no-ext-diff", "HEAD", "--", *productPathspec))
+        }
+        val newFiles = git(
+            "ls-files", "--others", "--exclude-standard", "-z", "--", *productPathspec
+        )
         for (path in newFiles.split('\u0000').filter { it.isNotEmpty() }) {
             val (diff, status) = gitResult("diff", "--no-ext-diff", "--no-index", "--", "/dev/null", path)
             if (status > 1) fail(diff.trim())
@@ -17,9 +23,9 @@ internal class TargetRepository(private val target: File) {
     }
 
     fun recordTaskChanges() {
-        if (git("status", "--porcelain", "--", ".").isNotBlank()) {
-            git("add", "--", ".")
-            git("commit", "--only", "-m", "Record factory task", "--", ".")
+        if (git("status", "--porcelain", "--", *productPathspec).isNotBlank()) {
+            git("add", "--", *productPathspec)
+            git("commit", "--only", "-m", "Record factory task", "--", *productPathspec)
         }
     }
 

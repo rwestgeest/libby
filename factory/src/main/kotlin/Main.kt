@@ -12,28 +12,33 @@ fun main(args: Array<String>) {
 
     val factoryDir = System.getenv("FACTORY_DIR")?.let(::File)
         ?: File(System.getProperty("user.dir"))
-    val assemblyLine = readAssemblyLine(
-        File(factoryDir, "assembly-line/line.dot"), factoryDir
+    val runName = option("--run") ?: fail("A run is required")
+    val namedRun = RunStore(factoryDir).open(
+        runName,
+        option("--target"),
+        option("--line"),
+        option("--seed")
     )
+    val assemblyLine = readAssemblyLine(namedRun.assemblyLineFile, namedRun.machinesDirectory)
     if ("--check-line" in args) {
         println("Assembly line accepted")
         return
     }
 
-    val seed = option("--seed")?.let { File(it).absoluteFile.normalize() }
-        ?.takeIf { it.isFile } ?: fail("There is no seed")
-    val target = option("--target")?.let { File(it).absoluteFile.normalize() }
-        ?: fail("A target is required")
-    target.mkdirs()
-    val plan = File(target, ".factory/plan.md")
     val maxAttempts = option("--max-attempts")?.toInt() ?: 3
 
-    val repository = TargetRepository(target)
+    val repository = TargetRepository(namedRun.target)
     repository.prepare()
 
-    val configuration = MachineConfiguration(factoryDir)
-    val runner = MachineRunner(target, configuration, option("--model"))
-    val jobs = MachineJobs(seed, plan, configuration, assemblyLine::resultFields, repository)
+    val configuration = MachineConfiguration(namedRun.machinesDirectory)
+    val runner = MachineRunner(namedRun.target, configuration, option("--model"))
+    val jobs = MachineJobs(
+        namedRun.seed,
+        namedRun.plan,
+        configuration,
+        assemblyLine::resultFields,
+        repository
+    )
 
     val lifecycle = TaskLifecycle(maxAttempts, jobs, repository)
     runFactory(assemblyLine, runner, lifecycle, repository)
