@@ -2,7 +2,7 @@
 
 ## Status
 
-Project/game logic, terminal input/bounded rendering, and tests/documentation tasks are completed. Final validation checks passed; the validation task remains open for planner sign-off after commit. The target now has a Node.js project, terminal-independent game engine, and interactive terminal interface. This plan was derived from `/home/rob/dev/libby/tetris/spec.md`. The designated factory plan does not exist; this local copy stays within the permitted target directory.
+All tasks are completed. Final validation checks passed; the committed validation task has received planner sign-off. The target now has a Node.js project, terminal-independent game engine, and interactive terminal interface. This plan was derived from `/home/rob/dev/libby/tetris/spec.md`. The designated factory plan does not exist; this local copy stays within the permitted target directory.
 
 ## Requirements
 
@@ -52,7 +52,7 @@ Project/game logic, terminal input/bounded rendering, and tests/documentation ta
   - [x] Run `npm test`: all 26 tests pass.
   - [x] Smoke-test `npm start` through a real 61×24 PTY: bounded frame, raw input, arrows/rotation/drops, restart, clean quit, and original terminal attributes restored.
   - Validator findings: none supplied; no finding subtasks needed.
-- [ ] Validate all completion criteria.
+- [x] Validate all completion criteria.
   - [x] Run `npm test`: all 26 tests pass, covering movement, rotation, collision, gravity, locking, drops, line clears, scoring, game over, restart, rendering, and cleanup.
   - [x] Launch `npm start` in a real 61×24 PTY; verify raw input and bounded 24-row frames during play, game over, and restart, with no row wider than 61 columns.
   - [x] Exercise arrow sequences, clockwise/reverse rotation, soft/hard drops, and restart; repeated hard drops reach game over with restart instructions in the existing frame.
