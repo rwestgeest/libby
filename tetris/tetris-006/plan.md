@@ -2,7 +2,7 @@
 
 ## Status
 
-First task completed. Remaining tasks are unfinished. The target now has a Node.js project and terminal-independent game engine. Terminal input/rendering are not implemented yet. This plan was derived from `/home/rob/dev/libby/tetris/spec.md`. The designated factory plan does not exist; this local copy stays within the permitted target directory.
+First task completed. Terminal input and bounded rendering are implemented and awaiting planner review; their top-level task remains unfinished. The target now has a Node.js project, terminal-independent game engine, and interactive terminal interface. This plan was derived from `/home/rob/dev/libby/tetris/spec.md`. The designated factory plan does not exist; this local copy stays within the permitted target directory.
 
 ## Requirements
 
@@ -38,5 +38,12 @@ First task completed. Remaining tasks are unfinished. The target now has a Node.
   - [x] Smoke-test `npm start`; it loads the engine and reports that the terminal interface is pending the next task.
   - Validator findings: none supplied.
 - [ ] Implement terminal input and bounded rendering.
+  - [x] Add arrow-key movement, clockwise/reverse rotation, soft/hard drops, restart, quit, and on-screen controls.
+  - [x] Render exactly 24 rows for playing/game-over states; disable wrapping and use a clipped warning below the minimum terminal size (61 columns by 24 rows).
+  - [x] Add gravity scheduling, resize handling, alternate-screen/cursor/raw-mode restoration, signal/error cleanup, and a non-interactive diagnostic.
+  - [x] Add six terminal tests; all 18 tests pass with `npm test`.
+  - [x] Fix PTY smoke finding: quitting restored the screen but initially left stdin flowing, preventing process exit. Restore previously inactive stdin and assert it is paused after quit.
+  - [x] Verify `npm start` through a real PTY: 24-row frame, raw input, arrow sequences, hard drop, restart, small-size warning, clean quit, and original terminal attributes restored.
+  - Validator findings: none supplied.
 - [ ] Add tests and documentation.
 - [ ] Validate all completion criteria.

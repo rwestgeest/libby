@@ -1,5 +1,8 @@
-import { Game } from './game.js';
+import { startTerminal } from './terminal.js';
 
-// The terminal input and bounded renderer are the next planned task.
-const game = new Game();
-console.log(`Tetris engine ready (${game.board[0].length}x${game.board.length}). Terminal interface not implemented yet.`);
+try {
+  startTerminal();
+} catch (error) {
+  console.error(`Tetris: ${error.message}`);
+  process.exitCode = 1;
+}
