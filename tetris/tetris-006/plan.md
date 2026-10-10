@@ -2,7 +2,7 @@
 
 ## Status
 
-First task implemented, awaiting planner review. The target now has a Node.js project and terminal-independent game engine. Terminal input/rendering are not implemented yet. This plan was derived from `/home/rob/dev/libby/tetris/spec.md`. The designated factory plan does not exist; this local copy stays within the permitted target directory.
+First task completed. Remaining tasks are unfinished. The target now has a Node.js project and terminal-independent game engine. Terminal input/rendering are not implemented yet. This plan was derived from `/home/rob/dev/libby/tetris/spec.md`. The designated factory plan does not exist; this local copy stays within the permitted target directory.
 
 ## Requirements
 
@@ -31,7 +31,7 @@ First task implemented, awaiting planner review. The target now has a Node.js pr
 ## Progress
 
 - [x] Read seed and prepare plan.
-- [ ] Create project and game logic.
+- [x] Create project and game logic.
   - [x] Add dependency-free Node.js project, `npm start` entry point, and `npm test` command.
   - [x] Implement 10-by-20 board, seven-piece bag, movement, rotation with horizontal wall kicks, collisions, gravity, locking, drops, line clearing, scoring, levels, game over, and restart.
   - [x] Add 12 engine tests; `npm test` passes all 12.
