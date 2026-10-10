@@ -2,7 +2,7 @@
 
 ## Status
 
-First task completed. Terminal input and bounded rendering are implemented and awaiting planner review; their top-level task remains unfinished. The target now has a Node.js project, terminal-independent game engine, and interactive terminal interface. This plan was derived from `/home/rob/dev/libby/tetris/spec.md`. The designated factory plan does not exist; this local copy stays within the permitted target directory.
+Project/game logic and terminal input/bounded rendering tasks are completed. Tests/documentation and final validation remain unfinished. The target now has a Node.js project, terminal-independent game engine, and interactive terminal interface. This plan was derived from `/home/rob/dev/libby/tetris/spec.md`. The designated factory plan does not exist; this local copy stays within the permitted target directory.
 
 ## Requirements
 
@@ -37,7 +37,7 @@ First task completed. Terminal input and bounded rendering are implemented and a
   - [x] Add 12 engine tests; `npm test` passes all 12.
   - [x] Smoke-test `npm start`; it loads the engine and reports that the terminal interface is pending the next task.
   - Validator findings: none supplied.
-- [ ] Implement terminal input and bounded rendering.
+- [x] Implement terminal input and bounded rendering.
   - [x] Add arrow-key movement, clockwise/reverse rotation, soft/hard drops, restart, quit, and on-screen controls.
   - [x] Render exactly 24 rows for playing/game-over states; disable wrapping and use a clipped warning below the minimum terminal size (61 columns by 24 rows).
   - [x] Add gravity scheduling, resize handling, alternate-screen/cursor/raw-mode restoration, signal/error cleanup, and a non-interactive diagnostic.
