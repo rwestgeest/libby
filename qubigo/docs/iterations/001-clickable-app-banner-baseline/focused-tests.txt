@@ -1,0 +1,30 @@
+
+> qubigo-frontend@1.0.0 test
+> jest --runInBand test/components/app-banner-component.test.js
+
+PASS test/components/app-banner-component.test.js
+  isIOSUserAgent
+    ✓ detects iPhone, iPad and iPod UAs (1 ms)
+    ✓ detects iPadOS 13+ desktop-mode Macintosh UA via touch
+    ✓ rejects Android and desktop UAs (1 ms)
+  shouldShowAppBanner
+    ✓ shows for an iOS web visitor
+    ✓ hides inside the native app
+    ✓ hides for non-iOS web visitors (no Android app exists)
+    ✓ hides on the game page
+    ✓ shows on other hashes including root
+    ✓ hides when dismissed this session (1 ms)
+  app banner component
+    ✓ renders the verbatim message on an iOS web visitor (12 ms)
+    ✓ renders nothing inside the native app (1 ms)
+    ✓ renders nothing for a non-iOS web visitor (1 ms)
+    ✓ renders nothing on the game page and shows again when leaving it (2 ms)
+    ✓ hides on hashchange into the game page (2 ms)
+    ✓ dismiss hides for the session (2 ms)
+    ✓ stays hidden for the rest of the session even after navigating (1 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       16 passed, 16 total
+Snapshots:   0 total
+Time:        0.484 s, estimated 1 s
+Ran all test suites matching /test\/components\/app-banner-component.test.js/i.

@@ -1,0 +1,223 @@
+
+> qubigo-frontend@1.0.0 test
+> jest --runInBand
+
+PASS test/components/app-banner-component.test.js
+PASS test/pages/registration-page.test.js
+PASS test/pages/set-password-page.test.js
+PASS test/invitations/pages/invited-by-page.test.js
+PASS test/invitations/pages/new-invitation-page.test.js
+PASS test/pages/forgot-password-page.test.js
+PASS test/games/components/game-list-component.test.js
+PASS test/pages/profile-page.test.js
+PASS test/games/pages/game-list-page.test.js
+PASS test/adapters/fetch-based-http.test.js
+  ● Console
+
+    console.log
+      from /api/foo response {
+        headers: { get: [Function: get] },
+        status: 200,
+        ok: true,
+        json: [Function: json]
+      }
+
+      at log (app/adapters/fetch-based-http.js:15:25)
+
+    console.log
+      from /api/foo response {
+        headers: { get: [Function: get] },
+        status: 200,
+        ok: true,
+        json: [Function: json]
+      }
+
+      at log (app/adapters/fetch-based-http.js:15:25)
+
+    console.log
+      from /api/foo response {
+        headers: { get: [Function: get] },
+        status: 200,
+        ok: true,
+        json: [Function: json]
+      }
+
+      at log (app/adapters/fetch-based-http.js:15:25)
+
+    console.log
+      from /api/foo response {
+        headers: { get: [Function: get] },
+        status: 200,
+        ok: true,
+        json: [Function: json]
+      }
+
+      at log (app/adapters/fetch-based-http.js:15:25)
+
+    console.log
+      from /api/foo response {
+        headers: { get: [Function: get] },
+        status: 200,
+        ok: true,
+        json: [Function: json]
+      }
+
+      at log (app/adapters/fetch-based-http.js:15:25)
+
+    console.log
+      from /api/foo response {
+        headers: { get: [Function: get] },
+        status: 200,
+        ok: true,
+        json: [Function: json]
+      }
+
+      at log (app/adapters/fetch-based-http.js:15:25)
+
+    console.log
+      from /api/foo response {
+        headers: { get: [Function: get] },
+        status: 200,
+        ok: true,
+        json: [Function: json]
+      }
+
+      at log (app/adapters/fetch-based-http.js:15:25)
+
+    console.log
+      from /api/foo response {
+        headers: { get: [Function: get] },
+        status: 200,
+        ok: true,
+        json: [Function: json]
+      }
+
+      at log (app/adapters/fetch-based-http.js:15:25)
+
+    console.log
+      from /api/foo response {
+        headers: { get: [Function: get] },
+        status: 200,
+        ok: true,
+        json: [Function: json]
+      }
+
+      at log (app/adapters/fetch-based-http.js:15:25)
+
+    console.log
+      from /api/foo response {
+        headers: { get: [Function: get] },
+        status: 200,
+        ok: true,
+        json: [Function: json]
+      }
+
+      at log (app/adapters/fetch-based-http.js:15:25)
+
+PASS test/pages/sign-in-page.test.js
+PASS test/components/bottom-tab-bar-component.test.js
+PASS test/invitations/pages/new-invitation-from-friends-page.test.js
+PASS test/pages/confirm-registration-page.test.js
+PASS test/components/input-field.test.js
+PASS test/modules/authentication-module.test.js
+  ● Console
+
+    console.log
+      Unable to sign out { messageId: 'error.authentication.notLoggedIn' }
+
+      at log (app/modules/authentication.module.js:47:25)
+
+    console.log
+      Unable to sign out { messageId: 'error.authentication.notLoggedIn' }
+
+      at log (app/modules/authentication.module.js:47:25)
+
+PASS test/invitations/pages/accept-invitation-page.test.js
+PASS test/games/pages/new-table-top-game-page.test.js
+PASS test/games/domain/current-game-module.test.js
+PASS test/invitations/domain/invitations-module.test.js
+PASS test/invitations/components/invitation-list-component.test.js
+PASS test/pages/welcome-page.test.js
+PASS test/modules/user-profile-module.test.js
+PASS test/components/invitation-button-component.test.js
+PASS test/router.test.js
+PASS test/pages/sign-out-page.test.js
+PASS test/domain/date-time.test.js
+PASS test/demo/domain/demo-game-module.test.js
+PASS test/components/top-back-menu-component.test.js
+PASS test/games/domain/games-module.test.js
+PASS test/demo/domain/demo-scenarios.test.js
+PASS test/adapters/api-based-user-profile-repository.test.js
+PASS test/demo/pages/game-demo-page.test.js
+PASS test/pages/confirm-registration-success-page.test.js
+PASS test/games/adapters/api-based-games-repository.test.js
+PASS test/components/throbber-component.test.js
+PASS test/adapters/api-based-authenticator.test.js
+PASS test/invitations/adapters/api-based-invitations-repository.test.js
+PASS test/pages/upgrade-page.test.js
+PASS test/modules/version-module.test.js
+PASS test/modules/onboarding-module.test.js
+PASS test/adapters/incoming-link-handler.test.js
+PASS test/adapters/game-dto-converters.test.js
+PASS test/invitations/domain/friends-module.test.js
+PASS test/pages/registration-success-page.test.js
+PASS test/components/password-rules-component.test.js
+PASS test/components/error-message-component.test.js
+PASS test/adapters/api-based-version-provider.test.js
+PASS test/adapters/api-based-onboarder.test.js
+PASS test/invitations/adapters/api-based-friends-repository.test.js
+PASS test/domain/game-list.test.js
+PASS test/adapters/app-focus-handler.test.js
+PASS test/domain/user-profile.test.js
+PASS test/domain/registration.test.js
+PASS test/domain/piece.test.js
+PASS test/domain/new-password.test.js
+PASS test/domain/jumper.test.js
+PASS test/domain/game.test.js
+PASS test/invitations/domain/invitation-list.test.js
+PASS test/domain/user-name.test.js
+PASS test/domain/sign-in.test.js
+PASS test/domain/qubigo-error.test.js
+PASS test/domain/position.test.js
+PASS test/domain/observable-model.test.js
+PASS test/domain/menu.test.js
+
+Test Suites: 1 skipped, 65 passed, 65 of 66 total
+Tests:       11 skipped, 671 passed, 682 total
+Snapshots:   0 total
+Time:        2.603 s, estimated 3 s
+Ran all test suites.
+Jest did not exit one second after the test run has completed.
+
+'This usually means that there are asynchronous operations that weren't stopped in your tests. Consider running Jest with `--detectOpenHandles` to troubleshoot this issue.
+/home/rob/dev/qubigo/qubigo-frontend/test/domain/jumper.test.js:78
+          (0, _globals.expect)(thing.position.z).toBe(startHeight);
+                                                 ^
+
+JestAssertionError: expect(received).toBe(expected) // Object.is equality
+
+Expected: 2
+Received: 2.0000000000000004
+    at /home/rob/dev/qubigo/qubigo-frontend/test/domain/jumper.test.js:78:50
+    at _callee$ (/home/rob/dev/qubigo/qubigo-frontend/test/utils/eventually.js:36:11)
+    at /home/rob/dev/qubigo/qubigo-frontend/test/utils/eventually.js:8:981
+    at Generator.<anonymous> (/home/rob/dev/qubigo/qubigo-frontend/test/utils/eventually.js:14:1660)
+    at Generator.next (/home/rob/dev/qubigo/qubigo-frontend/test/utils/eventually.js:15:255)
+    at asyncGeneratorStep (/home/rob/dev/qubigo/qubigo-frontend/test/utils/eventually.js:17:70)
+    at _next (/home/rob/dev/qubigo/qubigo-frontend/test/utils/eventually.js:18:163)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:567:9)
+    at processTimers (node:internal/timers:541:7) {
+  matcherResult: {
+    actual: 2.0000000000000004,
+    expected: 2,
+    message: 'expect(received).toBe(expected) // Object.is equality\n' +
+      '\n' +
+      'Expected: 2\n' +
+      'Received: 2.0000000000000004',
+    name: 'toBe',
+    pass: false
+  }
+}
+
+Node.js v24.18.0
