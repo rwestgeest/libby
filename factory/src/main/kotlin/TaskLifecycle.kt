@@ -51,7 +51,7 @@ internal class TaskLifecycle(
     }
 
     private fun finishPlanning() {
-        if (workAccepted) repository.recordTaskChanges()
+        repository.recordPlan(run, workAccepted)
         workInProgress = false
         workAccepted = false
         attempts = 0

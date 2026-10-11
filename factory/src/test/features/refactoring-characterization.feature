@@ -24,7 +24,7 @@ Feature: Current factory behavior before refactoring
     When the factory runs
     Then it reports that it could not read the validator's result
     And the doer has been called once
-    And there are no new commits
+    And there are no new work commits
 
   Scenario: Routing uses the field named by the edge
     Given the edges from validator are labelled "approved" and "not approved"
@@ -41,7 +41,7 @@ Feature: Current factory behavior before refactoring
     Given the edges from validator are labelled "approved" and "not approved"
     When the factory runs
     Then it reports that the result of validator has no field "approved"
-    And there are no new commits
+    And there are no new work commits
 
   Scenario: Retry exhaustion leaves work uncommitted and the task unfinished
     Given the factory allows at most three attempts at a task
@@ -51,7 +51,7 @@ Feature: Current factory behavior before refactoring
     And the doer has been called three times
     And the doer was given the validator's findings
     And the plan shows every task as not done
-    And there are no new commits
+    And there are no new work commits
 
   Scenario: Accepted work is committed before planner completion and its plan afterward
     When the factory runs

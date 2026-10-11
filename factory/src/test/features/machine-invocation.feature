@@ -57,7 +57,7 @@ Feature: Machine invocation and job context preserve the current protocol
     Given the doer cannot be run
     When the factory runs
     Then it reports that it could not run the doer
-    And there are no new commits
+    And there are no new work commits
 
   Scenario: A nonzero process exit reports stdout and inherits stderr
     Given the doer exits unsuccessfully with output
@@ -65,4 +65,4 @@ Feature: Machine invocation and job context preserve the current protocol
     Then it reports the diagnostic "The doer exited unsuccessfully"
     And it reports the diagnostic "failure stdout"
     And it reports the diagnostic "failure stderr"
-    And there are no new commits
+    And there are no new work commits

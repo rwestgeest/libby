@@ -29,6 +29,19 @@ internal class TargetRepository(private val target: File) {
         }
     }
 
+    /** Only this run's authoritative document, never the rest of target metadata. */
+    fun recordPlan(run: NamedRun, acceptedTask: Boolean) {
+        run.requirePlan()
+        val path = target.toPath().toAbsolutePath().normalize()
+            .relativize(run.plan.toPath().toAbsolutePath().normalize()).toString()
+        val pathspec = ":(literal)$path"
+        if (git("status", "--porcelain", "--", pathspec).isNotBlank()) {
+            git("add", "--", pathspec)
+            val boundary = if (acceptedTask) "accepted task progress" else "planning"
+            git("commit", "--only", "-m", "Record factory $boundary (${run.name})", "--", pathspec)
+        }
+    }
+
     private fun git(vararg arguments: String): String {
         val (output, status) = gitResult(*arguments)
         if (status != 0) fail(output.trim())

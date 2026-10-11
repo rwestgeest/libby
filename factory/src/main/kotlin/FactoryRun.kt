@@ -14,6 +14,6 @@ internal fun runFactory(
         lifecycle.followRoute(machine, next)
         machine = next
     }
-    repository.recordTaskChanges()
+    // Commits belong to lifecycle boundaries, not arbitrary routes to finish.
     println("factory stopped")
 }

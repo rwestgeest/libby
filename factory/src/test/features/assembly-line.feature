@@ -83,7 +83,7 @@ Feature: Assembly-line loading and graph decisions preserve current behavior
     Given the validator appends the JSON line '<result>' after its result
     When the factory runs
     Then it reports that the result of validator has no field "satisfied"
-    And there are no new commits
+    And there are no new work commits
 
     Examples:
       | result                                    |
@@ -103,7 +103,7 @@ Feature: Assembly-line loading and graph decisions preserve current behavior
     And the validator is never satisfied
     When the factory runs
     Then it reports the diagnostic "The result of validator does not select an edge"
-    And there are no new commits
+    And there are no new work commits
 
   Scenario: One unconditional edge takes priority over labeled edges
     Given this assembly line:

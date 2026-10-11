@@ -77,5 +77,14 @@ with a letter or digit.
 Targets own their routes and machine configuration. Assembly lines are
 `.assembly-lines/<name>.dot`, and machine configuration is under
 `.assembly-lines/.machines/<machine>/config.json`. Product commits exclude
-`.assembly-lines` and preserve unrelated repository changes. Optional
+`.assembly-lines` and `.factory` and preserve unrelated repository changes.
+After successful planning, a plan-only commit records the authoritative document
+before implementation starts. At an accepted task boundary (routing back to the
+planner), product work is committed first; the planner then updates completion
+status, and a run-labelled plan-only commit records it before further work or
+completion. Commit failures stop execution. Rejected retries do not record work
+or completed status; an arbitrary route to finish does not commit pending work.
+Only this run's exact plan is included in plan commits, not other runs, private
+metadata or assembly-line configuration. Validators review product diffs and
+must not treat plan status as acceptance evidence. Optional
 `--model` is forwarded to every machine harness.

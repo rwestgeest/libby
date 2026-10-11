@@ -377,13 +377,23 @@ class FactorySteps {
     @Then("accepted task commits bracket the planner's completion changes")
     fun acceptedCommitOrdering() {
         val commits = repo.git("rev-list", "--reverse", "$headBeforeRun..HEAD").lines()
-        check(commits.size == 2) { "Expected one product commit per task: $commits\n$output" }
+        check(commits.size == 5) { "Expected initial plan and work/progress pairs: $commits\n$output" }
+        val plan = workspace.relativize(planPath()).toString()
+        check(repo.diffTree(commits[0]) == listOf(plan))
+        check(repo.git("show", "${commits[0]}:$plan").contains("- [ ] alpha"))
+        for ((index, task) in listOf(2 to "alpha", 4 to "beta")) {
+            check(repo.diffTree(commits[index]) == listOf(plan))
+            check(repo.git("show", "${commits[index]}:$plan").contains("- [x] $task"))
+            check(repo.git("log", "-1", "--format=%s", commits[index]) ==
+                "Record factory accepted task progress ($currentRun)")
+        }
+        check(repo.git("show", "${commits[4]}:$plan") == Files.readString(planPath()).trim())
         fun state(call: Int) = Json.parseToJsonElement(
             Files.readString(workspace.resolve("calls/$call.git-state"))
         ).jsonObject
         val initial = state(0)
         check(initial.getValue("head").jsonPrimitive.content == headBeforeRun)
-        for ((call, workIndex) in listOf(1 to 0, 2 to 1)) {
+        for ((call, workIndex) in listOf(1 to 1, 2 to 3)) {
             val snapshot = state(call)
             check(snapshot.getValue("head").jsonPrimitive.content == commits[workIndex]) { snapshot }
             val task = if (call == 1) "alpha" else "beta"
@@ -450,13 +460,22 @@ class FactorySteps {
     }
 
     @Given("a plan with three tasks, none of them done")
-    fun planWithThreeTasks() = Plan(planPath())
-        .write(listOf(Task("alpha"), Task("beta"), Task("gamma")))
+    fun planWithThreeTasks() {
+        Plan(planPath()).write(listOf(Task("alpha"), Task("beta"), Task("gamma")))
+        commitFixturePlan()
+    }
+
+    private fun commitFixturePlan() {
+        val path = workspace.relativize(planPath()).toString()
+        repo.git("add", "--", path)
+        repo.git("commit", "--only", "-m", "Existing target plan fixture", "--", path)
+    }
 
     @Given("a plan in which every task is done")
     fun completedPlan() {
         Plan(planPath())
             .write(listOf(Task("alpha", done = true), Task("beta", done = true)))
+        commitFixturePlan()
     }
 
     @Given("no harness is chosen")
@@ -1118,6 +1137,8 @@ class FactorySteps {
     fun committedPlanMatches() {
         check(Files.isRegularFile(planPath()))
         check(!Files.exists(target.resolve(".factory/plan.md")))
+        check(targetGit("show", "HEAD:./.factory/runs/$currentRun/plan.md") ==
+            Files.readString(planPath()).trim())
     }
 
     @Then("the target has no uncommitted changes")
@@ -1127,6 +1148,7 @@ class FactorySteps {
             ":(exclude).assembly-lines", ":(exclude).factory"
         )
         check(status.isEmpty()) { status }
+        check(targetGit("status", "--porcelain", "--", ".factory/runs/$currentRun/plan.md").isEmpty())
     }
 
     @Then("the plan still has those three tasks")
@@ -1152,7 +1174,7 @@ class FactorySteps {
             check(targetGit("show", "HEAD:./$name.txt") == "Work for $name")
         }
         if (Files.isDirectory(target.resolve(".git"))) {
-            check(targetGit("rev-list", "--count", "HEAD") == "2")
+            check(targetGit("rev-list", "--count", "HEAD") == "5")
         } else {
             check(repo.logSince(headBeforeRun, target).size == 2)
         }
@@ -1202,6 +1224,67 @@ class FactorySteps {
                         MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(file))
                             .joinToString("") { "%02x".format(it) }
                 }
+        }
+    }
+
+    @Given("Git refuses factory commit number {int}")
+    fun refuseCommit(number: Int) {
+        val hook = workspace.resolve(".git/hooks/pre-commit")
+        val counter = workspace.resolve("commit-count")
+        Files.writeString(hook, """
+            #!/bin/sh
+            n=0
+            if test -f "$counter"; then n=${'$'}(head -1 "$counter"); fi
+            n=${'$'}((n + 1))
+            echo "${'$'}n" > "$counter"
+            if test "${'$'}n" = "$number"; then
+              echo "COMMIT_REFUSED" >&2
+              exit 1
+            fi
+        """.trimIndent() + "\n")
+        hook.toFile().setExecutable(true)
+    }
+
+    @Then("the committed plan has no completed tasks")
+    fun committedPlanUnfinished() {
+        val content = targetGit("show", "HEAD:./.factory/runs/$currentRun/plan.md")
+        check(content.contains("- [ ] alpha") && !content.contains("- [x]")) { content }
+    }
+
+    @Given("other target metadata has staged and unstaged changes")
+    fun protectedMetadata() {
+        ensureDefaultRun()
+        val files = listOf(".factory/runs/other/plan.md", ".factory/private.txt",
+            ".assembly-lines/protected.dot")
+        for (name in files) {
+            val path = target.resolve(name)
+            Files.createDirectories(path.parent)
+            Files.writeString(path, "original\n")
+            repo.git("add", "--", workspace.relativize(path).toString())
+        }
+        repo.git("commit", "--only", "-m", "Protected metadata fixture", "--",
+            *files.map { workspace.relativize(target.resolve(it)).toString() }.toTypedArray())
+        for (name in files) {
+            val path = target.resolve(name)
+            Files.writeString(path, "staged\n")
+            repo.git("add", "--", workspace.relativize(path).toString())
+            Files.writeString(path, "unstaged\n")
+            ownershipSnapshots[path] = Files.readString(path)
+        }
+        Files.writeString(workspace.resolve("protected-staged"),
+            repo.git("diff", "--cached", "--", "target/.factory", "target/.assembly-lines"))
+        Files.writeString(workspace.resolve("protected-unstaged"),
+            repo.git("diff", "--", "target/.factory", "target/.assembly-lines"))
+    }
+
+    @Then("other target metadata retains its staged and unstaged changes")
+    fun metadataPreserved() {
+        recordedPlanUnchanged()
+        for ((kind, args) in listOf("staged" to arrayOf("diff", "--cached"),
+                "unstaged" to arrayOf("diff"))) {
+            val diff = repo.git(*args, "--", "target/.factory/runs/other/plan.md",
+                "target/.factory/private.txt", "target/.assembly-lines")
+            check(diff == Files.readString(workspace.resolve("protected-$kind"))) { diff }
         }
     }
 

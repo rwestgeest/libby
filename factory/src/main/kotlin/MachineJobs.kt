@@ -44,6 +44,8 @@ internal class MachineJobs(
                     Check the doer's uncommitted product work in this target, including new files.
                     Review the supplied changes only; do not recheck previously committed work.
                     Your validation lens is: $lens.
+                    The supplied target-owned plan is the work record, not product acceptance evidence.
+                    Task/subtask status updates are permitted; they do not prove the product meets the seed.
                     Report findings only. Change neither the plan nor the product files.
                     ${resultRequest(machine)} Include an array "findings" in your JSON result.
                     Product changes:
