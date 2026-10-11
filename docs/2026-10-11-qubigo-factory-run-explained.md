@@ -8,16 +8,16 @@ The factory runs the process, Qubigo defines the workflow, and the iteration doc
 
 | Location | Purpose |
 | --- | --- |
-| `factory/` | Factory program: invokes agents, follows workflow routes, handles commits and retries. |
-| `factory/.factory/plan.md` | A plan for refactoring the factory itself. Unrelated to Qubigo iteration 001. |
-| `factory/runs/qubigo-001/settings.json` | Connects the named run to its target repository, iteration specification, and `careful` assembly line. |
-| `qubigo/.assembly-lines/careful.dot` | Defines routing between planner, doer, and validator. The directory is `.assembly-lines`, plural. |
-| `qubigo/.assembly-lines/.machines/` | Configures agents. All use `pi`; the validator has the `testability` lens. |
-| `qubigo/docs/iterations/001-clickable-app-banner.md` | Agreed product scope and acceptance criteria, called the seed by the factory. |
-| `qubigo/docs/iterations/001-clickable-app-banner-plan.md` | Agent-created implementation tasks and progress, currently in a workaround location. |
-| `qubigo/docs/iterations/001-clickable-app-banner-validation.md` | Execution evidence, test results, validator findings, and outstanding manual checks. |
-| `qubigo/docs/iterations/001-clickable-app-banner-baseline/` | Raw command outputs before implementation. |
-| `qubigo/docs/iterations/001-clickable-app-banner-verification/` | Raw command outputs after implementation. |
+| [`factory/`](/factory/) | Factory program: invokes agents, follows workflow routes, handles commits and retries. |
+| [`factory/.factory/plan.md`](/factory/.factory/plan.md) | A plan for refactoring the factory itself. Unrelated to Qubigo iteration 001. |
+| [`factory/runs/qubigo-001/settings.json`](/factory/runs/qubigo-001/settings.json) | Connects the named run to its target repository, iteration specification, and `careful` assembly line. |
+| [`qubigo/.assembly-lines/careful.dot`](/qubigo/.assembly-lines/careful.dot) | Defines routing between planner, doer, and validator. The directory is `.assembly-lines`, plural. |
+| [`qubigo/.assembly-lines/.machines/`](/qubigo/.assembly-lines/.machines/) | Configures agents. All use `pi`; the validator has the `testability` lens. |
+| [`qubigo/docs/iterations/001-clickable-app-banner.md`](/qubigo/docs/iterations/001-clickable-app-banner.md) | Agreed product scope and acceptance criteria, called the seed by the factory. |
+| [`qubigo/docs/iterations/001-clickable-app-banner-plan.md`](/qubigo/docs/iterations/001-clickable-app-banner-plan.md) | Agent-created implementation tasks and progress, currently in a workaround location. |
+| [`qubigo/docs/iterations/001-clickable-app-banner-validation.md`](/qubigo/docs/iterations/001-clickable-app-banner-validation.md) | Execution evidence, test results, validator findings, and outstanding manual checks. |
+| [`qubigo/docs/iterations/001-clickable-app-banner-baseline/`](/qubigo/docs/iterations/001-clickable-app-banner-baseline/) | Raw command outputs before implementation. |
+| [`qubigo/docs/iterations/001-clickable-app-banner-verification/`](/qubigo/docs/iterations/001-clickable-app-banner-verification/) | Raw command outputs after implementation. |
 
 ## How the run connects them
 
@@ -67,9 +67,9 @@ Task 5, manual acceptance and handoff, remains unfinished for two reasons.
 
 ### Expected plan is missing
 
-The factory supplies `/home/rob/dev/libby/factory/runs/qubigo-001/plan.md`, but agents are also instructed to work only inside the Qubigo target. They wrote the implementation plan under `qubigo/docs/iterations/` instead. The factory continues supplying the original nonexistent path, so validators report `ENOENT`.
+The factory supplies [`/home/rob/dev/libby/factory/runs/qubigo-001/plan.md`](/factory/runs/qubigo-001/plan.md), but agents are also instructed to work only inside the Qubigo target. They wrote the implementation plan under [`qubigo/docs/iterations/`](/qubigo/docs/iterations/) instead. The factory continues supplying the original nonexistent path, so validators report `ENOENT`.
 
-The target-local document is a workaround, not a repair of the factory contract. The factory should either permit agents to update the run-owned plan or formally use a target-local plan path consistently. This is a recommendation, not an implemented change.
+The target-local document ([`qubigo/docs/iterations/001-clickable-app-banner-plan.md`](/qubigo/docs/iterations/001-clickable-app-banner-plan.md)) is a workaround, not a repair of the factory contract. The factory should either permit agents to update the run-owned plan or formally use a target-local plan path consistently. This is a recommendation, not an implemented change.
 
 ### Manual acceptance requires devices
 
@@ -79,8 +79,8 @@ These are distinct blockers: repairing the plan path will not complete real-devi
 
 ## What counts as the log here
 
-No saved Qubigo factory console log was found during inspection. `factory/target/test.log` is output from the factory's own test suite, not the Qubigo production run.
+No saved Qubigo factory console log was found during inspection. [`factory/target/test.log`](/factory/target/test.log) is output from the factory's own test suite, not the Qubigo production run.
 
-This explanation reconstructs the latest recorded run state from the Qubigo implementation plan and validation evidence, checked against run settings, assembly-line configuration, and factory source (`MachineJobs.kt`, `TaskLifecycle.kt`, and `NamedRun.kt`). Historical execution notes can say a task is still in progress even where the planner later marked it done; use the latest plan status together with the latest validation section.
+This explanation reconstructs the latest recorded run state from the Qubigo implementation plan and validation evidence, checked against run settings, assembly-line configuration, and factory source ([`MachineJobs.kt`](/factory/src/main/kotlin/MachineJobs.kt), [`TaskLifecycle.kt`](/factory/src/main/kotlin/TaskLifecycle.kt), and [`NamedRun.kt`](/factory/src/main/kotlin/NamedRun.kt)). Historical execution notes can say a task is still in progress even where the planner later marked it done; use the latest plan status together with the latest validation section.
 
 No deployment or app-store release is recorded as part of this iteration.
