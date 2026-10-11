@@ -63,3 +63,4 @@ Result in: [2026-10-11-qubigo-factory-run-explained.md](./2026-10-11-qubigo-fact
 
 The only thing I don't really understand is the expected plan missing. Apparently there's a plan supplied by the factory in the runs directory, but the agents are also instructed to work only inside the qubigo target. There's an ambiguity there??? 
 
+Analysis an direction here: [2026-10-11-factory-plan-ownership.md](./2026-10-11-factory-plan-ownership.md)
