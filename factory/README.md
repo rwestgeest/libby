@@ -55,7 +55,17 @@ and [Cucumber CLI](https://cucumber.io/docs/cucumber/api/).
 
 The first invocation of a named run supplies its target, seed, and assembly
 line. Later invocations need only `--run`; settings are immutable and persist
-under `runs/<name>/`. Each run keeps its own `plan.md` there.
+under the factory's `runs/<name>/`. The authoritative implementation plan is
+separate from the seed, at `<target>/.factory/runs/<name>/plan.md`. Every machine
+uses that same path, including retries and name-only resumption. Plans for runs
+sharing a target remain distinct; `.factory/plan.md` is not used.
+
+Run settings record this ownership contract. Legacy settings without it, or a
+factory-owned `runs/<name>/plan.md`, are refused explicitly, without migration
+or replacement of recorded progress. Plan path components cannot be symlinks
+(including aliases within the target), and the plan cannot alias the seed.
+Run names allow only letters, digits, dots, underscores and hyphens, starting
+with a letter or digit.
 
 Targets own their routes and machine configuration. Assembly lines are
 `.assembly-lines/<name>.dot`, and machine configuration is under

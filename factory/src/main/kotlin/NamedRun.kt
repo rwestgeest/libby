@@ -1,4 +1,6 @@
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.LinkOption.NOFOLLOW_LINKS
 import kotlinx.serialization.json.*
 
 internal data class NamedRun(
@@ -8,7 +10,7 @@ internal data class NamedRun(
     val lineName: String,
     val directory: File
 ) {
-    val plan: File get() = File(directory, "plan.md")
+    val plan: File get() = File(target, planLocation(name))
     val assemblyLineFile: File get() = File(target, ".assembly-lines/$lineName.dot")
     val machinesDirectory: File get() = File(target, ".assembly-lines/.machines")
 }
@@ -32,6 +34,11 @@ internal class RunStore(private val factoryDir: File) {
         val seed = resolveSeed(name, seedArgument, existing)
 
         if (!seed.isFile) fail("There is no seed")
+        if (Files.exists(File(directory, "plan.md").toPath(), NOFOLLOW_LINKS) ||
+            (existing != null && existing.planLocation != planLocation(name))) {
+            fail("The \"$name\" run has legacy or ambiguous plan ownership; resumption is unsupported. No plan was migrated.")
+        }
+        validatePlanLocation(target, seed, name)
         target.mkdirs()
 
         if (existing == null) {
@@ -40,6 +47,7 @@ internal class RunStore(private val factoryDir: File) {
                 put("target", target.path)
                 put("line", line)
                 put("seed", seed.path)
+                put("planLocation", planLocation(name))
             }.toString() + "\n")
         }
         return NamedRun(name, target, seed, line, directory)
@@ -80,9 +88,33 @@ internal class RunStore(private val factoryDir: File) {
         StoredRun(
             File(json.getValue("target").jsonPrimitive.content).absoluteFile.normalize().path,
             json.getValue("line").jsonPrimitive.content,
-            File(json.getValue("seed").jsonPrimitive.content).absoluteFile.normalize().path
+            File(json.getValue("seed").jsonPrimitive.content).absoluteFile.normalize().path,
+            json["planLocation"]?.jsonPrimitive?.content
         )
     }.getOrElse { fail("Could not read the run settings") }
 
-    private data class StoredRun(val target: String, val lineName: String, val seed: String)
+    private data class StoredRun(
+        val target: String, val lineName: String, val seed: String, val planLocation: String?
+    )
 }
+
+/** No aliases are allowed in the work-record path, even aliases pointing inside the target. */
+private fun validatePlanLocation(target: File, seed: File, name: String) {
+    val root = target.canonicalFile.toPath()
+    val plan = root.resolve(planLocation(name))
+    var component = root
+    for (part in root.relativize(plan)) {
+        component = component.resolve(part)
+        if (Files.isSymbolicLink(component)) fail("The target plan path must not contain filesystem aliases")
+        if (Files.exists(component, NOFOLLOW_LINKS) &&
+            (if (component == plan) !Files.isRegularFile(component) else !Files.isDirectory(component))) {
+            fail("The target plan path has an incompatible filesystem entry")
+        }
+    }
+    if (seed.canonicalFile.toPath() == plan ||
+        (Files.exists(plan) && Files.isSameFile(seed.toPath(), plan))) {
+        fail("The target plan must be separate from the seed")
+    }
+}
+
+private fun planLocation(name: String): String = ".factory/runs/$name/plan.md"

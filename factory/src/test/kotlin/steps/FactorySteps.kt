@@ -109,6 +109,7 @@ class FactorySteps {
     private var seedNumber = 0
     private val runs = mutableMapOf<String, RunFixture>()
     private val callsByRun = mutableMapOf<String, InvocationCalls>()
+    private val ownershipSnapshots = mutableMapOf<Path, String>()
 
     @Given("a copy of the factory")
     fun copyFactory() {
@@ -529,7 +530,7 @@ class FactorySteps {
     }
 
     private fun planPath(run: String = currentRun): Path =
-        workspace.resolve("factory/runs/$run/plan.md")
+        (runs[run]?.target ?: target).resolve(".factory/runs/$run/plan.md")
 
     private fun linePath(line: String = currentLine, targetPath: Path = target): Path =
         targetPath.resolve(".assembly-lines/$line.dot")
@@ -989,6 +990,80 @@ class FactorySteps {
         check(!Files.exists(workspace.resolve("bin/calls")))
     }
 
+    @Given("the seed content is recorded")
+    fun recordSeedContent() { ownershipSnapshots[seed] = Files.readString(seed) }
+
+    @Then("the seed content is unchanged")
+    fun seedContentUnchanged() {
+        check(Files.readString(seed) == ownershipSnapshots.getValue(seed))
+    }
+
+    @Then("all machines share the target-owned plan path")
+    fun sharedTargetPlanPath() {
+        check(planPath() == target.resolve(".factory/runs/$currentRun/plan.md"))
+        for (folder in listOf("calls", "doer/calls", "validator/calls")) {
+            val records = workspace.resolve(folder)
+            check(Files.isDirectory(records))
+            Files.list(records).use { calls -> calls.filter { it.toString().endsWith(".json") }.forEach { call ->
+                val record = Json.parseToJsonElement(Files.readString(call)).jsonObject
+                val prompt = record.getValue("args").jsonArray.last().jsonPrimitive.content
+                check(prompt.contains("The plan is at \"${planPath()}\".")) { prompt }
+                check(record.getValue("cwd").jsonPrimitive.content == target.toString())
+            } }
+        }
+    }
+
+    @Given("the authoritative plan contains recorded completion")
+    fun recordedCompletion() {
+        ensureDefaultRun()
+        Plan(planPath()).write(listOf(Task("previously accepted work", true)))
+        ownershipSnapshots[planPath()] = Files.readString(planPath())
+    }
+
+    @Then("the recorded plan is unchanged")
+    fun recordedPlanUnchanged() {
+        for ((path, content) in ownershipSnapshots) check(Files.readString(path) == content) { path }
+    }
+
+    @Given("the current plan content is recorded")
+    fun recordCurrentPlan() { ownershipSnapshots[planPath()] = Files.readString(planPath()) }
+
+    @Given("factory-owned legacy progress exists")
+    fun legacyProgress() {
+        val legacy = workspace.resolve("factory/runs/$currentRun/plan.md")
+        Files.createDirectories(legacy.parent)
+        Files.writeString(legacy, "- [x] old accepted work\n- [ ] manual acceptance\n")
+        ownershipSnapshots[legacy] = Files.readString(legacy)
+    }
+
+    @Given("legacy run settings exist without a plan")
+    fun legacySettings() {
+        ensureDefaultRun()
+        val settings = workspace.resolve("factory/runs/$currentRun/settings.json")
+        Files.createDirectories(settings.parent)
+        Files.writeString(settings, buildJsonObject {
+            put("target", target.toString())
+            put("line", currentLine)
+            put("seed", seed.toString())
+        }.toString())
+        ownershipSnapshots[settings] = Files.readString(settings)
+    }
+
+    @Given("the target plan component {string} aliases {string}")
+    fun planAlias(component: String, destination: String) {
+        val link = target.resolve(component)
+        Files.createDirectories(link.parent)
+        val destinationPath = workspace.resolve(destination)
+        Files.createDirectories(destinationPath)
+        Files.createSymbolicLink(link, destinationPath)
+    }
+
+    @Given("the plan aliases the seed by hard link")
+    fun planSeedHardLink() {
+        Files.createDirectories(planPath().parent)
+        Files.createLink(planPath(), seed)
+    }
+
     @Then("there is a plan")
     fun thereIsAPlan() { check(Files.isRegularFile(planPath())) }
 
@@ -1044,7 +1119,7 @@ class FactorySteps {
 
     @Then("there is no plan in the factory's folder")
     fun noFactoryPlan() {
-        check(!Files.exists(target.resolve(".factory/plan.md")))
+        check(!Files.exists(workspace.resolve("factory/runs/$currentRun/plan.md")))
     }
 
     @Given("the planner keeps its plan in prose")

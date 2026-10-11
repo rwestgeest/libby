@@ -26,7 +26,7 @@ plan_match = re.search(r'The plan is at "([^"]+)"\.', prompt)
 if not plan_match:
     raise RuntimeError("The prompt did not name a plan")
 plan = Path(plan_match.group(1))
-plan.parent.mkdir(exist_ok=True)
+plan.parent.mkdir(parents=True, exist_ok=True)
 
 prose_plan = (Path(__file__).parent / "prose-plan").exists()
 planner = "You are the planner." in prompt
