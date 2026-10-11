@@ -102,3 +102,9 @@ or handoff route for outstanding manual checks rather than assuming a doer can
 perform them. Reaching a line's finish node alone is not proof of acceptance.
 `src/test/features/target-acceptance.feature` exercises this contract with a
 synthetic owner/check fixture; it makes no real human or device acceptance claim.
+
+For reproducible lifecycle checks, evidence mapped to all eight iteration 0041
+criteria, and the explicit fetched-spec ownership conflict, see
+[the target-owned plan validation record](docs/target-owned-plan-validation.md).
+That record distinguishes deterministic evidence from unperformed live-agent,
+human and device checks; it does not claim a green full suite.
