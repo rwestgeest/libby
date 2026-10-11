@@ -39,13 +39,27 @@ Resulted in the factory stopping after creating the plan. The plan contained no 
 
 ## Second attempt
 
+### Backlog an initial plan
+
 More focus. Created a backlog.md in docs/ and used the prompt to create an initial iteration. 
 
 The llm was a bit eager to make the iteration a kind of implementation plan. Had do steer a bit, to stick more to the goal.
 
-```
-qubigo/docs/iterations/001-clickable-app-banner.md
-```
+[qubigo/docs/iterations/001-clickable-app-banner.md](/qubigo/docs/iterations/001-clickable-app-banner.md)
 
 
+### Making sense of the result
+
+There are quite some files generated and it is somewhat hard to make sense of it. I tend to start wondering. This, and the potential improvements to the factory to deal with this may be part of the tutorial. Or should i fix this myself now? 
+
+Wondering is time consuming. 
+
+So i aske codex:
+
+> explain the latest factory log. what is where? There is some stuff in factory/.factory the assembly line is in qubigo/.assembly-line and more information is in qubigo/docs/iterations 
+  - how is it all tied together
+
+Result in: [2026-10-11-qubigo-factory-run-explained.md](./2026-10-11-qubigo-factory-run-explained.md)
+
+The only thing I don't really understand is the expected plan missing. Apparently there's a plan supplied by the factory in the runs directory, but the agents are also instructed to work only inside the qubigo target. There's an ambiguity there??? 
 
