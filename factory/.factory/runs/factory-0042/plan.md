@@ -4,7 +4,7 @@
 
 Seed: `iterations/0042-EvidenceOwnedByTarget.md` (unchanged; Draft, product-owner interview in progress).
 
-Status: planned; no implementation or validation performed. Completion: **false**.
+Status: task 1 inspection and baseline recorded; required-test failure blocks accepted-task commits and advancement. No product implementation performed. Completion: **false**.
 
 The authoritative progress and selected evidence live in this run directory, `.factory/runs/factory-0042/`. The seed defines scope, not progress. Preserve iteration 0041 and avoid assembly-line configuration changes, other runs, and unrelated changes. The factory handles commits; this planning step does not implement product work.
 
@@ -21,6 +21,9 @@ The authoritative progress and selected evidence live in this run directory, `.f
 ## Implementation tasks (not started)
 
 1. [ ] Inspect existing planning, machine instructions, resumption, required-test execution, validation, staging, and commit lifecycle. Identify required test commands and existing exclusions without modifying scope. Record findings and any baseline failures locally.
+   - [x] Inspect lifecycle, shared/role-specific instructions, named resumption, Git exclusions and existing coverage; record observations in [validation.md](validation.md).
+   - [x] Identify required commands and execute the unmodified full deterministic baseline: `./test` exited 1 (116/117 scenarios passed).
+   - [ ] Baseline blocker: fetched factory-owned-plan assertion conflicts with the existing 0041 target-owned contract (`spec/features/planning.feature:61`, `FactorySteps.kt:1177`). Requires course/spec-owner reconciliation; do not alter fetched specs or waive the required-test gate. Retain selected failure output in [validation.md](validation.md).
 2. [ ] Make every relevant machine use the same authoritative run record, preserving recorded progress and reading referenced evidence and product-owner feedback on resumption. Keep seed and private execution metadata separate.
 3. [ ] Preserve explicitly selected evidence beside the plan in Git despite general `.factory/` exclusions. Restrict staging to the selected run and protect other runs, unrelated changes, and assembly-line configuration.
 4. [ ] Enforce the required-test gate on accepted-task implementation, evidence, and completion-status commits, advancement, and completion. Cover pre-existing as well as new failures, even when the validator reports satisfaction. Retain normal lifecycle when tests pass, subject to other acceptance requirements.
@@ -32,7 +35,7 @@ Each accepted task must follow the gate and commit protocol above. These checkbo
 
 ## Acceptance evidence ledger
 
-All entries are outstanding. No referenced evidence files exist yet.
+All acceptance entries remain outstanding. [validation.md](validation.md) records task 1 inspection and the failing required-test baseline, not accepted implementation or criterion satisfaction.
 
 | Criterion | Required evidence | Status |
 | --- | --- | --- |
@@ -62,7 +65,8 @@ These open questions do not grant permission to relax the explicit accepted-task
 ## Recorded progress
 
 - Initial planning: seed read; this target-owned plan created. No product changes, tests, commits, or acceptance checks performed by the planner.
-- Automated implementation: not started.
+- Automated implementation: task 1 inspection recorded in [validation.md](validation.md); no product-code changes or commits made. Task checkbox left unfinished for the planner; required-test gate blocks acceptance and advancement. Previous validator findings were `[]`; no validator-finding subtasks required.
+- Planner resumption: reread seed, plan, and referenced `validation.md`. Task 1 inspection is performed, but acceptance and advancement remain blocked by the recorded required-test failure. Repository inspection (`git status --short`, `git log -5 --oneline`, and run-local history) found `plan.md` modified and `validation.md` untracked; the only recorded run commit is initial planning `5a1ef40`. The reported task commit is therefore not supported by the available Git evidence. No tests were rerun, no commits made, and no manual acceptance performed by this planner. Task 1 remains unchecked under the seed's explicit gate; completion remains false.
 - Automated acceptance: not performed.
 - Product-owner/manual acceptance: not performed; clarification outstanding.
-- Blockers: no observed test failure yet; required commands and baseline still need inspection. Draft-scope/manual clarification remains outstanding.
+- Blockers: `./test` exit 1; 116/117 scenarios pass, with the previously documented 0041/fetched-spec plan-location conflict still failing. See [validation.md](validation.md) for selected output and source references. No baseline waiver, accepted-task commits, advancement or completion permitted. Draft-scope/manual clarification remains outstanding.
