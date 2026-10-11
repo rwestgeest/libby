@@ -182,6 +182,74 @@ class FactorySteps {
         configureMachine("doer", "harness", doer.toString())
     }
 
+    @Given("automated work is complete but manual acceptance is unavailable")
+    fun manualAcceptanceFixture() {
+        Files.writeString(workspace.resolve("manual-acceptance"), "yes")
+        Files.writeString(seed, Files.readString(seed) +
+            "\nManual acceptance requires the owner to inspect the terminal display.\n")
+        customInspector()
+        Files.writeString(workspace.resolve("inspector.py"),
+            "#!/usr/bin/env python3\nimport sys\nprint('Manual acceptance remains outstanding')\nsys.exit(1)\n")
+        thisAssemblyLine("""
+            digraph {
+              start -> planner
+              planner -> finish [label="complete"]
+              planner -> inspector [label="not complete"]
+              inspector -> planner
+            }
+        """.trimIndent())
+    }
+
+    @Given("the owner records an unperformed manual check in the target")
+    fun unperformedManualCheck() {
+        Files.createDirectories(target.resolve("acceptance"))
+        Files.writeString(target.resolve("acceptance/manual.md"),
+            "Check: terminal display not inspected; owner unavailable\n")
+    }
+
+    @Given("the owner records passing manual evidence in the target")
+    fun ownerManualEvidence() {
+        Files.createDirectories(target.resolve("acceptance"))
+        Files.writeString(target.resolve("acceptance/manual.md"),
+            "Owner: fixture maintainer\nCheck: terminal display inspected; passed\n")
+        Files.writeString(planPath(), Files.readString(planPath()).replace(
+            "Manual acceptance: outstanding; operator unavailable.",
+            "Manual acceptance: passed; see recorded owner evidence."))
+        val paths = listOf(planPath(), target.resolve("acceptance/manual.md"))
+            .map { workspace.relativize(it).toString() }.toTypedArray()
+        repo.git("add", "--", *paths)
+        repo.git("commit", "--only", "-m", "Owner records fixture acceptance", "--", *paths)
+    }
+
+    @Given("factory execution settings are recorded")
+    fun recordExecutionSettings() {
+        val settings = workspace.resolve("factory/runs/$currentRun/settings.json")
+        ownershipSnapshots[settings] = Files.readString(settings)
+    }
+
+    @Then("the planner reports acceptance {word}")
+    fun plannerAcceptance(expected: String) {
+        val last = countCalls(workspace.resolve("calls")) - 1
+        val result = Json.parseToJsonElement(
+            Files.readString(workspace.resolve("calls/$last.result"))).jsonObject
+        check(result.getValue("complete").jsonPrimitive.boolean == expected.toBooleanStrict())
+        val prompt = Files.readString(workspace.resolve("calls/$last.txt"))
+        for (instruction in listOf("outstanding manual acceptance required by the seed",
+                "unperformed manual check remains explicitly outstanding",
+                "not merely when implementation tasks are done",
+                "referenced target-local evidence", "Do not require factory-side acceptance edits")) {
+            check(prompt.contains(instruction)) { prompt }
+        }
+    }
+
+    @Then("manual acceptance remains outstanding in the target plan")
+    fun manualOutstanding() {
+        val text = Files.readString(planPath())
+        check(text.contains("Automated implementation: complete")) { text }
+        check(text.contains("Manual acceptance: outstanding")) { text }
+        check(text.contains("Evidence: acceptance/manual.md")) { text }
+    }
+
     @Given("the planner's planning behavior is {string}")
     fun planningBehavior(behavior: String) {
         Files.writeString(workspace.resolve("planning-mode"), behavior)

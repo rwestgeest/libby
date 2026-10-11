@@ -88,3 +88,17 @@ Only this run's exact plan is included in plan commits, not other runs, private
 metadata or assembly-line configuration. Validators review product diffs and
 must not treat plan status as acceptance evidence. Optional
 `--model` is forwarded to every machine harness.
+
+Acceptance is also target-owned. The planner records required manual checks and
+acceptance evidence in the plan or target-local documents referenced by it.
+Completed automated tasks do not satisfy unavailable or unperformed manual
+checks. On name-only resumption the planner reads the existing record, including
+owner-supplied evidence, without regenerating progress or requiring factory-side
+acceptance edits. Owners can commit evidence and update the acceptance record in
+the target, then resume the run. The planner, not factory checkbox parsing or an
+acceptance schema, decides whether the seed's required acceptance is supported.
+Assembly-line routing remains target-defined: operators must provide a stopping
+or handoff route for outstanding manual checks rather than assuming a doer can
+perform them. Reaching a line's finish node alone is not proof of acceptance.
+`src/test/features/target-acceptance.feature` exercises this contract with a
+synthetic owner/check fixture; it makes no real human or device acceptance claim.

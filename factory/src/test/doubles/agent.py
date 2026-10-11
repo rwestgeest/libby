@@ -70,6 +70,23 @@ if planner:
             print(json.dumps({"complete": False}))
             sys.exit(0)
 
+if planner and (Path(__file__).parent / "manual-acceptance").exists():
+    # Deterministic planner policy only: orchestration never parses this record.
+    if not plan.exists():
+        plan.write_text(
+            "Automated implementation: complete (fixture checks passed).\n"
+            "Manual acceptance: outstanding; operator unavailable.\n"
+            "Evidence: acceptance/manual.md (target-local, not yet available).\n"
+        )
+    evidence = Path("acceptance/manual.md")
+    complete = ("Evidence: acceptance/manual.md" in plan.read_text()
+                and evidence.exists()
+                and evidence.read_text() == "Owner: fixture maintainer\n"
+                    "Check: terminal display inspected; passed\n")
+    (calls / f"{number}.result").write_text(json.dumps({"complete": complete}))
+    print(json.dumps({"complete": complete}))
+    sys.exit(0)
+
 if validator:
     print(json.dumps({"satisfied": True, "findings": []}))
     sys.exit(0)

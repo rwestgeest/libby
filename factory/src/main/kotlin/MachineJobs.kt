@@ -54,7 +54,15 @@ internal class MachineJobs(
             }
             else -> resultRequest(machine)
         }
-        return "You are the $machine.\n$context\n$job"
+        val acceptance = if (machine == "planner") """
+            Distinguish completed automated work from outstanding manual acceptance required by the seed.
+            Record acceptance evidence and outstanding checks in the target-owned plan or target-local documents referenced by it.
+            An unavailable or unperformed manual check remains explicitly outstanding; never infer a pass from automated work or task status.
+            Report complete only when required acceptance is supported by recorded evidence, not merely when implementation tasks are done.
+            On resumption, read the plan and its referenced target-local evidence, including product-owner acceptance; preserve recorded progress and outstanding checks.
+            Do not require factory-side acceptance edits or invent evidence. Completion decisions remain yours.
+        """.trimIndent() else ""
+        return "You are the $machine.\n$context\n$job\n$acceptance"
     }
 
     private fun resultRequest(machine: String): String {
