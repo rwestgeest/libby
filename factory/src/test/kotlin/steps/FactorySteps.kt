@@ -182,6 +182,24 @@ class FactorySteps {
         configureMachine("doer", "harness", doer.toString())
     }
 
+    @Given("the planner's planning behavior is {string}")
+    fun planningBehavior(behavior: String) {
+        Files.writeString(workspace.resolve("planning-mode"), behavior)
+    }
+
+    @Then("the planner is told to preserve authoritative progress")
+    fun plannerPreservesProgress() {
+        val prompt = Files.readString(workspace.resolve("calls/0.txt"))
+        check(prompt.contains("exact supplied plan path, never an alternative location")) { prompt }
+        check(prompt.contains("recorded progress on retries and resumption; do not regenerate")) { prompt }
+        check(prompt.contains("All plan and progress writes must stay inside the target")) { prompt }
+    }
+
+    @Then("the authoritative plan is absent")
+    fun authoritativePlanAbsent() {
+        check(!Files.exists(planPath())) { "Unexpected plan at ${planPath()}" }
+    }
+
     @Given("the planner plans the tasks alpha and beta")
     fun preparePlanner() {
         agent = workspace.resolve("agent.py")

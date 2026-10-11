@@ -60,6 +60,13 @@ separate from the seed, at `<target>/.factory/runs/<name>/plan.md`. Every machin
 uses that same path, including retries and name-only resumption. Plans for runs
 sharing a target remain distinct; `.factory/plan.md` is not used.
 
+Before planning, the factory prepares only the authoritative plan's target-local
+parent directories. The planner must create that exact file before routing can
+continue, even if it reports completion. Missing plans or planner failures stop
+execution; a doer cannot run without the authoritative plan, even on a route
+that bypasses planning. No fallback plan is used. Retries and resumption instruct
+the planner to read existing progress rather than regenerate it from the seed.
+
 Run settings record this ownership contract. Legacy settings without it, or a
 factory-owned `runs/<name>/plan.md`, are refused explicitly, without migration
 or replacement of recorded progress. Plan path components cannot be symlinks

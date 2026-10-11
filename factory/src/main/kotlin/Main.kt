@@ -40,6 +40,6 @@ fun main(args: Array<String>) {
         repository
     )
 
-    val lifecycle = TaskLifecycle(maxAttempts, jobs, repository)
+    val lifecycle = TaskLifecycle(maxAttempts, jobs, repository, namedRun)
     runFactory(assemblyLine, runner, lifecycle, repository)
 }

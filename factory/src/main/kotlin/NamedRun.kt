@@ -13,6 +13,20 @@ internal data class NamedRun(
     val plan: File get() = File(target, planLocation(name))
     val assemblyLineFile: File get() = File(target, ".assembly-lines/$lineName.dot")
     val machinesDirectory: File get() = File(target, ".assembly-lines/.machines")
+
+    fun preparePlanning() {
+        validatePlanLocation(target, seed, name)
+        if (!plan.parentFile.isDirectory && !plan.parentFile.mkdirs()) {
+            fail("Could not create the authoritative plan directory: ${plan.parentFile}")
+        }
+    }
+
+    fun requirePlan() {
+        validatePlanLocation(target, seed, name)
+        if (!plan.isFile) {
+            fail("Planning did not establish the authoritative plan: $plan. Product work cannot proceed.")
+        }
+    }
 }
 
 internal class RunStore(private val factoryDir: File) {

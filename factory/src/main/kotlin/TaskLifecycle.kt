@@ -5,7 +5,8 @@ import kotlinx.serialization.json.JsonObject
 internal class TaskLifecycle(
     private val maxAttempts: Int,
     private val jobs: MachineJobs,
-    private val repository: TargetRepository
+    private val repository: TargetRepository,
+    private val run: NamedRun
 ) {
     private var workInProgress = false
     private var workAccepted = false
@@ -13,6 +14,8 @@ internal class TaskLifecycle(
     private var findings = JsonArray(emptyList())
 
     fun prepareExecution(machine: String): String {
+        if (machine == "planner") run.preparePlanning()
+        if (machine == "doer") run.requirePlan()
         if (machine == "planner" && workInProgress) acceptWork()
         // Construct the prompt before beginning the attempt, preserving failure ordering.
         val prompt = jobs.prompt(machine, workAccepted, findings)
@@ -21,6 +24,7 @@ internal class TaskLifecycle(
     }
 
     fun receiveResult(machine: String, result: JsonObject) {
+        if (machine == "planner") run.requirePlan()
         if (machine == "validator") {
             findings = result["findings"] as? JsonArray
                 ?: fail("Could not read the validator's result")

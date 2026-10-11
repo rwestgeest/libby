@@ -26,7 +26,8 @@ plan_match = re.search(r'The plan is at "([^"]+)"\.', prompt)
 if not plan_match:
     raise RuntimeError("The prompt did not name a plan")
 plan = Path(plan_match.group(1))
-plan.parent.mkdir(parents=True, exist_ok=True)
+if "You are the planner." in prompt and not plan.parent.is_dir():
+    raise RuntimeError("The factory did not prepare the authoritative plan directory")
 
 prose_plan = (Path(__file__).parent / "prose-plan").exists()
 planner = "You are the planner." in prompt
@@ -46,6 +47,28 @@ if workspace:
     role = "planner" if planner else "validator" if validator else "doer"
     with (Path(workspace) / "call-order.txt").open("a") as order:
         order.write(role + "\n")
+
+if planner:
+    mode = Path(__file__).parent / "planning-mode"
+    if mode.exists():
+        behavior = mode.read_text().strip()
+        if behavior == "failure":
+            print("Planning failed", file=sys.stderr)
+            sys.exit(1)
+        if behavior == "missing":
+            print(json.dumps({"complete": False}))
+            sys.exit(0)
+        if behavior == "missing-complete":
+            print(json.dumps({"complete": True}))
+            sys.exit(0)
+        if behavior == "alternative":
+            Path("alternative-plan.md").write_text("- [ ] invented work\n")
+            print(json.dumps({"complete": False}))
+            sys.exit(0)
+        if behavior == "delete-after-work" and "The task's work has been committed." in prompt:
+            plan.unlink()
+            print(json.dumps({"complete": False}))
+            sys.exit(0)
 
 if validator:
     print(json.dumps({"satisfied": True, "findings": []}))

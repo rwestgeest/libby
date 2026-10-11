@@ -23,7 +23,10 @@ internal class MachineJobs(
                 Do not implement product work.
                 ${resultRequest(machine)}
             """.trimIndent() else """
-                If no plan exists, write one from the seed. Otherwise, report its status without changing it.
+                If no plan exists, write one from the seed at the exact supplied plan path, never an alternative location.
+                Otherwise, report its status without changing it.
+                Use the existing plan's recorded progress on retries and resumption; do not regenerate it from the seed.
+                Keep the seed unchanged. All plan and progress writes must stay inside the target.
                 Do not implement product work.
                 ${resultRequest(machine)}
             """.trimIndent()
