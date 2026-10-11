@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+exec npx --yes markserv "$repo_root/docs" --address 0.0.0.0 --port 8000 --no-browser --light "$@"
