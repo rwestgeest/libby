@@ -1,15 +1,19 @@
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
 
 /** Owns attempt state and the work/plan commit boundary; never reads the plan. */
 internal class TaskLifecycle(
     private val maxAttempts: Int,
     private val jobs: MachineJobs,
     private val repository: TargetRepository,
-    private val run: NamedRun
+    private val run: NamedRun,
+    private val requiredTests: RequiredTests = RequiredTests(run.target)
 ) {
     private var workInProgress = false
     private var workAccepted = false
+    private var plannerComplete = false
     private var attempts = 0
     private var findings = JsonArray(emptyList())
 
@@ -24,7 +28,10 @@ internal class TaskLifecycle(
     }
 
     fun receiveResult(machine: String, result: JsonObject) {
-        if (machine == "planner") run.requirePlan()
+        if (machine == "planner") {
+            run.requirePlan()
+            plannerComplete = (result["complete"] as? JsonPrimitive)?.booleanOrNull == true
+        }
         if (machine == "validator") {
             findings = result["findings"] as? JsonArray
                 ?: fail("Could not read the validator's result")
@@ -46,6 +53,7 @@ internal class TaskLifecycle(
     }
 
     private fun acceptWork() {
+        requiredTests.requirePassing()
         repository.validateEvidenceSelection(run)
         repository.recordTaskChanges()
         repository.recordEvidence(run)
@@ -53,6 +61,8 @@ internal class TaskLifecycle(
     }
 
     private fun finishPlanning() {
+        // Recheck after planner edits and on completed resumption; no cached waiver.
+        if (workAccepted || plannerComplete) requiredTests.requirePassing()
         repository.recordEvidence(run)
         repository.recordPlan(run, workAccepted)
         workInProgress = false

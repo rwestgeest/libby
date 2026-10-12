@@ -134,6 +134,9 @@ class FactorySteps {
         targetNumber++
         val name = if (targetNumber == 1) "target" else "target-$targetNumber"
         target = Files.createDirectory(workspace.resolve(name))
+        installRequiredTests("passing")
+        repo.git("add", "--", "$name/test")
+        repo.commit("Synthetic target required-test adapter")
     }
 
     @Given("a seed describing a game of Tetris")
@@ -431,6 +434,78 @@ class FactorySteps {
             val relative = workspace.relativize(path).toString()
             evidenceIsolation[path] = Triple(Files.readString(path),
                 repo.git("diff", "--cached", "--", relative), repo.git("diff", "--", relative))
+        }
+    }
+
+    private fun installRequiredTests(boundary: String) {
+        val check = when (boundary) {
+            "baseline" -> "exit 1"
+            "new work" -> "[ ! -e alpha.txt ]"
+            "progress" -> "! grep -q '\\[x\\] alpha' .factory/runs/tetris/plan.md"
+            "completion" -> "! grep -q '\\[x\\] beta' .factory/runs/tetris/plan.md"
+            else -> "exit 0"
+        }
+        Files.writeString(target.resolve("test"), "#!/bin/sh\nprintf '%s\\n' \"\$(git rev-parse HEAD)\" >> '${workspace.resolve("required-test-heads")}'\necho 'Synthetic required-test result: $boundary'\n$check\n")
+        target.resolve("test").toFile().setExecutable(true)
+    }
+
+    @Given("required tests fail at {string}")
+    fun requiredTestsFail(boundary: String) {
+        if (boundary == "unavailable") Files.delete(target.resolve("test"))
+        else if (boundary == "unexecutable") target.resolve("test").toFile().setExecutable(false)
+        else installRequiredTests(boundary)
+        if (boundary == "baseline") {
+            Files.createDirectories(planPath().parent)
+            val existing = if (Files.exists(planPath())) Files.readString(planPath())
+                else "- [ ] alpha\n- [ ] beta\n"
+            Files.writeString(planPath(), existing + "Baseline failure documented: [baseline](baseline.md).\n")
+            Files.writeString(planPath().parent.resolve("baseline.md"),
+                "Synthetic pre-existing required-test failure: exit 1. Not a waiver.\n")
+        }
+    }
+
+    @Then("the validator has been called once")
+    fun validatorCalledOnce() {
+        check(invocationCalls().validator == 1L)
+    }
+
+    @Then("required-test failure leaves the task pending without completion")
+    fun requiredFailurePending() {
+        check(exitCode != 0 && !output.contains("factory stopped") && !output.contains("\"complete\":true")) { output }
+        check(Files.readString(planPath()).contains("- [ ] alpha"))
+        check(invocationCalls().planner == 1L) { "Planner advanced despite test failure" }
+        check(output.contains("Synthetic required-test result:") || output.contains("Cannot run")) { output }
+    }
+
+    @Then("only the first implementation is committed without accepted progress")
+    fun noProgressAfterTestFailure() {
+        val commits = repo.git("rev-list", "$headBeforeRun..HEAD").lines().filter { it.isNotBlank() }
+        check(commits.any { repo.diffTree(it).contains("target/alpha.txt") })
+        check(commits.none { repo.git("log", "-1", "--format=%s", it).contains("accepted task progress") })
+        check(repo.git("show", "HEAD:target/.factory/runs/tetris/plan.md").contains("- [ ] alpha"))
+        check(!output.contains("factory stopped")) { output }
+    }
+
+    @Then("completion failure preserves the last committed pending task")
+    fun completionFailurePending() {
+        val commits = repo.git("rev-list", "$headBeforeRun..HEAD").lines().filter { it.isNotBlank() }
+        val progress = commits.filter { repo.git("log", "-1", "--format=%s", it).contains("accepted task progress") }
+        check(progress.size == 1)
+        check(repo.git("show", "HEAD:target/.factory/runs/tetris/plan.md").contains("- [ ] beta"))
+        check(!output.contains("factory stopped") && !output.contains("\"complete\":true")) { output }
+    }
+
+    @Then("required tests ran before implementation and progress commits")
+    fun testBoundaryHeads() {
+        val heads = Files.readAllLines(workspace.resolve("required-test-heads"))
+        check(heads.size == 4) { heads }
+        val commits = repo.git("rev-list", "--reverse", "$headBeforeRun..HEAD").lines()
+        val work = commits.filter { repo.git("log", "-1", "--format=%s", it) == "Record factory task" }
+        val progress = commits.filter { repo.git("log", "-1", "--format=%s", it).contains("accepted task progress") }
+        check(work.size == 2 && progress.size == 2)
+        for (i in 0..1) {
+            check(repo.git("rev-parse", "${work[i]}^") == heads[2 * i])
+            check(repo.git("rev-parse", "${progress[i]}^") == heads[2 * i + 1])
         }
     }
 
@@ -1397,6 +1472,7 @@ class FactorySteps {
         extraWorkspaces.add(outside)
         target = outside.resolve("product")
         preparedTarget.toFile().copyRecursively(target.toFile())
+        target.resolve("test").toFile().setExecutable(true)
         runs[currentRun] = runs.getValue(currentRun).copy(target = target)
         absoluteTarget = true
     }

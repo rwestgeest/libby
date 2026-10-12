@@ -98,8 +98,21 @@ to survive `.gitignore`; product staging still respects ignore rules. The factor
 does not parse plan contents to discover evidence. Preserve the manifest on
 resumption; no manifest means no selected-evidence commit. Evidence created by
 the planner is recorded before its plan commit too. Invalid selections stop
-execution before task recording. Required-test gating and fully related commit
-identifiers are still outstanding iteration 0042 work.
+execution before task recording. Fully related commit identifiers remain
+outstanding iteration 0042 work.
+
+Every target must provide an executable `./test` adapter that runs its complete
+required suite and returns nonzero on any failure (including pre-existing ones).
+The factory independently executes it in the target before accepted-work product
+and evidence commits, then again after planner edits before evidence/progress
+commits or advancement. Completed planning and name-only completed resumption
+also require a passing suite before completion is printed. A missing/unexecutable
+adapter blocks acceptance; validator satisfaction and recorded baseline failures
+provide no waiver. This is not a red-phase gate: doers can revise authorized tests
+and implement before it runs. Other manual acceptance requirements still apply.
+Initial incomplete planning remains outside this gate, pending scope clarification.
+Failure stops execution without committing changes at the blocked boundary;
+already accepted earlier boundaries are not rolled back.
 
 Validators review product diffs and
 must not treat plan status as acceptance evidence. Optional

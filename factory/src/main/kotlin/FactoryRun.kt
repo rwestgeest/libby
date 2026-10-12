@@ -8,10 +8,11 @@ internal fun runFactory(
     var machine = assemblyLine.next("start", null)
     while (machine != "finish") {
         val result = runner.run(machine, lifecycle.prepareExecution(machine))
-        println(result)
         lifecycle.receiveResult(machine, result)
         val next = assemblyLine.next(machine, result)
         lifecycle.followRoute(machine, next)
+        // Never publish planner completion before the independent acceptance gate.
+        println(result)
         machine = next
     }
     // Commits belong to lifecycle boundaries, not arbitrary routes to finish.

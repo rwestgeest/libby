@@ -26,6 +26,7 @@ internal class MachineJobs(
         Record the old expectation, the requested replacement, and the reason for each test change in the run record.
         If the intended behavior is ambiguous, report the question rather than inventing a requirement.
         A red phase during TDD is expected; acceptance still requires all required tests to pass.
+        The target's executable ./test must run the complete required suite and fail on any required-test failure. The factory independently runs it before accepted-work commits and after planner edits before progress commits, advancement or completion. Missing tests, pre-existing failures, baseline documentation and validator satisfaction never waive this gate. Preserve any other outstanding acceptance checks.
         End your answer with a single line of JSON.
     """.trimIndent()
 
