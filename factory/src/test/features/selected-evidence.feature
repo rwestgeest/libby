@@ -24,6 +24,17 @@ Feature: Explicitly selected target-owned evidence
     And accepted implementation, evidence and progress commits are related and ordered
     And unselected run records and assembly-line changes are preserved
 
+  Scenario: Rejected work does not commit selected evidence or accepted progress
+    Given the target ignores factory metadata and contains unrelated staged run records
+    And the doer selects evidence beside the plan
+    And the validator is never satisfied
+    When the factory runs the "tetris" run
+    Then it reports that a task hit its limit
+    And no task product or selected evidence has been committed
+    And rejected selected evidence remains uncommitted with the task pending
+    And unselected run records and assembly-line changes are preserved
+    And the factory's own files and unrelated uncommitted changes are as they were
+
   Scenario Outline: Evidence selection cannot escape its run
     Given the doer selects the evidence path "<path>"
     When the factory runs the "tetris" run

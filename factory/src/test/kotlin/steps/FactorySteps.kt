@@ -574,6 +574,23 @@ class FactorySteps {
             check(snapshot.getValue("head").jsonPrimitive.content == evidence) { snapshot }
         }
         check(repo.git("show", "HEAD:$plan") == Files.readString(planPath()).trim())
+        val testHeads = Files.readAllLines(workspace.resolve("required-test-heads"))
+        val expectedHeads = listOf(commits[0], commits[2], commits[3], commits[5])
+        check(testHeads.take(4) == expectedHeads) { "Required-test boundaries: $testHeads != $expectedHeads" }
+        // Completed name-only resumption runs the gate once without changing history.
+        check(testHeads.size in 4..5 && testHeads.drop(4).all { it == commits.last() }) { testHeads }
+    }
+
+    @Then("rejected selected evidence remains uncommitted with the task pending")
+    fun rejectedEvidencePending() {
+        val prefix = workspace.relativize(planPath().parent).toString()
+        check(Files.exists(planPath().parent.resolve("evidence.list")))
+        check(Files.readString(planPath().parent.resolve("validation.md")) == "Synthetic checks passed for alpha\n")
+        check(Files.readString(planPath()).contains("- [ ] alpha"))
+        check(repo.git("show", "HEAD:$prefix/plan.md").contains("- [ ] alpha"))
+        check(repo.git("ls-tree", "-r", "--name-only", "HEAD", "--", prefix) == "$prefix/plan.md")
+        check(!Files.exists(workspace.resolve("required-test-heads"))) { "Rejected work reached the acceptance gate" }
+        check(!output.contains("factory stopped") && !output.contains("\"complete\":true")) { output }
     }
 
     @Then("unselected run records and assembly-line changes are preserved")
