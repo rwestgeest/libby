@@ -4,7 +4,7 @@
 
 Seed: `iterations/0042-EvidenceOwnedByTarget.md` (unchanged; Draft, product-owner interview in progress).
 
-Status: tasks 1–5 completed. Related-commit implementation is verified in `f5b3b23`; the recorded full deterministic suite passes (134/134 scenarios, 1941 steps); see [validation.md](validation.md). Task 6 is next. This run's actual commit-lifecycle acceptance and product-owner/manual clarification remain outstanding. Completion: **false**.
+Status: automated tasks 1–6 completed. Task 6 test changes are verified in `764b2fd`; the recorded full deterministic suite passes (135/135 scenarios, 1961 steps); see [validation.md](validation.md). Task 7 acceptance review is next. This run's actual commit-lifecycle acceptance and product-owner/manual clarification remain outstanding. Completion: **false**.
 
 ## Product-owner decision: local test evolution (2026-10-12)
 
@@ -53,10 +53,14 @@ The authoritative progress and selected evidence live in this run directory, `.f
    - [x] Inspect intended red (missing implementation run identity); implement run and implementation trailers through accepted-work/planner boundaries, and document the protocol without changing staging scope or test gates.
    - [x] Rerun the complete required deterministic suite: 134 scenarios / 1941 steps passed; record TDD, the corrected fixture-path assertion and synthetic-evidence limits in [validation.md](validation.md). Findings were `[]`; no finding subtasks required.
    - Planner verified implementation commit `f5b3b23` and marked task 5 done against the recorded passing full suite (134 scenarios / 1941 steps) and synthetic actual-history assertions. This completes automated implementation, not this run's acceptance: selected evidence/manifest remain uncommitted, and the actual related implementation/evidence/progress sequence and remaining end-to-end/manual acceptance remain outstanding.
-6. [ ] Add deterministic coverage for first execution, named resumption, actual committed contents and commit ordering, failure gates, passing counterpart, and isolation. Exercise acceptance end to end and record selected results.
-   - Reuse recorded tasks 2–5 coverage; inspect for remaining acceptance gaps without manufacturing red for already-satisfied expectations. Run the complete required suite and record results and synthetic-fixture limits.
-   - Verify this run's actual selected-evidence and plan commits, implementation links, ordering and isolation. Record missing relationships or ordering as unresolved; do not infer acceptance from synthetic triples or rewrite historical observations.
+6. [x] Add deterministic coverage for first execution, named resumption, actual committed contents and commit ordering, failure gates, passing counterpart, and isolation. Exercise acceptance end to end and record selected results.
+   - [x] Reuse tasks 2–5 coverage and inspect remaining acceptance gaps. Extend actual-history checks to verify required-test HEADs around evidence/progress triples, and add rejected-selected-evidence/isolation coverage. Both already match the implementation; no artificial red or production change. See [task 6 validation](validation.md#task-6-end-to-end-deterministic-acceptance-and-live-history-inspection).
+   - [x] Run the complete required deterministic suite and record selected results and synthetic-fixture limits (135 scenarios / 1961 steps passed). Previous validator findings were `[]`; no finding subtasks required.
+   - [x] Inspect this run's actual selected-evidence and plan commits, implementation links, ordering and workspace isolation; record missing relationships and ordering without rewriting history or claiming acceptance.
+   - Planner verified task 6 automated test changes in `764b2fd` against recorded passing full-suite results (135 scenarios / 1961 steps). Automated coverage and live-history inspection are done; actual lifecycle acceptance is explicitly carried forward to task 7, not marked passed.
 7. [ ] Review all acceptance evidence and outstanding checks; report completion only when every required criterion is supported. Automated task completion alone is insufficient.
+   - [ ] Verify the factory-created accepted implementation/evidence/progress sequence after commits exist. Historical inspection at `3bb0efd` found task 5 implementation `f5b3b23` and progress `3bb0efd` without relationship trailers or intervening evidence. Current HEAD `764b2fd` adds task 6 tests but still has message `Record factory task` without trailers; no intervening run-evidence commit exists. The manifest remains untracked and selected task 2–6 validation remains modified, not committed. Do not amend history or infer acceptance from synthetic triples. The factory handles commits; this run's actual lifecycle acceptance remains unresolved.
+   - [ ] Resolve the recorded Draft-scope/open questions and whether genuine human acceptance is required; record genuine owner decisions/evidence locally if supplied. No `acceptance.md` exists and no manual pass is inferred.
 
 Each accepted task must follow the gate and commit protocol above. These checkboxes record implementation progress only and never establish acceptance by themselves.
 
@@ -90,6 +94,8 @@ Outstanding product-owner clarification (seed is still Draft):
 These open questions do not grant permission to relax the explicit accepted-task test gate or expand scope. Completion remains pending acceptance evidence and any required manual checks; unavailable or unperformed checks must remain outstanding.
 
 ## Recorded progress
+
+- Planner resumption at `764b2fd`: read seed, plan, complete referenced `validation.md` and `evidence.list`; `acceptance.md` remains absent. Verified task 6 commit changes only deterministic coverage in `selected-evidence.feature` and `FactorySteps.kt`. Marked the first unfinished task (task 6) done based on completed automated coverage/history inspection and recorded full-suite success (135/135 scenarios, 1961 steps). Moved the unresolved actual-run commit verification to task 7 without marking it passed. Current history still lacks selected-evidence commits and relationship trailers for this run; validation is modified and manifest untracked. Target-scoped `git diff --check -- .` passes. Historical local-test restrictions remain superseded by the owner decision. Task 7, actual lifecycle acceptance, Draft-scope clarification and any required genuine manual acceptance remain outstanding; completion is false. No product work, tests, commits or manual checks performed by this planner; unrelated changes left untouched.
 
 - Initial planning: seed read; this target-owned plan created. No product changes, tests, commits, or acceptance checks performed by the planner.
 - Automated implementation: task 1 inspection recorded in [validation.md](validation.md); no product-code changes or commits made. Task checkbox left unfinished for the planner; required-test gate blocks acceptance and advancement. Previous validator findings were `[]`; no validator-finding subtasks required.
