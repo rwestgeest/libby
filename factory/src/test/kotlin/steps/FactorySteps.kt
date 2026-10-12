@@ -544,6 +544,38 @@ class FactorySteps {
         check(repo.git("show", "HEAD:$runPrefix/plan.md").contains("[validation](validation.md)"))
     }
 
+    @Then("accepted implementation, evidence and progress commits are related and ordered")
+    fun relatedAcceptedCommits() {
+        val commits = repo.git("rev-list", "--reverse", "$evidenceStartHead..HEAD").lines()
+        check(commits.size == 7) { "Expected planning then two implementation/evidence/progress triples: $commits" }
+        val plan = workspace.relativize(planPath()).toString()
+        check(repo.diffTree(commits[0]) == listOf(plan))
+        for ((index, task) in listOf(1 to "alpha", 4 to "beta")) {
+            val implementation = commits[index]
+            val evidence = commits[index + 1]
+            val progress = commits[index + 2]
+            val implementationMessage = repo.git("log", "-1", "--format=%B", implementation)
+            check(implementationMessage.contains("Factory-Run: $currentRun")) { implementationMessage }
+            for (commit in listOf(evidence, progress)) {
+                val message = repo.git("log", "-1", "--format=%B", commit)
+                check(message.contains("Factory-Run: $currentRun")) { message }
+                check(message.contains("Factory-Implementation: $implementation")) { message }
+            }
+            val productPaths = mutableSetOf("target/$task.txt")
+            if (task == "alpha") productPaths.add("target/.gitignore")
+            check(repo.diffTree(implementation).toSet() == productPaths) { repo.diffTree(implementation) }
+            check(repo.git("log", "-1", "--format=%s", evidence) == "Record factory evidence ($currentRun)")
+            check(repo.diffTree(progress) == listOf(plan))
+            check(repo.git("show", "$progress:$plan").contains("- [x] $task"))
+            val plannerCall = if (task == "alpha") 1 else 2
+            val snapshot = Json.parseToJsonElement(
+                Files.readString(workspace.resolve("calls/$plannerCall.git-state"))
+            ).jsonObject
+            check(snapshot.getValue("head").jsonPrimitive.content == evidence) { snapshot }
+        }
+        check(repo.git("show", "HEAD:$plan") == Files.readString(planPath()).trim())
+    }
+
     @Then("unselected run records and assembly-line changes are preserved")
     fun evidenceIsolationPreserved() {
         for ((path, snapshot) in evidenceIsolation) {

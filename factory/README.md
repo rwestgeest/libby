@@ -98,8 +98,12 @@ to survive `.gitignore`; product staging still respects ignore rules. The factor
 does not parse plan contents to discover evidence. Preserve the manifest on
 resumption; no manifest means no selected-evidence commit. Evidence created by
 the planner is recorded before its plan commit too. Invalid selections stop
-execution before task recording. Fully related commit identifiers remain
-outstanding iteration 0042 work.
+execution before task recording. Accepted implementation, evidence and progress
+commits carry a `Factory-Run` trailer; evidence and progress identify the exact
+implementation SHA in `Factory-Implementation`. Planner-created evidence uses
+the same implementation link. The ordered commits are recorded before advancing
+or reporting completion. Unchanged categories do not create empty commits;
+initial planning and completed resumption do not invent implementation links.
 
 Every target must provide an executable `./test` adapter that runs its complete
 required suite and returns nonzero on any failure (including pre-existing ones).

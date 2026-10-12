@@ -16,10 +16,12 @@ Feature: Explicitly selected target-owned evidence
     And the doer selects evidence beside the plan
     When the factory runs the "tetris" run
     Then selected evidence is committed separately beside the plan for each task
+    And accepted implementation, evidence and progress commits are related and ordered
     And unselected run records and assembly-line changes are preserved
     And the factory's own files and unrelated uncommitted changes are as they were
     When the factory runs the "tetris" run, given only its name
     Then selected evidence is committed separately beside the plan for each task
+    And accepted implementation, evidence and progress commits are related and ordered
     And unselected run records and assembly-line changes are preserved
 
   Scenario Outline: Evidence selection cannot escape its run

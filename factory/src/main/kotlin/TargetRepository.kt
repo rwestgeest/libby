@@ -24,7 +24,7 @@ internal class TargetRepository(private val target: File) {
         }
     }
 
-    fun recordTaskChanges() {
+    fun recordTaskChanges(runName: String? = null): String? {
         if (git("status", "--porcelain", "--", *productPathspec).isNotBlank()) {
             // Enumerate literal product paths: broad add can error on ignored, staged
             // metadata even when excluded. Never force-add ignored product files.
@@ -32,16 +32,20 @@ internal class TargetRepository(private val target: File) {
                 "--", *productPathspec).split('\u0000').filter { it.isNotEmpty() }.distinct()
                 .map { ":(literal)$it" }.toTypedArray()
             git("add", "--", *paths)
-            git("commit", "--only", "-m", "Record factory task", "--", *paths)
+            val message = "Record factory task" + recordLink(runName, null)
+            git("commit", "--only", "-m", message, "--", *paths)
+            return git("rev-parse", "HEAD").trim()
         }
+        return null
     }
 
     /** Explicit selection keeps the plan opaque and private/unrelated files out of history. */
     fun validateEvidenceSelection(run: NamedRun) { selectedEvidence(run) }
 
-    fun recordEvidence(run: NamedRun) {
+    fun recordEvidence(run: NamedRun, implementation: String? = null) {
         val files = selectedEvidence(run)
-        if (files.isNotEmpty()) recordFiles(files, "Record factory evidence (${run.name})")
+        if (files.isNotEmpty()) recordFiles(files,
+            "Record factory evidence (${run.name})" + recordLink(run.name, implementation))
     }
 
     private fun selectedEvidence(run: NamedRun): List<File> {
@@ -67,11 +71,18 @@ internal class TargetRepository(private val target: File) {
     }
 
     /** Only this run's authoritative document, never the rest of target metadata. */
-    fun recordPlan(run: NamedRun, acceptedTask: Boolean) {
+    fun recordPlan(run: NamedRun, acceptedTask: Boolean, implementation: String? = null) {
         run.requirePlan()
         val boundary = if (acceptedTask) "accepted task progress" else "planning"
-        recordFiles(listOf(run.plan), "Record factory $boundary (${run.name})")
+        recordFiles(listOf(run.plan),
+            "Record factory $boundary (${run.name})" + recordLink(run.name, implementation))
     }
+
+    private fun recordLink(runName: String?, implementation: String?): String =
+        if (runName == null) "" else buildString {
+            append("\n\nFactory-Run: $runName")
+            if (implementation != null) append("\nFactory-Implementation: $implementation")
+        }
 
     private fun recordFiles(files: List<File>, message: String) {
         val root = target.toPath().toAbsolutePath().normalize()

@@ -13,6 +13,7 @@ internal class TaskLifecycle(
 ) {
     private var workInProgress = false
     private var workAccepted = false
+    private var implementationCommit: String? = null
     private var plannerComplete = false
     private var attempts = 0
     private var findings = JsonArray(emptyList())
@@ -55,16 +56,17 @@ internal class TaskLifecycle(
     private fun acceptWork() {
         requiredTests.requirePassing()
         repository.validateEvidenceSelection(run)
-        repository.recordTaskChanges()
-        repository.recordEvidence(run)
+        implementationCommit = repository.recordTaskChanges(run.name)
+        repository.recordEvidence(run, implementationCommit)
         workAccepted = true
     }
 
     private fun finishPlanning() {
         // Recheck after planner edits and on completed resumption; no cached waiver.
         if (workAccepted || plannerComplete) requiredTests.requirePassing()
-        repository.recordEvidence(run)
-        repository.recordPlan(run, workAccepted)
+        repository.recordEvidence(run, implementationCommit)
+        repository.recordPlan(run, workAccepted, implementationCommit)
+        implementationCommit = null
         workInProgress = false
         workAccepted = false
         attempts = 0

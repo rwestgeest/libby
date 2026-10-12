@@ -20,6 +20,7 @@ internal class MachineJobs(
         Select evidence for Git explicitly in evidence.list beside the plan: one run-relative file path per line, including spaces literally. List only existing regular evidence files within this run; never plan.md, evidence.list, symlinks, parent/absolute paths or assembly-line configuration. The factory commits only the listed files and this selection manifest, separately from product work and plan progress. Preserve existing selections on resumption. Unlisted files remain uncommitted.
         Retain failures that explain unresolved issues or later corrections. Keep full transcripts and private execution bookkeeping out of the selected evidence.
         Do not invent evidence or treat synthetic fixtures as genuine human or device acceptance.
+        Accepted work is recorded in implementation, selected-evidence and plan-progress order before advancement or completion. The factory relates these commits using Factory-Run trailers and the exact implementation SHA in Factory-Implementation trailers on evidence and progress. Do not infer acceptance from commit messages alone; preserve outstanding checks.
         Work only in the current target directory. The factory handles commits.
         An explicitly requested behavior change in the seed or recorded product-owner instructions takes precedence over an older, conflicting test expectation.
         This authorization includes local updates to superseded fetched specs; no upstream course change is required.
