@@ -27,7 +27,10 @@ factory source is separate from the generated product. Targets
 are plain folders: commits in their containing repository include only
 the selected target's work and preserve unrelated staged changes. Git is
 initialized only when no repository contains the target. The run keeps
-its plan in `runs/<name>/plan.md` in the factory's folder, never in the target.
+its plan in `.factory/runs/<name>/plan.md` in the target, separate from the seed.
+All machines use that same authoritative plan, including on resumption.
+Initial planning and accepted-task progress are preserved in the target's Git
+history; factory-owned run settings remain execution state, not another plan.
 
 New since iteration 3: runs, and targets that hold their own lines and
-machines. Plans move from each target into the factory's `runs/` folder.
+machines. Each target keeps a separate plan for each named run.

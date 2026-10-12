@@ -26,12 +26,14 @@ That is a normal development sequence. A failing test during implementation is e
 
 Here the obstacle was conflicting authority. The older executable spec required one behavior; the newer iteration required another. Repository instructions prohibited editing fetched `factory/spec/`, and the 0042 seed explicitly made pre-existing failures block acceptance without a baseline waiver. The run's plan treated reconciliation as outside scope. The doer followed those restrictions, but the factory kept requesting another attempt.
 
-The initial advice to reconcile the course spec was specific to that ownership rule. It should not be generalized into “every failing existing test needs external approval.” Within an authorized behavior change, updating superseded tests is part of implementation. Under this repository's current rules, course content is authored in the tutorial repository and fetched here, so that is where the conflicting executable requirement must be updated.
+The initial advice to change the course repository was too restrictive for the student's intent. On 2026-10-12 the product owner clarified the desired rule: the doer is allowed and expected to update existing tests locally when an explicitly requested behavior supersedes their old expectations. That includes fetched specs. No tutorial fork or upstream approval is needed for this project's authorized change.
+
+The updated repository instructions, machine prompts, 0042 seed and current run plan express that rule. The doer must record why each expectation changed and preserve coverage of requirements that still apply. The planner must treat the necessary test changes as part of the work; the validator must review them against the requested behavior. If the implementation already satisfies the corrected test, record that result without manufacturing red. Required tests still have to pass before acceptance.
 
 ## Questions for the factory contract
 
 - When a new iteration supersedes an older requirement, how is that precedence expressed so the doer can distinguish an obsolete expectation from a regression?
-- Who may update the executable spec? If fetched specs remain immutable here, how does the factory request or perform the corresponding change in the authoritative course repository?
+- How should later course fetches preserve or expose conflicts with locally authorized spec changes rather than silently replacing them?
 - How do we explicitly permit the TDD sequence—change the expectation, observe red, implement, reach green—while still enforcing passing tests at acceptance?
 - How does a machine report “blocked pending a decision” so the factory stops and exposes the decision, rather than routing another identical attempt?
 - What constitutes task advancement, and what bounds repeated cycles that produce notes or commits without advancing a task?
@@ -39,10 +41,10 @@ The initial advice to reconcile the course spec was specific to that ownership r
 
 ## Direction for resolution
 
-Resolve the old/new planning expectation at its authoritative source and fetch the reconciled spec. Preserve the distinction between tests failing during development and tests failing at acceptance.
+Update the superseded planning expectation here to reflect the target-owned behavior requested in 0041. Preserve the distinction between tests failing during development and tests failing at acceptance. A meaningful test change follows a changed requirement; removing coverage merely to get green does not.
 
 Give the factory an explicit blocked outcome and a bound on repeated cycles without advancement. Enforce the required-test gate before accepted-task commits, and avoid labeling blocked observations as accepted progress. Keep selected evidence with the run record so resumption can use the blocker already discovered instead of repeatedly rediscovering it.
 
-These are related changes with separate purposes: reconciling the spec makes the work actionable; enforcing acceptance prevents false claims; stopping on a blocker prevents the factory from running to eternity.
+Allowing local test evolution makes this work actionable. Acceptance enforcement and stopping on genuinely unresolved blockers remain separate concerns; changing the test-evolution policy alone does not implement those safeguards.
 
 Sources: [run plan](../factory/.factory/runs/factory-0042/plan.md), [0042 seed](../factory/iterations/0042-EvidenceOwnedByTarget.md), [task lifecycle](../factory/src/main/kotlin/TaskLifecycle.kt), [machine instructions](../factory/src/main/kotlin/MachineJobs.kt), [Git boundaries](../factory/src/main/kotlin/TargetRepository.kt), and [earlier plan-ownership discussion](2026-10-11-factory-plan-ownership.md). This document records the observed run and design questions; it does not change the factory or its specs.

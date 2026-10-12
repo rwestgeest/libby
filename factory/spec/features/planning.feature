@@ -53,16 +53,18 @@ Feature: Planning
       When the factory runs the "tetris" run
       Then every task in the plan comes from the seed
 
-  Rule: A run keeps its plan with the factory, not in the target
+  Rule: A run keeps its plan in the target, separate from factory execution state
 
-    Each run has a folder of its own, in runs/ in the factory, and its
-    plan is plan.md there.
+    Each run has a folder of its own, in .factory/runs/ in the target,
+    and its authoritative plan is plan.md there. Every machine uses this
+    same path, including on retries and resumption. The seed stays separate;
+    factory-owned run settings are not a second implementation plan.
 
     Example: The first invocation of a run named "tetris"
       Given no plan
       When the factory runs the "tetris" run
-      Then the plan is plan.md in the factory's runs folder, under tetris
-      And there is no plan in the target
+      Then the plan is .factory/runs/tetris/plan.md in the target
+      And there is no plan in the factory's folder
 
   Rule: The planner keeps the plan, and the factory never reads it
 

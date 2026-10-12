@@ -1,5 +1,15 @@
 # factory-0042 — Inspection and baseline evidence
 
+## Current verification: authorized local test evolution (2026-10-12)
+
+The product owner clarified that the doer should change tests locally when an explicitly requested behavior supersedes their old expectations, using TDD. This overrides the external course/spec-owner restriction recorded in the historical sections below. The target-owned-plan contract from 0041 supersedes the old factory-owned-plan expectation in `spec/features/planning.feature`. The local feature, exact-path step assertion and accompanying spec prose now reflect that contract; unrelated coverage was retained.
+
+Repository instructions, machine prompts and the 0042 seed now authorize these changes. Planner instructions treat them as work; doer instructions require TDD and a recorded rationale; validator instructions review against the requested behavior and reject weakened coverage. The run plan preserves historical failures but supersedes the obsolete blocker.
+
+TDD evidence for the instruction contract: the new `@test-evolution` scenario failed before the prompt update because the planner lacked the precedence instruction (1 scenario failed). After the update, `./test -Dkotlin.compiler.daemon=false` passed: **118 scenarios, 1690 steps, all passed**, duration 0m 36.359s. No scenarios were excluded beyond the normal `@real-agent` exclusion. The compiler daemon was disabled for this verification after its startup failed; this does not change test selection. The revised planning expectation already matches the 0041 implementation, so no artificial red phase or production path change was necessary for it.
+
+The deterministic scenario verifies the instructions delivered to all three machines, including later calls. It does not demonstrate that a live agent will follow them. No live factory run, manual acceptance or acceptance of the remaining 0042 work is claimed. Runtime test-gate enforcement and separate evidence commits remain work for 0042.
+
 ## Task 1: observed existing lifecycle
 
 This is inspection evidence, not acceptance of iteration 0042. No product code, fetched specs, assembly-line configuration, or other runs were changed. No commits were made by the doer. All paths below are relative to the current target (`factory/`).

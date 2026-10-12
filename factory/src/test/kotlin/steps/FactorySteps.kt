@@ -929,6 +929,25 @@ class FactorySteps {
         check(validatorPrompt().contains(value)) { "Validator was not given $value" }
     }
 
+    @Then("the {word} was given these instructions:")
+    fun machineInstructions(machine: String, instructions: String) {
+        val folder = when (machine) {
+            "planner" -> workspace.resolve("calls")
+            "doer", "validator" -> workspace.resolve("$machine/calls")
+            else -> error("Unknown machine: $machine")
+        }
+        val prompts = Files.list(folder).use { calls ->
+            calls.filter { it.toString().endsWith(".txt") }
+                .map { Files.readString(it) }.toList()
+        }
+        check(prompts.isNotEmpty()) { "$machine was not called" }
+        for (prompt in prompts) {
+            for (instruction in instructions.lines().filter { it.isNotBlank() }) {
+                check(prompt.contains(instruction)) { "$machine was not given: $instruction\n$prompt" }
+            }
+        }
+    }
+
     @Then("the validator was given the work for the second task")
     fun validatorGivenSecondTask() {
         val prompt = validatorPrompt()
@@ -1172,9 +1191,11 @@ class FactorySteps {
     @Then("there is a plan")
     fun thereIsAPlan() { check(Files.isRegularFile(planPath())) }
 
-    @Then("the plan is plan.md in the factory's runs folder, under tetris")
-    fun planInRunsFolder() {
-        check(Files.isRegularFile(workspace.resolve("factory/runs/tetris/plan.md")))
+    @Then("the plan is .factory\\/runs\\/tetris\\/plan.md in the target")
+    fun namedPlanInTarget() {
+        val expected = target.resolve(".factory/runs/tetris/plan.md")
+        check(planPath() == expected)
+        check(Files.isRegularFile(expected))
     }
 
     @Then("each run has its own plan")

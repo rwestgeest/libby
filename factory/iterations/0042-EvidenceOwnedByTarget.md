@@ -25,6 +25,8 @@ Keep the plan and selected evidence together in the target's Git history, so mai
 
 ### Required-test gate
 
+- Use TDD for authorized behavior changes. When this seed, iteration 0041's target-owned-plan contract, or recorded product-owner instructions supersede an older test expectation, the doer must update the affected local spec, tests and step definitions to assert the requested behavior. This includes fetched specs in `spec/`; no upstream course change is required. Record the conflicting expectations and the reason for the update. Run the revised test, inspect red where the implementation needs changing, implement the behavior and rerun the required suite. If the implementation already satisfies the revised expectation, record that result without manufacturing a failure.
+- Preserve coverage of requirements that still apply. Do not delete, skip, filter out or weaken checks merely to get green. Ambiguous requirements still need clarification. The test gate applies at acceptance, not to the red phase or the act of implementing a requested change.
 - All required tests must pass before accepted-task implementation, evidence, or completion-status commits. Pre-existing failures block these commits too; documenting a baseline failure does not waive the gate.
 - Validator satisfaction or a completed checkbox cannot override failing required tests. Report blockers without advancing or declaring completion; do not silently weaken tests or expand scope to fix unrelated failures.
 - Passing tests does not waive other acceptance requirements. Unavailable or unperformed manual acceptance remains outstanding.

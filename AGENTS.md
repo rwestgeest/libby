@@ -15,8 +15,27 @@ Students name their fork for their capstone project. Tetris is the shared
 practice target their factories build first, not their capstone. Explain
 that distinction when introducing the course to a student.
 
-- `factory/spec/` holds the current homework iteration, fetched from the course. Don't edit it. Its feature files are the factory's test suite.
+- `factory/spec/` holds the current homework iteration, fetched from the course.
+  Its feature files are the factory's test suite. Preserve it during ordinary
+  homework implementation.
 - `factory/ITERATION` holds the student's progress, e.g. `001 WIP`.
+
+## Changing behavior with TDD
+
+When the user explicitly requests a behavior change, directly or through a
+supplied iteration seed or recorded product-owner instructions, that change
+takes precedence over older conflicting expectations. The doer should update
+the affected specs, tests and step definitions here using TDD, including fetched
+specs; no upstream course change is required. This is an explicit exception to
+the skills' usual rule against editing `spec/` during homework implementation.
+
+Record which requirement supersedes the old expectation and why. Preserve checks
+for requirements that still apply; do not delete, skip, filter out or weaken
+tests just to get green. If the intended behavior is ambiguous, ask rather than
+inventing a requirement. Required tests must pass before acceptance; failures
+during the red phase do not prohibit implementation. If the implementation
+already satisfies the revised expectation, record that result without
+manufacturing a failure.
 
 Skills, in `.agents/skills/` at the repository's root:
 

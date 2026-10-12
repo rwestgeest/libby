@@ -18,12 +18,16 @@ factory source stays in `factory/`.
   choose).
 - **Each execution is a named run.** You name the run, and the first time
   you start it you give it a target, one of that target's lines, and a seed.
-  The run remembers all three; after that, its name is enough. It keeps
-  its plan with the factory, in `factory/runs/<name>/plan.md`. To resume your
-  existing game, move its `.factory/plan.md` there; a run
-  now owns that plan. Or start with a fresh target. Unlike the target's
-  plan in earlier homeworks, run state must stay out of Git: add
-  `/factory/runs/` to your repository-root `.gitignore`.
+  The run remembers all three; after that, its name is enough. Its
+  authoritative plan stays in the target, at `.factory/runs/<name>/plan.md`,
+  separate from the seed. To resume your homework-3 game, move its
+  `.factory/plan.md` to that named path. Or start with a fresh target.
+  All machines use the same plan, including on retries and resumption.
+  Keep initial planning and accepted-task progress in the target's Git
+  history, preserving unrelated changes. Factory-owned run settings are
+  execution state, not another copy of the plan. Existing factory-owned
+  plans must not be silently discarded or restarted; report unsupported
+  legacy resumption clearly rather than inventing a second plan.
 
 Once the route is data, a target can hold more than one line. Write a second
 one — the same line without the validator will do — and have each run say
@@ -54,6 +58,6 @@ $ bin/factory --run snake --target snake/snake1 --line quick --seed snake/spec.m
 The factory should build whatever the new seed describes, without disturbing
 the first run.
 
-The checks still run against a copy of your factory, because runs live with
-the factory. The copy still builds in separate targets, now each holding its
-own lines and machines.
+The checks still run against a copy of your factory. The copy builds in
+separate targets, each holding its own plans, lines and machines; the factory
+keeps the settings needed to resume each run by name.

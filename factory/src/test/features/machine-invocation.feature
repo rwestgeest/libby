@@ -32,6 +32,28 @@ Feature: Machine invocation and job context preserve the current protocol
     Then it accepts it
     And the validator was given "Your validation lens is: testability."
 
+  @test-evolution
+  Scenario: Machines distinguish an authorized test change from weakening acceptance
+    When the factory runs
+    Then it accepts it
+    And the planner was given these instructions:
+      """
+      An explicitly requested behavior change in the seed or recorded product-owner instructions takes precedence over an older, conflicting test expectation.
+      Plan the necessary test updates as part of the authorized change, rather than declaring obsolete expectations an external blocker.
+      """
+    And the doer was given these instructions:
+      """
+      An explicitly requested behavior change in the seed or recorded product-owner instructions takes precedence over an older, conflicting test expectation.
+      Use TDD: add or update the test to assert the requested behavior, run it and inspect the result, then change the implementation and rerun the required suite.
+      You are authorized and expected to update conflicting tests and their step definitions inside the target, including fetched specs when they express the superseded behavior.
+      Do not delete, skip, filter out, or weaken checks merely to get green; preserve coverage of requirements that still apply.
+      """
+    And the validator was given these instructions:
+      """
+      Review changed tests against the requested behavior, not the superseded expectation; reject weakened coverage of requirements that still apply.
+      A red phase during TDD is expected; acceptance still requires all required tests to pass.
+      """
+
   Scenario: Configured lens and model forwarding preserve shared prompt context
     Given the validator uses the lens "responsibility-driven design"
     And the chosen model is "provider/model"
