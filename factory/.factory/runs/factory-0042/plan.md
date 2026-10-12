@@ -4,7 +4,7 @@
 
 Seed: `iterations/0042-EvidenceOwnedByTarget.md` (unchanged; Draft, product-owner interview in progress).
 
-Status: tasks 1–2 completed. Shared run-record instructions and deterministic named-resumption coverage are implemented in `cdc9983`; the recorded full deterministic suite passes (119/119); see [validation.md](validation.md). Task 3 is next. Remaining implementation, commit-lifecycle acceptance and product-owner/manual clarification are outstanding. Completion: **false**.
+Status: tasks 1–3 completed. Selected-evidence preservation and isolation are implemented in `28e82da`; the recorded full deterministic suite passes (125/125); see [validation.md](validation.md). Task 4 is next. Required-test gate implementation, related commit-lifecycle acceptance and product-owner/manual clarification remain outstanding. Completion: **false**.
 
 ## Product-owner decision: local test evolution (2026-10-12)
 
@@ -26,7 +26,7 @@ The authoritative progress and selected evidence live in this run directory, `.f
 - If blocked, report the blocker without advancement or completion. Do not silently weaken tests or fix unrelated failures. Keep the initial-planning-commit policy and disposition of blocked changes explicit pending clarification; do not assume a gate exception for accepted work.
 - For each accepted task, the factory must make separate, clearly related implementation, selected-evidence, and plan-progress commits, in that order, before advancing or reporting completion. Verify actual commits, not just messages or checkboxes. Scope run-record commits to this run only.
 
-## Implementation tasks (tasks 1–2 complete)
+## Implementation tasks (tasks 1–3 complete)
 
 1. [x] Inspect existing planning, machine instructions, resumption, required-test execution, validation, staging, and commit lifecycle. Identify required test commands and existing exclusions without modifying scope. Record findings and any baseline failures locally.
    - [x] Inspect lifecycle, shared/role-specific instructions, named resumption, Git exclusions and existing coverage; record observations in [validation.md](validation.md).
@@ -37,7 +37,12 @@ The authoritative progress and selected evidence live in this run directory, `.f
    - [x] Inspect intended red (missing run-record prompt instructions), then implement shared context and align planner/doer/validator responsibilities.
    - [x] Rerun the required full deterministic suite: 119 scenarios and 1711 steps passed; record results and limits in [validation.md](validation.md). Validator findings were `[]`; no finding subtasks required.
    - Implementation committed in `cdc9983` and marked done by the planner against the recorded passing suite. Selected evidence and plan updates are currently modified, not yet committed; the separate implementation/evidence/progress lifecycle is not accepted.
-3. [ ] Preserve explicitly selected evidence beside the plan in Git despite general `.factory/` exclusions. Restrict staging to the selected run and protect other runs, unrelated changes, and assembly-line configuration.
+3. [x] Preserve explicitly selected evidence beside the plan in Git despite general `.factory/` exclusions. Restrict staging to the selected run and protect other runs, unrelated changes, and assembly-line configuration.
+   - [x] Define explicit `evidence.list` selection without parsing plan contents; give all machines consistent selection instructions and document the contract.
+   - [x] Add deterministic actual-commit/ignored-record/name-only-resumption and isolation tests; inspect intended red before implementation. Reject escaping, plan/configuration and symlink selections before task recording.
+   - [x] Implement selected-run evidence commits, force-add only selected records, and preserve unrelated staged/unstaged files. Resolve the ignored-but-staged metadata Git-add edge case with literal product paths, retaining ignored-product exclusions.
+   - [x] Rerun the required deterministic suite: 125 scenarios / 1806 steps passed; see [validation.md](validation.md). Previous validator findings were `[]`; no finding subtasks were required.
+   - Implementation verified in `28e82da`; planner marked task 3 done against the recorded passing suite (125 scenarios / 1806 steps). Selection for this run is [evidence.list](evidence.list). This run's selected evidence remains modified and its manifest untracked; no separate evidence/progress commit sequence or complete acceptance is claimed. Gate enforcement and fully related commit protocol remain tasks 4–5.
 4. [ ] Enforce the required-test gate on accepted-task implementation, evidence, and completion-status commits, advancement, and completion. Cover pre-existing as well as new failures, even when the validator reports satisfaction. Retain normal lifecycle when tests pass, subject to other acceptance requirements.
 5. [ ] Produce and verify separate, related implementation, evidence, and plan-progress commits for accepted tasks before advancement/completion.
 6. [ ] Add deterministic coverage for first execution, named resumption, actual committed contents and commit ordering, failure gates, passing counterpart, and isolation. Exercise acceptance end to end and record selected results.
@@ -47,16 +52,16 @@ Each accepted task must follow the gate and commit protocol above. These checkbo
 
 ## Acceptance evidence ledger
 
-Acceptance remains incomplete. [validation.md](validation.md) records inspection, the authorized expectation replacement, passing required suites and task 2 instruction/resumption coverage. These support tasks 1–2 completion and partial criteria 1/3 evidence, not acceptance of the remaining commit/gate lifecycle or genuine manual approval.
+Acceptance remains incomplete. [validation.md](validation.md) records inspection, the authorized expectation replacement, passing required suites, task 2 instruction/resumption coverage and task 3 synthetic actual-commit/isolation coverage. These support tasks 1–3 implementation completion and partial criteria 1/3/6 evidence, not acceptance of the remaining commit/gate lifecycle or genuine manual approval.
 
 | Criterion | Required evidence | Status |
 | --- | --- | --- |
-| 1. Evidence committed beside plan; consistent instructions | Deterministic first-run result, actual committed plan/evidence contents despite exclusions, and inspection of all relevant machine instructions | Partial: shared first-run instructions verified; actual selected-evidence commit contents remain outstanding |
+| 1. Evidence committed beside plan; consistent instructions | Deterministic first-run result, actual committed plan/evidence contents despite exclusions, and inspection of all relevant machine instructions | Deterministic selected-evidence/plan commit contents verified despite `.gitignore`, with shared instructions; this run's factory-owned commit lifecycle and acceptance remain outstanding |
 | 2. Separate related commits before advancement/completion | Actual commit IDs, ordering, contents, and advancement timing for an accepted task with passing required tests | Outstanding; not run |
 | 3. Named resumption preserves progress and uses evidence/feedback | Resumption scenario with target-local recorded progress, referenced evidence and labeled product-owner feedback fixture; no factory-side progress edits | Synthetic instruction/resumption preservation scenario passed; no genuine owner acceptance or live-agent compliance claimed |
 | 4. Failure gate, including baseline failures | New and pre-existing failing required-test scenarios, validator-satisfied variants, actual commit/advancement observations proving no accepted-task or completion-status commits and no advancement/completion; documented baseline gives no waiver | Outstanding; not run |
 | 5. Passing counterpart | Passing required tests with normal validation and ordered commit lifecycle; other acceptance checks still enforced | Outstanding; not run |
-| 6. Run and workspace isolation | Actual staged/committed contents plus before/after observations showing other runs, unrelated changes, and assembly-line configuration untouched | Outstanding; not run |
+| 6. Run and workspace isolation | Actual staged/committed contents plus before/after observations showing other runs, unrelated changes, and assembly-line configuration untouched | Task 3 synthetic fixture passed: evidence commit paths exact; other-run/private staged and unstaged contents/diffs, unrelated factory changes and assembly-line configuration unchanged |
 
 Planned target-local evidence files (create only when recording real observations):
 - `validation.md`: required commands, test results, deterministic scenario evidence, selected failure output, commit IDs/order and isolation checks.
@@ -123,3 +128,4 @@ These open questions do not grant permission to relax the explicit accepted-task
 - Product-owner/manual acceptance: not performed; clarification outstanding.
 - Current doer task 1 verification at `bb3d3a7`: read seed, plan and referenced evidence; rechecked lifecycle, machine instructions, staging exclusions and the corrected planning assertion. Task 1 is already implemented by the recorded inspection and authorized correction; the revised test matches the implementation, so no artificial red or additional behavior change was introduced. `./test` failed at compiler-daemon startup before scenarios; `./test -Dkotlin.compiler.daemon=false` then passed the same full deterministic suite (118 scenarios, 1690 steps; 36.362s). See [validation.md](validation.md). Findings were `[]`; no finding subtasks required. No commits or advancement performed; task 1 remains unchecked for the planner, and all remaining acceptance work stays outstanding.
 - Current follow-up: resume from the completed inspection and corrected planning expectation. The latest required suite passed (118/118); the historical 116/117 baseline is not a current failure or an external blocker. No accepted-task commit ordering or completion is claimed; remaining implementation, acceptance criteria and Draft-scope/manual clarification remain outstanding.
+- Planner resumption at `28e82da`: read seed, plan, `validation.md` and `evidence.list`; `acceptance.md` remains absent. Verified the implementation commit contains selected-evidence staging, lifecycle integration, shared instructions and deterministic coverage. Marked the first unfinished task (task 3) done using recorded full-suite success (125 scenarios / 1806 steps). Task 4 is next. Target-scoped `git diff --check -- .` passes. Plan/validation remain modified and the manifest untracked; this run's separate evidence/progress commits and complete lifecycle acceptance are not verified. Historical course/spec-owner restrictions remain superseded by the recorded owner decision. Tasks 4–7, genuine owner/manual acceptance clarification and seed open questions remain outstanding. No product work, test rerun, commits or manual checks performed by this planner; completion remains false. Unrelated changes outside this target were left untouched; the factory handles commits.
