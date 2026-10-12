@@ -12,6 +12,13 @@ internal class MachineJobs(
     private val context = """
         Read the seed at "$seed".
         The plan is at "$plan".
+        The authoritative run record is at "${plan.parentFile}".
+        Before acting, read the existing plan and all evidence and product-owner feedback referenced by it.
+        Preserve recorded progress, decisions and outstanding checks on retries and named resumption; do not regenerate them from the seed.
+        Keep the seed separate and unchanged; private execution metadata is not the work record.
+        When your role permits record writes: Store selected validation results, relevant failure logs, product-owner feedback and manual acceptance evidence beside the plan, and reference them from the plan.
+        Retain failures that explain unresolved issues or later corrections. Keep full transcripts and private execution bookkeeping out of the selected evidence.
+        Do not invent evidence or treat synthetic fixtures as genuine human or device acceptance.
         Work only in the current target directory. The factory handles commits.
         An explicitly requested behavior change in the seed or recorded product-owner instructions takes precedence over an older, conflicting test expectation.
         This authorization includes local updates to superseded fetched specs; no upstream course change is required.
@@ -37,6 +44,7 @@ internal class MachineJobs(
             """.trimIndent()
             "doer" -> """
                 Implement the first unfinished task in the plan.
+                Update selected evidence and references as work proceeds, but leave top-level task completion to the planner.
                 Use TDD: add or update the test to assert the requested behavior, run it and inspect the result, then change the implementation and rerun the required suite.
                 You are authorized and expected to update conflicting tests and their step definitions inside the target, including fetched specs when they express the superseded behavior.
                 Confirm that red reflects the intended behavior change, not a broken fixture or syntax error. If the implementation already satisfies the revised test, record that observation without manufacturing a failure.
@@ -57,6 +65,7 @@ internal class MachineJobs(
                     Check the recorded reason for test changes and the required-suite results as well as the configured lens.
                     The supplied target-owned plan is the work record, not product acceptance evidence.
                     Task/subtask status updates are permitted; they do not prove the product meets the seed.
+                    Read the run record for review context; report findings without changing the record or product files.
                     Report findings only. Change neither the plan nor the product files.
                     ${resultRequest(machine)} Include an array "findings" in your JSON result.
                     Product changes:
@@ -69,7 +78,7 @@ internal class MachineJobs(
             Plan the necessary test updates as part of the authorized change, rather than declaring obsolete expectations an external blocker.
             On resumption, preserve historical observations but use current product-owner decisions to supersede obsolete blockers and plan restrictions.
             Distinguish completed automated work from outstanding manual acceptance required by the seed.
-            Record acceptance evidence and outstanding checks in the target-owned plan or target-local documents referenced by it.
+            Record acceptance evidence and outstanding checks in the target-owned plan or selected documents beside it, referenced from the plan.
             An unavailable or unperformed manual check remains explicitly outstanding; never infer a pass from automated work or task status.
             Report complete only when required acceptance is supported by recorded evidence, not merely when implementation tasks are done.
             On resumption, read the plan and its referenced target-local evidence, including product-owner acceptance; preserve recorded progress and outstanding checks.

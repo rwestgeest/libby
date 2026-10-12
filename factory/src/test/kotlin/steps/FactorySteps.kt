@@ -948,6 +948,41 @@ class FactorySteps {
         }
     }
 
+    @Then("every invoked machine receives the authoritative run record instructions")
+    fun sharedRunRecordInstructions() {
+        val instructions = listOf(
+            "The authoritative run record is at \"${planPath().parent}\".",
+            "Before acting, read the existing plan and all evidence and product-owner feedback referenced by it.",
+            "Preserve recorded progress, decisions and outstanding checks on retries and named resumption; do not regenerate them from the seed.",
+            "Keep the seed separate and unchanged; private execution metadata is not the work record.",
+            "Store selected validation results, relevant failure logs, product-owner feedback and manual acceptance evidence beside the plan, and reference them from the plan.",
+            "Do not invent evidence or treat synthetic fixtures as genuine human or device acceptance.")
+        for (machine in listOf("planner", "doer", "validator")) {
+            machineInstructions(machine, instructions.joinToString("\n"))
+        }
+        machineInstructions("validator", "Read the run record for review context; report findings without changing the record or product files.")
+        machineInstructions("doer", "Update selected evidence and references as work proceeds, but leave top-level task completion to the planner.")
+    }
+
+    @Given("selected evidence and owner feedback are referenced beside the current plan")
+    fun selectedRunEvidence() {
+        val evidence = planPath().parent.resolve("validation.md")
+        val feedback = planPath().parent.resolve("owner-feedback.md")
+        Files.writeString(evidence, "Synthetic validation fixture: required checks passed; manual approval outstanding.\n")
+        Files.writeString(feedback, "Synthetic owner feedback fixture: retain outstanding manual approval.\n")
+        for (path in listOf(evidence, feedback)) ownershipSnapshots[path] = Files.readString(path)
+        Files.writeString(planPath(), Files.readString(planPath()) +
+            "\nSelected evidence: [validation](validation.md).\nProduct-owner feedback: [feedback](owner-feedback.md).\nManual approval: outstanding.\n")
+    }
+
+    @Then("the selected run evidence and owner feedback are unchanged")
+    fun selectedRunEvidenceUnchanged() {
+        for (name in listOf("validation.md", "owner-feedback.md")) {
+            val path = planPath().parent.resolve(name)
+            check(Files.readString(path) == ownershipSnapshots.getValue(path))
+        }
+    }
+
     @Then("the validator was given the work for the second task")
     fun validatorGivenSecondTask() {
         val prompt = validatorPrompt()
