@@ -46,11 +46,14 @@ internal class TaskLifecycle(
     }
 
     private fun acceptWork() {
+        repository.validateEvidenceSelection(run)
         repository.recordTaskChanges()
+        repository.recordEvidence(run)
         workAccepted = true
     }
 
     private fun finishPlanning() {
+        repository.recordEvidence(run)
         repository.recordPlan(run, workAccepted)
         workInProgress = false
         workAccepted = false

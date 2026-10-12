@@ -129,6 +129,14 @@ else:
         name_file = Path(__file__).parent / "product-name.txt"
         product = name_file.read_text().strip() if name_file.exists() else f"{task}.txt"
         Path(product).write_text(f"Work for {task}\n")
+        selection = Path(__file__).parent / "selected-evidence"
+        if selection.exists():
+            (plan.parent / "validation.md").write_text(f"Synthetic checks passed for {task}\n")
+            (plan.parent / "selected log.txt").write_text(f"Synthetic log for {task}\n")
+            (plan.parent / "evidence.list").write_text(selection.read_text())
+            text = plan.read_text()
+            if "[validation](validation.md)" not in text:
+                plan.write_text(text + "Evidence: [validation](validation.md), [log](selected log.txt).\n")
         result = {"task": task}
 
 message_file = Path(__file__).parent / "before-result.txt"

@@ -411,6 +411,81 @@ class FactorySteps {
         Files.writeString(workspace.resolve("validator/result-field.txt"), field)
     }
 
+    @Given("the target ignores factory metadata and contains unrelated staged run records")
+    fun evidenceIsolationFixture() {
+        evidenceStartHead = repo.head()
+        Files.writeString(target.resolve(".gitignore"), ".factory/\n")
+        val other = target.resolve(".factory/runs/other/validation.md")
+        val privateFile = planPath().parent.resolve("private.txt")
+        Files.createDirectories(other.parent)
+        Files.createDirectories(privateFile.parent)
+        Files.writeString(other, "Other run staged evidence\n")
+        Files.writeString(privateFile, "Private staged execution metadata\n")
+        repo.git("add", "-f", "--", workspace.relativize(other).toString(),
+            workspace.relativize(privateFile).toString())
+        Files.writeString(other, "Other run unstaged evidence\n")
+        Files.writeString(privateFile, "Private unstaged execution metadata\n")
+        val config = target.resolve(".assembly-lines/careful.dot")
+        Files.writeString(config, Files.readString(config) + "\n// unrelated configuration change\n")
+        for (path in listOf(other, privateFile, config)) {
+            val relative = workspace.relativize(path).toString()
+            evidenceIsolation[path] = Triple(Files.readString(path),
+                repo.git("diff", "--cached", "--", relative), repo.git("diff", "--", relative))
+        }
+    }
+
+    private var evidenceStartHead = ""
+    private val evidenceIsolation = linkedMapOf<Path, Triple<String, String, String>>()
+
+    @Given("the doer selects evidence beside the plan")
+    fun selectEvidenceFixture() {
+        Files.writeString(workspace.resolve("doer/selected-evidence"), "validation.md\nselected log.txt\n")
+    }
+
+    @Given("the doer selects the evidence path {string}")
+    fun invalidEvidenceFixture(path: String) {
+        Files.createDirectories(planPath().parent)
+        Files.createSymbolicLink(planPath().parent.resolve("link.md"), seed)
+        Files.writeString(workspace.resolve("doer/selected-evidence"), "$path\n")
+    }
+
+    @Then("selected evidence is committed separately beside the plan for each task")
+    fun selectedEvidenceCommits() {
+        check(exitCode == 0) { output }
+        val runPrefix = workspace.relativize(planPath().parent).toString()
+        val commits = repo.git("rev-list", "--reverse", "$evidenceStartHead..HEAD").lines()
+            .filter { repo.git("log", "-1", "--format=%s", it) == "Record factory evidence ($currentRun)" }
+        check(commits.size == 2) { "Expected two evidence commits: $commits\n$output" }
+        for ((index, commit) in commits.withIndex()) {
+            val task = if (index == 0) "alpha" else "beta"
+            val paths = repo.diffTree(commit).toSet()
+            val expected = mutableSetOf("$runPrefix/validation.md", "$runPrefix/selected log.txt")
+            if (index == 0) expected.add("$runPrefix/evidence.list")
+            check(paths == expected) { "$commit: $paths != $expected" }
+            check(repo.git("show", "$commit:$runPrefix/validation.md") == "Synthetic checks passed for $task")
+            check(repo.git("show", "$commit:$runPrefix/selected log.txt") == "Synthetic log for $task")
+        }
+        check(repo.git("show", "HEAD:$runPrefix/evidence.list") == "validation.md\nselected log.txt")
+        check(repo.git("show", "HEAD:$runPrefix/plan.md").contains("[validation](validation.md)"))
+    }
+
+    @Then("unselected run records and assembly-line changes are preserved")
+    fun evidenceIsolationPreserved() {
+        for ((path, snapshot) in evidenceIsolation) {
+            val relative = workspace.relativize(path).toString()
+            check(Files.readString(path) == snapshot.first) { "$path changed" }
+            check(repo.git("diff", "--cached", "--", relative) == snapshot.second) { "$path index changed" }
+            check(repo.git("diff", "--", relative) == snapshot.third) { "$path worktree diff changed" }
+        }
+    }
+
+    @Then("no task product or selected evidence has been committed")
+    fun noEvidenceOrProductCommits() {
+        val commits = repo.git("rev-list", "$headBeforeRun..HEAD").lines().filter { it.isNotBlank() }
+        val plan = workspace.relativize(planPath()).toString()
+        check(commits.all { repo.diffTree(it) == listOf(plan) }) { commits }
+    }
+
     @Given("the target has tracked product changes and private factory metadata")
     fun targetProductFixture() {
         Files.writeString(target.resolve("existing.txt"), "original product\n")
@@ -956,7 +1031,9 @@ class FactorySteps {
             "Preserve recorded progress, decisions and outstanding checks on retries and named resumption; do not regenerate them from the seed.",
             "Keep the seed separate and unchanged; private execution metadata is not the work record.",
             "Store selected validation results, relevant failure logs, product-owner feedback and manual acceptance evidence beside the plan, and reference them from the plan.",
-            "Do not invent evidence or treat synthetic fixtures as genuine human or device acceptance.")
+            "Do not invent evidence or treat synthetic fixtures as genuine human or device acceptance.",
+            "Select evidence for Git explicitly in evidence.list beside the plan:",
+            "Preserve existing selections on resumption. Unlisted files remain uncommitted.")
         for (machine in listOf("planner", "doer", "validator")) {
             machineInstructions(machine, instructions.joinToString("\n"))
         }

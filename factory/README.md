@@ -80,12 +80,28 @@ Targets own their routes and machine configuration. Assembly lines are
 `.assembly-lines` and `.factory` and preserve unrelated repository changes.
 After successful planning, a plan-only commit records the authoritative document
 before implementation starts. At an accepted task boundary (routing back to the
-planner), product work is committed first; the planner then updates completion
-status, and a run-labelled plan-only commit records it before further work or
+planner), product work is committed first, followed by selected evidence; the
+planner then updates completion status, and a run-labelled plan-only commit records it before further work or
 completion. Commit failures stop execution. Rejected retries do not record work
 or completed status; an arbitrary route to finish does not commit pending work.
 Only this run's exact plan is included in plan commits, not other runs, private
-metadata or assembly-line configuration. Validators review product diffs and
+metadata or assembly-line configuration.
+
+Select evidence explicitly in `<target>/.factory/runs/<name>/evidence.list`, one
+run-relative path per line (spaces are literal; blank lines are ignored). Keep
+concise evidence beside the plan and reference it from the plan. Only listed
+existing regular files and the manifest are included in run-labelled evidence
+commits; unlisted files stay untouched, even if already staged. Selection cannot
+include the plan, the manifest itself, symlinks, absolute/parent paths or
+assembly-line configuration. Selected evidence and the exact plan are force-added
+to survive `.gitignore`; product staging still respects ignore rules. The factory
+does not parse plan contents to discover evidence. Preserve the manifest on
+resumption; no manifest means no selected-evidence commit. Evidence created by
+the planner is recorded before its plan commit too. Invalid selections stop
+execution before task recording. Required-test gating and fully related commit
+identifiers are still outstanding iteration 0042 work.
+
+Validators review product diffs and
 must not treat plan status as acceptance evidence. Optional
 `--model` is forwarded to every machine harness.
 

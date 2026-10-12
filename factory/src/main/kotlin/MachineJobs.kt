@@ -17,6 +17,7 @@ internal class MachineJobs(
         Preserve recorded progress, decisions and outstanding checks on retries and named resumption; do not regenerate them from the seed.
         Keep the seed separate and unchanged; private execution metadata is not the work record.
         When your role permits record writes: Store selected validation results, relevant failure logs, product-owner feedback and manual acceptance evidence beside the plan, and reference them from the plan.
+        Select evidence for Git explicitly in evidence.list beside the plan: one run-relative file path per line, including spaces literally. List only existing regular evidence files within this run; never plan.md, evidence.list, symlinks, parent/absolute paths or assembly-line configuration. The factory commits only the listed files and this selection manifest, separately from product work and plan progress. Preserve existing selections on resumption. Unlisted files remain uncommitted.
         Retain failures that explain unresolved issues or later corrections. Keep full transcripts and private execution bookkeeping out of the selected evidence.
         Do not invent evidence or treat synthetic fixtures as genuine human or device acceptance.
         Work only in the current target directory. The factory handles commits.
