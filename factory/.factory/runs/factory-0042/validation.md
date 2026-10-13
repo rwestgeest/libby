@@ -1,5 +1,11 @@
 # factory-0042 — Inspection and baseline evidence
 
+## Task 8: blocked resumption at `72497d9`
+
+Read the complete seed, existing plan, referenced validation and selection, including recorded owner feedback. Target-scoped status was clean and `git diff --check -- .` passed. `git log -3 --format='%H %s%n%b' -- .` and `git show --stat HEAD -- .` verify evidence `9e7f4dbe7602fc3785d49d7e1abab26c654065a9` followed by plan-only progress `72497d95def27e043222b01187ae59ad8390e831`. Both carry `Factory-Run: factory-0042`, neither carries `Factory-Implementation`; the outstanding implementation-linked lifecycle is not established. `git ls-files -s` confirms tracked regular manifest/validation; selection remains `validation.md`. Run-local inspection confirms `acceptance.md` remains absent; no genuine owner clarification was supplied.
+
+Both task 8 acceptance checks remain unresolved. Factory-created related commits and genuine owner answers are required; another record-only retry cannot supply them. No behavior change or superseded test expectation arises, so no implementation/test edit or artificial red is warranted. No identical suite rerun: latest recorded complete required suite passed 135 scenarios / 1961 steps (50.507s), not fresh validation or acceptance. Findings `[]`; no finding subtasks required. Preserved selection and progress; updated only this run's evidence/reference. No commits, history repair, advancement, manual approval or task completion performed. Completion false.
+
 ## Planner verification at `f7095c9`
 
 Read the complete seed, plan and all referenced existing evidence/selection, including recorded owner feedback. Target-scoped history/stat verifies HEAD `f7095c91771e554512dc13718fe04ab409d6b135` changes only selected validation, follows progress `f9ba433`, and carries `Factory-Run` without `Factory-Implementation`. Existing plan edits and selection (`validation.md`) are preserved. Run-local inspection confirms `acceptance.md` remains absent. Neither task 8 acceptance check is supported: actual implementation-linked lifecycle and genuine owner scope/manual clarification remain outstanding. No product work, test changes, commits, history repair or manual approval performed; no superseded expectation or artificial red arises.
