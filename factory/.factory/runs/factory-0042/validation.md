@@ -1,5 +1,13 @@
 # factory-0042 — Inspection and baseline evidence
 
+## Task 8: blocked resumption at `c6ce636`
+
+Read the complete seed, plan and all referenced existing evidence/selection, including recorded owner feedback. Target-scoped status was clean and `git diff --check -- .` passed. `git log -4 --format='%H %s%n%b' -- .`, `git show --stat HEAD -- .` and `git ls-files -s .factory/runs/factory-0042` verify selected-evidence commit `140c5ce3a37a26952a76871f715e33b3974c7d1e` followed by plan-only progress `c6ce6367d9b8455147bc0553924525824f6437e9`. Both carry `Factory-Run: factory-0042`, neither carries `Factory-Implementation`. Selected validation and manifest remain committed regular files; this does not establish the outstanding exact implementation-linked lifecycle.
+
+Run-local inspection confirms `acceptance.md` remains absent; no new genuine owner answers were supplied. Both task 8 checks remain blocked pending factory-created related commits and owner decisions on further human acceptance, initial-planning failure gates, blocked-change/evidence disposition and adoption of evidence elsewhere. The doer cannot create/repair factory-owned history or invent those decisions. Further record-only retries cannot supply these inputs.
+
+No behavior change or superseded test expectation arises; no test/implementation edit, artificial red or identical suite rerun warranted. Latest recorded required suite passed 135 scenarios / 1961 steps (44.219s), not fresh validation. Findings `[]`; no finding subtasks required. Preserved selection (`validation.md`), progress and outstanding checks. Updated only this run's evidence and plan reference; no commits, advancement, manual approval or task completion. Completion false.
+
 ## Task 8: blocked resumption at `eb3f076`
 
 Read the complete seed, plan and referenced validation/selection, including recorded owner feedback. Target-scoped status was clean and `git diff --check -- .` passed. `git log -4 --format='%H %s%n%b' -- .`, `git show --stat HEAD -- .` and `git ls-files -s .factory/runs/factory-0042` confirm selected-evidence commit `13e64ed1c73de36df159c5bf529850152f84e6cb` followed by plan-only progress `eb3f0764ab696b3cdb54a205a4299b9aace6f4d5`. Both carry `Factory-Run: factory-0042`, neither carries `Factory-Implementation`. Selected validation and manifest remain committed regular files; evidence adoption is verified, not the required exact implementation-linked lifecycle.
