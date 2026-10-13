@@ -46,7 +46,25 @@ internal class AssemblyLine(private val edges: List<AssemblyEdge>) {
         machines.lastOrNull { it !in canFinish }?.let {
             fail("Finish cannot be reached from $it")
         }
+        machines.forEach { machine ->
+            val branches = branches(machine)
+            if (branches.isNotEmpty()) {
+                val exits = branches.map { branch -> edges.filter { it.from == branch } }
+                if (exits.any { it.size != 1 || it.single().label != null } ||
+                    exits.map { it.single().to }.distinct().size != 1) {
+                    fail("The branches from $machine do not meet")
+                }
+            }
+        }
     }
+
+    fun branches(machine: String): List<String> {
+        val choices = edges.filter { it.from == machine }
+        return if (machine != "start" && choices.size > 1 && choices.all { it.label == null })
+            choices.map { it.to } else emptyList()
+    }
+
+    fun meetingPoint(machine: String): String = next(branches(machine).first(), null)
 
     fun next(node: String, result: JsonObject?): String {
         val choices = edges.filter { it.from == node }

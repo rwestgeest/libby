@@ -1,12 +1,20 @@
 import java.io.File
 import kotlin.system.exitProcess
 
-internal fun fail(message: String): Nothing {
-    System.err.println(message)
-    exitProcess(1)
-}
+internal class FactoryFailure(message: String) : RuntimeException(message)
+
+internal fun fail(message: String): Nothing = throw FactoryFailure(message)
 
 fun main(args: Array<String>) {
+    try {
+        executeFactory(args)
+    } catch (error: FactoryFailure) {
+        System.err.println(error.message)
+        exitProcess(1)
+    }
+}
+
+private fun executeFactory(args: Array<String>) {
     fun option(name: String): String? = args.indexOf(name).takeIf { it >= 0 }
         ?.let { args.getOrNull(it + 1) }?.takeUnless { it.startsWith("--") }
 

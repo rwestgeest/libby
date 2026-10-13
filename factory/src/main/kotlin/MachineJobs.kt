@@ -1,5 +1,6 @@
 import java.io.File
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
 
 /** Owns shared prompt context and the small set of role-specific instructions. */
 internal class MachineJobs(
@@ -17,6 +18,16 @@ internal class MachineJobs(
     """.trimIndent()
 
     fun prompt(machine: String, taskAccepted: Boolean, findings: JsonArray): String {
+        configuration.prompt(machine)?.let { job ->
+            return """
+                $context
+                $job
+                Your validation lens is: ${configuration.validationLens(machine)}.
+                ${resultRequest(machine)}
+                Product changes:
+                ${repository.uncommittedProductChanges()}
+            """.trimIndent()
+        }
         val job = when (machine) {
             "planner" -> if (taskAccepted) """
                 The task's work has been committed. Mark the first unfinished task done and report whether the plan is complete.
@@ -52,9 +63,18 @@ internal class MachineJobs(
         return "You are the $machine.\n$context\n$job"
     }
 
+    fun meetingPrompt(machine: String, results: Map<String, JsonObject>): String = """
+        ${configuration.prompt(machine) ?: "Combine the supplied branch results and decide."}
+        Use only these results. Do not read or change files.
+        End your answer with a single line of JSON.
+        ${resultRequest(machine)} Include an array "findings" in your JSON result.
+        Branch results:
+        ${JsonObject(results)}
+    """.trimIndent()
+
     private fun resultRequest(machine: String): String {
         val fields = resultFields(machine)
-        if (fields.isEmpty()) return "Include an empty JSON object as your result."
+        if (fields.isEmpty()) return "Include a JSON object describing the job you did as your result."
         return "Include boolean ${if (fields.size == 1) "field" else "fields"} " +
             fields.joinToString(" and ") { "\"$it\"" } + " in your JSON result."
     }

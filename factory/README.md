@@ -62,3 +62,70 @@ Targets own their routes and machine configuration. Assembly lines are
 `.assembly-lines/.machines/<machine>/config.json`. Product commits exclude
 `.assembly-lines` and preserve unrelated repository changes. Optional
 `--model` is forwarded to every machine harness.
+
+## Parallel review (homework 005)
+
+Several unlabelled edges leaving a machine run their destinations concurrently.
+Each branch must have exactly one unlabelled edge to the same meeting machine:
+
+```dot
+doer -> reviewer_1
+doer -> reviewer_2
+doer -> reviewer_3
+reviewer_1 -> synthesiser
+reviewer_2 -> synthesiser
+reviewer_3 -> synthesiser
+synthesiser -> doer [label="not satisfied"]
+synthesiser -> planner [label="satisfied"]
+```
+
+Use this in place of the validator edges in a target's line; keep the existing
+start and planner edges. Each reviewer and the synthesiser needs its own
+folder under `.assembly-lines/.machines/`.
+
+A machine's optional `prompt` configuration supplies its job. Branches can
+have different jobs. For the three big brains, give all reviewers the same
+configuration apart from `model`, choosing models from three providers you
+have signed into in Pi. For example (replace `provider/model-id`):
+
+```json
+{
+  "harness": "pi",
+  "model": "provider/model-id",
+  "lens": "testability",
+  "prompt": "Review only the supplied product changes through the configured lens. Change neither the plan nor the product. Return a JSON result with a boolean satisfied and an array findings."
+}
+```
+
+A machine's `model` overrides the CLI's shared `--model`. Reviewer prompts
+include current uncommitted product changes, excluding completed work.
+The meeting machine receives only the branches' JSON results, keyed by machine
+name, together with its job and requested result fields. Its prompt can be:
+
+```json
+{
+  "harness": "pi",
+  "prompt": "Assess the reviewers' reports and decide whether to accept this attempt. Return a boolean satisfied and an array findings. Use only the reports; do not inspect or change files."
+}
+```
+
+Only the synthesiser's result routes to the doer or planner. Its findings go
+to the doer's retry, and retries obey `--max-attempts`. A branch that crashes,
+cannot start, or returns no JSON result stops the other branches and the run,
+without running the synthesiser or committing that attempt.
+
+With that line saved as `three-big-brains.dot` in the target, try from the
+repository root:
+
+```sh
+bin/factory --run tetris-brains --target tetris/tetris-005 --line three-big-brains --seed tetris/spec.md
+bin/factory --run tetris-brains
+```
+
+These commands call real agents. To exercise the course's real-agent examples
+explicitly, select them with `./test -Preal-agent` from `factory/`. That profile
+still has undefined real-agent steps from earlier iterations; real Pi behavior
+can be tried manually through the CLI after configuring the machines above.
+The default suite uses
+external doubles, including FIFO barriers that prove concurrent execution and
+keep sibling reviewers at work until the factory stops them on a failure.

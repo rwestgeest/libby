@@ -12,10 +12,11 @@ internal class TaskLifecycle(
     private var attempts = 0
     private var findings = JsonArray(emptyList())
 
-    fun prepareExecution(machine: String): String {
+    fun prepareExecution(machine: String, branchResults: Map<String, JsonObject>? = null): String {
         if (machine == "planner" && workInProgress) acceptWork()
         // Construct the prompt before beginning the attempt, preserving failure ordering.
-        val prompt = jobs.prompt(machine, workAccepted, findings)
+        val prompt = if (branchResults == null) jobs.prompt(machine, workAccepted, findings)
+            else jobs.meetingPrompt(machine, branchResults)
         if (machine == "doer") beginAttempt()
         return prompt
     }
@@ -27,10 +28,14 @@ internal class TaskLifecycle(
         }
     }
 
-    /** Routing is authoritative: only a validator-to-doer route exhausts retries. */
-    fun followRoute(machine: String, next: String) {
-        if (machine == "validator" && next == "doer" && attempts >= maxAttempts) {
-            fail("The task hit its limit of $maxAttempts attempts. Findings: $findings")
+    /** The deciding machine supplies retry findings, including after a fan-in. */
+    fun followRoute(machine: String, next: String, result: JsonObject) {
+        if (machine != "planner" && next == "doer") {
+            findings = result["findings"] as? JsonArray
+                ?: fail("Could not read the $machine's result")
+            if (attempts >= maxAttempts) {
+                fail("The task hit its limit of $maxAttempts attempts. Findings: $findings")
+            }
         }
         if (machine == "planner") finishPlanning()
     }

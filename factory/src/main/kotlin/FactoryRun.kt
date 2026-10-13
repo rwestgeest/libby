@@ -6,12 +6,22 @@ internal fun runFactory(
     repository: TargetRepository
 ) {
     var machine = assemblyLine.next("start", null)
+    var branchResults: Map<String, kotlinx.serialization.json.JsonObject>? = null
     while (machine != "finish") {
-        val result = runner.run(machine, lifecycle.prepareExecution(machine))
+        val result = runner.run(machine, lifecycle.prepareExecution(machine, branchResults))
+        branchResults = null
         println(result)
         lifecycle.receiveResult(machine, result)
+        val branches = assemblyLine.branches(machine)
+        if (branches.isNotEmpty()) {
+            val prompts = branches.associateWith { lifecycle.prepareExecution(it) }
+            branchResults = runner.runBranches(prompts)
+            branchResults.values.forEach(::println)
+            machine = assemblyLine.meetingPoint(machine)
+            continue
+        }
         val next = assemblyLine.next(machine, result)
-        lifecycle.followRoute(machine, next)
+        lifecycle.followRoute(machine, next, result)
         machine = next
     }
     repository.recordTaskChanges()

@@ -8,6 +8,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import kotlinx.serialization.json.*
 
 private data class Task(val name: String, val done: Boolean = false)
@@ -46,8 +48,15 @@ private fun runProcess(
         .redirectErrorStream(true)
     builder.environment().putAll(environment)
     val process = builder.start()
-    val output = process.inputStream.bufferedReader().use { it.readText() }
-    return output to process.waitFor()
+    val output = CompletableFuture.supplyAsync {
+        process.inputStream.bufferedReader().use { it.readText() }
+    }
+    if (!process.waitFor(60, TimeUnit.SECONDS)) {
+        process.descendants().use { children -> children.forEach { it.destroyForcibly() } }
+        process.destroyForcibly()
+        error("Process did not finish within 60 seconds: ${command.first()}")
+    }
+    return output.get(5, TimeUnit.SECONDS) to process.exitValue()
 }
 
 private class GitRepo(private val workspace: Path) {
@@ -202,14 +211,12 @@ class FactorySteps {
     private fun configureMachine(name: String, key: String, value: String?) {
         val file = machineDirectory(name).resolve("config.json")
         val entries = if (Files.exists(file)) {
-            Regex("\"([^\"]+)\"\\s*:\\s*\"([^\"]*)\"").findAll(Files.readString(file))
-                .associate { it.groupValues[1] to it.groupValues[2] }.toMutableMap()
+            Json.parseToJsonElement(Files.readString(file)).jsonObject
+                .mapValues { it.value.jsonPrimitive.content }.toMutableMap()
         } else mutableMapOf()
         if (value == null) entries.remove(key) else entries[key] = value
         Files.createDirectories(file.parent)
-        Files.writeString(file, entries.entries.joinToString(",\n", "{\n", "\n}\n") {
-            "  \"${it.key}\": \"${it.value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
-        })
+        Files.writeString(file, JsonObject(entries.mapValues { JsonPrimitive(it.value) }).toString() + "\n")
         if (::factoryBefore.isInitialized) {
             factoryBefore = snapshot(workspace.resolve("factory"))
             stagedBefore = repo.git("diff", "--cached", "--binary", "--", "factory")
@@ -219,6 +226,216 @@ class FactorySteps {
 
     private fun machineDirectory(name: String): Path =
         target.resolve(".assembly-lines/.machines/$name")
+
+    private val reviewers = (1..3).map { "reviewer_$it" }
+
+    @Given("the target has the three big brains")
+    fun threeBigBrains() {
+        (reviewers + "synthesiser").forEach { Files.createDirectories(machineDirectory(it)) }
+    }
+
+    @Then("it reports that the branches from doer do not meet")
+    fun branchesDoNotMeet() {
+        check(exitCode != 0 && output.contains("branches from doer do not meet", true)) { output }
+    }
+
+    private val reviewJob = """
+        Check the doer's uncommitted product work, including new files, through the configured lens.
+        Review only the supplied changes. Report findings without changing the plan or product.
+        Return a JSON result with a boolean "satisfied" and an array "findings".
+    """.trimIndent()
+
+    @Given("the three big brains has replaced the validator on the {string} line")
+    fun replaceValidatorWithBrains(line: String) {
+        threeBigBrains()
+        currentLine = line
+        val replacement = reviewers.joinToString("\n") { "doer -> $it\n$it -> synthesiser" }
+        Files.writeString(linePath(), Files.readString(linePath())
+            .replace("doer -> validator", replacement).replace("validator ->", "synthesiser ->"))
+        reviewers.forEachIndexed { index, reviewer ->
+            configureMachine(reviewer, "prompt", reviewJob)
+            configureMachine(reviewer, "model", listOf("openai/reviewer", "anthropic/reviewer", "google/reviewer")[index])
+        }
+        configureMachine("synthesiser", "prompt",
+            "Decide whether the reviewers' reports justify accepting the attempt. Return your decision and findings. Do not inspect or change files.")
+    }
+
+    private fun prepareReviewMachine(name: String) {
+        val folder = Files.createDirectories(workspace.resolve(name))
+        val harness = Files.copy(Path.of("src/test/doubles/review.py"), folder.resolve("review.py"))
+        harness.toFile().setExecutable(true)
+        configureMachine(name, "harness", harness.toString())
+    }
+
+    @Given("every reviewer is always satisfied")
+    fun satisfiedReviewers() = reviewers.forEach(::prepareReviewMachine)
+
+    @Given("the synthesiser is always satisfied")
+    fun satisfiedSynthesiser() = prepareReviewMachine("synthesiser")
+
+    @Given("a plan with one task, not done")
+    fun oneUnfinishedTask() = Plan(planPath()).write(listOf(Task("alpha")))
+
+    @Then("every reviewer has been called once")
+    fun reviewersCalledOnce() {
+        reviewers.forEach { check(countCalls(workspace.resolve("$it/calls")) == 1L) { "$it\n$output" } }
+    }
+
+    @Then("the synthesiser has been called once")
+    fun synthesiserCalledOnce() {
+        check(countCalls(workspace.resolve("synthesiser/calls")) == 1L) { output }
+    }
+
+    @Given("no reviewer finishes until all three have begun")
+    fun reviewersWaitForPeers() {
+        val barrier = Files.createDirectory(workspace.resolve("review-barrier"))
+        val (message, status) = runProcess(listOf("mkfifo") + reviewers.map { barrier.resolve(it).toString() }, workspace)
+        check(status == 0) { message }
+    }
+
+    private fun reviewPrompt(name: String, call: Int = 0): String {
+        val path = workspace.resolve("$name/calls/$call.txt")
+        check(Files.isRegularFile(path)) { "$name was not called.\n$output" }
+        return Files.readString(path)
+    }
+
+    @Then("every reviewer was asked for a result")
+    fun reviewersAskedForResult() {
+        reviewers.forEach {
+            val prompt = reviewPrompt(it)
+            check(prompt.contains("JSON") && prompt.contains("result")) { prompt }
+        }
+    }
+
+    private fun reviewerFinding(name: String, finding: String) {
+        Files.writeString(workspace.resolve("$name/never-satisfied"), "yes")
+        Files.writeString(workspace.resolve("$name/finding.txt"), finding)
+    }
+
+    @Given("every reviewer is not satisfied, with a finding of its own: {string}, {string} or {string}")
+    fun allReviewerFindings(first: String, second: String, third: String) {
+        reviewers.zip(listOf(first, second, third)).forEach { (name, finding) -> reviewerFinding(name, finding) }
+    }
+
+    private var inspectedPrompts = emptyList<String>()
+
+    @Then("the synthesiser was given {string}, {string} and {string}")
+    fun synthesiserGivenReports(first: String, second: String, third: String) {
+        listOf(first, second, third).forEach(::synthesiserGivenReport)
+        val results = Json.parseToJsonElement(reviewPrompt("synthesiser").substringAfter("Branch results:\n")).jsonObject
+        check(results.keys == reviewers.toSet()) { results }
+        reviewers.zip(listOf(first, second, third)).forEach { (name, finding) ->
+            check(results.getValue(name).jsonObject.getValue("findings").jsonArray == JsonArray(listOf(JsonPrimitive(finding)))) { results }
+        }
+    }
+
+    @Given("the second reviewer is not satisfied, with the finding {string}")
+    fun secondReviewerFinding(finding: String) = reviewerFinding("reviewer_2", finding)
+
+    @Then("the synthesiser was given {string}")
+    fun synthesiserGivenReport(report: String) {
+        val prompt = reviewPrompt("synthesiser")
+        check(prompt.contains(report)) { prompt }
+        check(!prompt.contains(seed.toString()) && !prompt.contains(planPath().toString())) { prompt }
+        inspectedPrompts = listOf(prompt)
+    }
+
+    @Given("the synthesiser is never satisfied")
+    fun synthesiserNeverSatisfied() {
+        Files.writeString(workspace.resolve("synthesiser/never-satisfied"), "yes")
+        Files.writeString(workspace.resolve("synthesiser/finding.txt"), "Synthesis: resolve the review concerns.")
+    }
+
+    @Given("the synthesiser is not satisfied the first time")
+    fun synthesiserRejectsFirst() {
+        Files.writeString(workspace.resolve("synthesiser/reject-first"), "yes")
+        Files.writeString(workspace.resolve("synthesiser/finding.txt"), "Synthesis: resolve the review concerns.")
+    }
+
+    @Then("the doer was given the synthesiser's findings")
+    fun doerReceivedSynthesis() {
+        check(reviewPrompt("doer", 1).contains("Synthesis: resolve the review concerns."))
+    }
+
+    @Then("it was not given {string}")
+    fun retryNotGiven(report: String) { check(!reviewPrompt("doer", 1).contains(report)) }
+
+    @Given("the second reviewer answers in prose, with no result")
+    fun secondReviewerNoResult() { Files.writeString(workspace.resolve("reviewer_2/no-result"), "yes") }
+
+    @Then("it reports that it could not read reviewer_{int}'s result")
+    fun reviewerUnreadable(number: Int) {
+        check(exitCode != 0 && output.contains("could not read the reviewer_$number's result", true)) { output }
+    }
+
+    @Then("the synthesiser has not been called")
+    fun synthesiserNotCalled() { check(countCalls(workspace.resolve("synthesiser/calls")) == 0L) { output } }
+
+    @Given("the second reviewer cannot be run")
+    fun secondReviewerCannotRun() {
+        check(workspace.resolve("reviewer_2/review.py").toFile().setExecutable(false, false))
+    }
+
+    @Then("it reports that it could not run reviewer_{int}")
+    fun reviewerCannotRunReported(number: Int) {
+        check(exitCode != 0 && output.contains("could not run the reviewer_$number", true)) { output }
+    }
+
+    @Then("every reviewer was given the work for the second task")
+    fun reviewersGivenSecondTask() {
+        inspectedPrompts = reviewers.map(::reviewPrompt)
+        inspectedPrompts.forEach { check(it.contains("beta.txt") && it.contains("Work for beta")) { it } }
+    }
+
+    @Then("every reviewer was given the same prompt")
+    fun reviewersSamePrompt() {
+        val prompts = reviewers.map(::reviewPrompt)
+        check(prompts.distinct().size == 1) { prompts }
+        val models = reviewers.map { reviewer ->
+            val args = Json.parseToJsonElement(Files.readString(workspace.resolve("$reviewer/calls/0.json")))
+                .jsonObject.getValue("args").jsonArray.map { it.jsonPrimitive.content }
+            args[args.indexOf("--model") + 1]
+        }
+        check(models.map { it.substringBefore('/') }.distinct().size == 3) { models }
+    }
+
+    @Given("the reviewers' lens is testability")
+    fun reviewersTestability() = reviewers.forEach { configureMachine(it, "lens", "testability") }
+
+    @Then("every reviewer was given {string}")
+    fun reviewersGiven(value: String) {
+        reviewers.forEach { check(reviewPrompt(it).contains(value)) { reviewPrompt(it) } }
+    }
+
+    @Given("the other reviewers are held at work")
+    fun holdOtherReviewers() {
+        val gates = Files.createDirectory(workspace.resolve("stop-gates"))
+        val (message, status) = runProcess(listOf("mkfifo") + listOf("reviewer_1", "reviewer_3")
+            .map { gates.resolve(it).toString() }, workspace)
+        check(status == 0) { message }
+    }
+
+    @Given("the second reviewer crashes")
+    fun secondReviewerCrashes() { Files.writeString(workspace.resolve("reviewer_2/crash"), "yes") }
+
+    @Then("the held reviewers have stopped")
+    fun heldReviewersStopped() {
+        for (name in listOf("reviewer_1", "reviewer_3")) {
+            val pid = Files.readString(workspace.resolve("$name/pid")).toLong()
+            check(ProcessHandle.of(pid).map { !it.isAlive }.orElse(true)) { "$name is still running" }
+        }
+    }
+
+    @Given("each branch has its own job")
+    fun distinctBranchJobs() = reviewers.forEachIndexed { index, name ->
+        configureMachine(name, "prompt", "Do distinct job ${index + 1} and report a JSON result.")
+    }
+
+    @Then("each branch received only its own job")
+    fun distinctBranchPrompts() = reviewers.forEachIndexed { index, name ->
+        val prompt = reviewPrompt(name)
+        for (job in 1..3) check(prompt.contains("Do distinct job $job") == (job == index + 1)) { prompt }
+    }
 
     @Given("the factory allows at most three attempts per pass")
     fun threeAttemptsPerPass() {
@@ -831,8 +1048,10 @@ class FactorySteps {
 
     @Then("it was not given the work for the first task")
     fun validatorNotGivenFirstTask() {
-        val prompt = validatorPrompt()
-        check(!prompt.contains("alpha.txt") && !prompt.contains("Work for alpha")) { prompt }
+        val prompts = inspectedPrompts.ifEmpty { listOf(validatorPrompt()) }
+        prompts.forEach { prompt ->
+            check(!prompt.contains("alpha.txt") && !prompt.contains("Work for alpha")) { prompt }
+        }
     }
 
     private fun assertDoerCalls(expected: Long) {
