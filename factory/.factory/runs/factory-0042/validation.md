@@ -1,5 +1,11 @@
 # factory-0042 — Inspection and baseline evidence
 
+## Planner verification at `594c066`
+
+Read complete seed, plan and referenced validation/selection, including recorded owner feedback. Target-scoped history/stat confirms HEAD `594c0664b0ee8f9f9c861564e94b51f9cb3a1390` changes only selected validation, follows progress `72497d9`, and carries `Factory-Run` without `Factory-Implementation`. Entry plan edits preserved; selection remains `validation.md`. Run-local inspection confirms `acceptance.md` remains absent. Neither task 8 acceptance check is closed. No product work, test changes, commits, history repair or manual approval performed; no superseded expectation or artificial red arises.
+
+After planner edits, `./test -Dkotlin.compiler.daemon=false` exited **0**: **135/135 scenarios and 1961/1961 steps passed**, **51.717s**. Complete required deterministic suite, normal selection unchanged; full transient log: `target/test.log`. Passing automation does not supply the missing related lifecycle or genuine owner clarification. Task 8 remains unchecked; completion false. Further record-only retries cannot supply those acceptance inputs.
+
 ## Task 8: blocked resumption at `72497d9`
 
 Read the complete seed, existing plan, referenced validation and selection, including recorded owner feedback. Target-scoped status was clean and `git diff --check -- .` passed. `git log -3 --format='%H %s%n%b' -- .` and `git show --stat HEAD -- .` verify evidence `9e7f4dbe7602fc3785d49d7e1abab26c654065a9` followed by plan-only progress `72497d95def27e043222b01187ae59ad8390e831`. Both carry `Factory-Run: factory-0042`, neither carries `Factory-Implementation`; the outstanding implementation-linked lifecycle is not established. `git ls-files -s` confirms tracked regular manifest/validation; selection remains `validation.md`. Run-local inspection confirms `acceptance.md` remains absent; no genuine owner clarification was supplied.
