@@ -64,3 +64,12 @@ Result in: [2026-10-11-qubigo-factory-run-explained.md](./2026-10-11-qubigo-fact
 The only thing I don't really understand is the expected plan missing. Apparently there's a plan supplied by the factory in the runs directory, but the agents are also instructed to work only inside the qubigo target. There's an ambiguity there??? 
 
 Analysis an direction here: [2026-10-11-factory-plan-ownership.md](./2026-10-11-factory-plan-ownership.md)
+
+
+## Changing the factory with the factory
+
+When changing the factory to change the planned ownership to the target, the factory got stuck in a loop. It appeared that the authoritative specs of the tutorial were blocking a change that I wanted to make. See [./2026-10-11-from-factory-to-eternity.md](./2026-10-11-from-factory-to-eternity.md). 
+
+Since I wanted to make the change to the ownership of the plan, I had to change an instruction in the AGENTS.md as well. [See change in agents md](https://github.com/rwestgeest/libby/commit/bb3d3a7#diff-a54ff182c7e8acf56acfd6e4b9c3ff41e2c41a31c9b211b2deb9df75d9a478f9)
+
+
