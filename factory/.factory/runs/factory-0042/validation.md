@@ -1,5 +1,13 @@
 # factory-0042 — Inspection and baseline evidence
 
+## Task 8: blocked resumption at `84d7541`
+
+Read the complete unchanged seed, existing plan and referenced validation/selection, including recorded owner feedback. Target-scoped status was clean and `git diff --check -- .` passed. History/stat inspection verifies evidence `1bb4131ce433f3578c83cfba86527e72a0965758` followed by plan-only progress `84d7541f16cd1d753dbd0cdecffdfbdb7fc98ad5`. Both carry `Factory-Run: factory-0042`, neither carries `Factory-Implementation`; this does not close the exact implementation-linked lifecycle check. Tracked manifest and selected validation remain regular files; selection remains `validation.md`. Run-local inspection confirms `acceptance.md` remains absent; no genuine owner answers were supplied.
+
+Both task 8 acceptance checks remain blocked pending factory-created related commits and genuine owner clarification on further human acceptance and the recorded Draft-scope questions. The doer cannot make/repair factory-owned commits or invent decisions. Further record-only retries cannot supply these inputs.
+
+No behavior change or superseded expectation arises; no test/implementation edit or artificial red warranted. No identical suite rerun: latest recorded complete required suite passed 135 scenarios / 1961 steps (52.177s), not fresh validation or acceptance. Findings `[]`; no finding subtasks required. Preserved selection, decisions and progress; updated only this run's evidence/reference. No commits, history repair, advancement, manual approval or task completion performed. Task 8 remains unchecked; completion false.
+
 ## Planner verification at `28bad87`
 
 Read complete seed, plan and all referenced existing evidence/selection, including recorded owner feedback. Target-scoped history/stat verifies HEAD `28bad879d110bc441767dea61fed25f7ccda03f3` changes only selected validation, follows progress `569c07b`, and carries `Factory-Run` without `Factory-Implementation`. Entry plan edits preserved; selection remains `validation.md`. Run-local file inspection confirms `acceptance.md` remains absent. Neither task 8 acceptance check is closed. No product work, test changes, commits, history repair or manual approval; no new superseded expectation or artificial red arises.
