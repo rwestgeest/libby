@@ -1,5 +1,15 @@
 # factory-0042 — Inspection and baseline evidence
 
+## Task 8: acceptance verification at `483f056`
+
+New evidence supersedes earlier uncommitted-selection observations: HEAD `483f056d468884932ceafd6aec28f8ad168be161` actually commits this run's `evidence.list` and selected `validation.md` (278 insertions, 1 deletion), with `Factory-Run: factory-0042`. The committed manifest selects exactly `validation.md`; target status and index were clean before this attempt. Verified with target-scoped history, `git show`, `git ls-tree` and status; target-scoped diff check passes.
+
+Actual related lifecycle acceptance still fails: implementation `764b2fd0354ccaff29d5c1d9acf5fe01800d3b59` has no run trailer; nineteen plan-only progress commits follow it before this evidence commit. Immediate predecessor `e73399b1413de92da822a75bbfd2c0f02e7897dd` changes only the plan and has no relationship trailers. Evidence HEAD has no `Factory-Implementation` trailer. This is genuine selected-evidence adoption, not the required implementation/evidence/progress order or exact implementation linkage. No historical repair or acceptance inferred; the factory owns commits.
+
+Fresh complete required suite: `./test -Dkotlin.compiler.daemon=false` exited **0**, **135/135 scenarios and 1961/1961 steps passed**, **44.219s**; inspected `target/test.log` confirming BUILD SUCCESS. Normal suite selection unchanged. This acceptance task supplies no behavior change or superseded expectation: no tests/implementation changed and no artificial red warranted. Findings were `[]`; no finding subtasks required.
+
+`acceptance.md` remains absent; no genuine owner answers supplied. Both task 8 acceptance subtasks remain unresolved. Needed inputs: a verifiable factory-created related sequence, plus owner clarification on further human acceptance, initial-planning failure gates, blocked-change/evidence disposition and adoption of existing evidence elsewhere. Updated only this run's record; preserved selection and history. No commits, advancement, approval or top-level completion performed. Completion false.
+
 ## Task 8: blocked resumption at `c8025f2`
 
 Read the complete seed, plan and referenced evidence/manifest. Target-scoped `git log 764b2fd..HEAD --format='%h %s%n%b' -- .` and changed-path history show eighteen plan-only progress commits, no selected-evidence commit or relationship trailers. `git ls-tree` tracks only plan and validation; validation remains modified and the manifest untracked. Target index is empty, `acceptance.md` absent and `git diff --check -- .` passes.
@@ -448,6 +458,6 @@ Validator findings were `[]`; no finding subtasks were needed. Did not repeat th
 
 ## Limits
 
-Inspection, the historical failing baseline, authorized test evolution and passing full deterministic suites were performed; the historical external-reconciliation blocker is superseded. Tasks 2–6 exercised synthetic acceptance scenarios for instructions/resumption, actual fixture Git contents and related commit ordering, selected evidence, test gates, rejection and isolation. Tasks 6–8 inspected this run's live Git history, recording actual commit IDs, contents and missing relationships. Those completed checks are evidence, not acceptance of this run's actual lifecycle: selected later-task evidence/manifest remain uncommitted and its required related implementation/evidence/progress sequence remains unsupported.
+Inspection, the historical failing baseline, authorized test evolution and passing full deterministic suites were performed; the historical external-reconciliation blocker is superseded. Tasks 2–6 exercised synthetic acceptance scenarios for instructions/resumption, actual fixture Git contents and related commit ordering, selected evidence, test gates, rejection and isolation. Tasks 6–8 inspected this run's live Git history, recording actual commit IDs, contents and missing relationships. Those completed checks are evidence, not acceptance of this run's actual lifecycle: selected later-task evidence/manifest were committed in `483f056`, but its required related implementation/evidence/progress sequence remains unsupported (see task 8 verification above).
 
 Synthetic owner-feedback/manual fixtures are not genuine approval. The recorded owner test-evolution decision authorizes local TDD changes but does not resolve the Draft-scope/open questions or establish full acceptance. No live-agent compliance, genuine human/device acceptance or new owner answers to those questions are claimed. Actual lifecycle acceptance and genuine owner clarification remain outstanding; completion is false. Full transient test output is in `target/test.log`; selected results and explanatory failures above are retained beside the authoritative plan for resumption.
