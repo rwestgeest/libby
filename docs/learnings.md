@@ -18,6 +18,5 @@
     - And use the right tools (skills, hooks, extensions) where appropriate
     - And then i stumbled over Lada's augmented coding patterns. What stood out (initially - i am still digesting) was that you can monitor the quality of the context using markers. She uses emoijis in her important instructions, that the agent must print as an indicator.
 
-
 - 2026-10-13: rules can contradict - making a factory end up in an endless loop
 - 2026-10-13: Agent.md is a striong guidance - rules in there are obeyed quite well by agent
