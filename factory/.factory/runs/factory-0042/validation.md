@@ -1,5 +1,13 @@
 # factory-0042 — Inspection and baseline evidence
 
+## Task 8: blocked resumption at `fe32369`
+
+Read the complete unchanged seed, existing plan, validation and selection manifest, including recorded owner feedback. Target-scoped status and index were clean. `git log`, `git show --stat`, `git ls-tree` and `git ls-files -s` verify committed regular `evidence.list` and selected `validation.md`. Latest evidence `ca0772ff23b4fa09b5108f098488ba76aa9ba215` is followed by plan-only progress `fe32369111a484aef334a314cc639b7955d6f9c6`. Both carry `Factory-Run: factory-0042` but neither carries `Factory-Implementation`; implementation `764b2fd0354ccaff29d5c1d9acf5fe01800d3b59` still has no relationship trailers. Evidence adoption is real, but the required related implementation/evidence/progress lifecycle remains unsupported; no history repair or acceptance inferred.
+
+`acceptance.md` remains absent and no new genuine owner answers were supplied. Task 8 remains blocked pending a verifiable factory-created related sequence and owner clarification on further human acceptance, initial-planning failure gates, blocked-change/evidence disposition and adoption of evidence elsewhere. The doer cannot supply those decisions or create commits under the current instructions.
+
+No behavior change or superseded test expectation arises from this acceptance task; no test/implementation change or artificial red warranted. No identical suite rerun: latest recorded complete suite passed 135 scenarios / 1961 steps (44.219s), not fresh validation. Findings were `[]`; no finding subtasks required. Preserved `evidence.list` selecting exactly `validation.md`. Updated only this run's evidence and plan reference; target-scoped diff check passed before edits. No commits, advancement, manual approval or top-level completion performed. Both acceptance checks remain outstanding; completion false. Further record-only retries cannot supply the missing inputs.
+
 ## Task 8: acceptance verification at `483f056`
 
 New evidence supersedes earlier uncommitted-selection observations: HEAD `483f056d468884932ceafd6aec28f8ad168be161` actually commits this run's `evidence.list` and selected `validation.md` (278 insertions, 1 deletion), with `Factory-Run: factory-0042`. The committed manifest selects exactly `validation.md`; target status and index were clean before this attempt. Verified with target-scoped history, `git show`, `git ls-tree` and status; target-scoped diff check passes.
