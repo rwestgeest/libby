@@ -1,5 +1,13 @@
 # factory-0042 — Inspection and baseline evidence
 
+## Task 8: blocked resumption at `389d74d`
+
+Read the complete seed, plan and all referenced existing evidence/selection, including recorded owner feedback. Target-scoped status was clean and `git diff --check -- .` passed. Target-scoped history and HEAD stat verify evidence `25bd9afb125b04ab13d73cc2b3a90cde61311e36` followed by plan-only progress `389d74de1e75499779e96c2f706a71e5df1c042b`. Both carry `Factory-Run: factory-0042`, neither carries `Factory-Implementation`. Tracked selected validation and manifest remain regular files; selection remains exactly `validation.md`. This does not establish the outstanding exact implementation-linked lifecycle.
+
+Run-local inspection confirms `acceptance.md` remains absent; no genuine owner scope/manual answers were supplied. Both task 8 checks remain blocked pending factory-created related commits and owner clarification on further human acceptance, initial-planning failure gates, blocked-change/evidence disposition and adoption of existing evidence elsewhere. The doer cannot create/repair factory-owned history or invent decisions. Further record-only retries cannot supply these inputs.
+
+No behavior change or superseded test expectation arises; no test/implementation edit, artificial red or identical suite rerun warranted. Latest recorded complete required suite passed 135 scenarios / 1961 steps (47.501s), not fresh validation or acceptance. Findings `[]`; no finding subtasks required. Preserved selection, completed progress and outstanding checks. Updated only this run's evidence and plan reference; no commits, advancement, manual approval or task completion. Completion false.
+
 ## Planner verification at `f661be6`
 
 Read the complete seed, plan and referenced evidence/selection, including recorded owner feedback. Target-scoped history and HEAD stat verify `f661be68c67b656a54dd6d97da20931b44d3f06f` changes only selected `validation.md`, follows progress `8c05145`, and carries `Factory-Run` without `Factory-Implementation`. Run-local files remain regular; selection remains exactly `validation.md`. Entry plan edits preserved; target-scoped diff check passed before edits. `acceptance.md` and genuine owner scope/manual answers remain absent. Task 8's related-lifecycle and owner-clarification checks remain outstanding; committed verification is not acceptance closure. No product work, test changes, commits, history repair or manual acceptance performed; no superseded expectation or artificial red arises.
