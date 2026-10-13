@@ -1,5 +1,13 @@
 # factory-0042 — Inspection and baseline evidence
 
+## Task 8: blocked resumption at `f43fb11`
+
+Read the complete seed, existing plan and all referenced evidence/selection, including recorded owner feedback. Target-scoped status was clean and `git diff --check -- .` passed. Actual history and HEAD stat confirm evidence `25b6cb693982b4d6df829bf1d10533aaf382623c` followed by plan-only progress `f43fb1116a5714284a0abad1cc08a5888a14db12`. Both carry `Factory-Run: factory-0042`, neither carries `Factory-Implementation`. `git ls-files -s` confirms committed regular selection/validation files. Evidence adoption remains verified, not the required exact implementation-linked triple.
+
+`acceptance.md` and new genuine owner decisions remain absent. Task 8 cannot close without factory-created related commits and owner answers on further human acceptance, initial-planning failure gates, blocked-change/evidence disposition and adoption of existing evidence elsewhere. The doer cannot create/repair factory-owned commits or invent owner answers. Further record-only retries cannot resolve these blockers.
+
+No behavior change or superseded expectation arises; no test/implementation change, manufactured red or identical suite rerun warranted. Latest recorded complete required suite passed 135 scenarios / 1961 steps (44.219s), not fresh validation. Findings `[]`; no finding subtasks required. Preserved existing selection and progress; updated only this run's evidence and plan reference. No commits, advancement, manual approval or task completion; both acceptance checks remain outstanding and completion false.
+
 ## Task 8: blocked resumption at `967f434`
 
 Read the complete seed, plan and referenced validation/selection, including recorded owner feedback. Target-scoped status was clean and `git diff --check -- .` passed. `git log -4 --format='%H %s%n%b' -- .`, `git show --stat HEAD -- .` and `git ls-files -s .factory/runs/factory-0042` verify evidence `969bd6ee1e5b0cadf34ff9df9c544b656e486cfb` followed by plan-only progress `967f434366ba6c6c105d6d0ec5477fb5216ee05a`. Both carry `Factory-Run: factory-0042`, neither carries `Factory-Implementation`. Selected validation and manifest remain committed regular files; evidence adoption does not establish the outstanding exact implementation-linked triple.
