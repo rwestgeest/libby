@@ -1,5 +1,13 @@
 # factory-0042 — Inspection and baseline evidence
 
+## Task 8: blocked resumption at `8c05145`
+
+Read the complete seed, plan and all referenced existing evidence/selection, including recorded owner feedback. Target-scoped status was clean and `git diff --check -- .` passed. `git log -4 --format='%H %s%n%b' -- .`, `git show --stat HEAD -- .` and `git ls-files -s .factory/runs/factory-0042` verify evidence `431bc647bbe3098600152b0488cf069153028746` followed by plan-only progress `8c05145c775f386943d640f080a14c8825c61c82`. Both carry `Factory-Run: factory-0042`, neither carries `Factory-Implementation`. Selected validation and manifest remain committed regular files; selection remains exactly `validation.md`. This does not establish the outstanding exact implementation-linked lifecycle.
+
+Run-local inspection confirms `acceptance.md` remains absent; no genuine owner answers were supplied. Both task 8 checks remain blocked pending factory-created related commits and clarification on further human acceptance, initial-planning failure gates, blocked-change/evidence disposition and adoption of existing evidence elsewhere. The doer cannot create/repair factory-owned history or invent owner decisions. Further record-only retries cannot supply these inputs.
+
+No behavior change or superseded test expectation arises; no test/implementation edit, artificial red or identical suite rerun warranted. Latest recorded complete required suite passed 135 scenarios / 1961 steps (50.644s), not fresh validation or acceptance. Findings `[]`; no finding subtasks required. Preserved selection, completed progress and outstanding checks. Updated only this run's evidence and plan reference; no commits, advancement, manual approval or task completion. Completion false.
+
 ## Planner verification at `edead44`
 
 After planner edits, `./test -Dkotlin.compiler.daemon=false` exited **0**: **135/135 scenarios, 1961/1961 steps passed**, **50.644s**. Complete required deterministic suite, unchanged normal selection; full transient log: `target/test.log`. Passing automation does not close either acceptance check.
