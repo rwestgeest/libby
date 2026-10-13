@@ -1,0 +1,23 @@
+# Learnings
+- 2026-10-13: Ralph loops keep context small and process somewhat predictable
+- 2026-10-13: doer and validator separation may work as a control system
+- 2026-10-13: doer and validator have different focus
+- 2026-10-13: doer focus is on producing stuff - slob cannon
+- 2026-10-13: validator focus is on validating stuff - analysis focus
+- 2026-10-13: Context engineering:
+    - it is ram, and it rots in several ways:
+        - poisoned (hallucination)
+        - distracted (focus drop - by history)
+        - confusion
+        - clashing
+    - so we should use the disk to
+        - focus (summarize, select, make it smaller, isolate stuff we care about)
+        - by using notes, or subagents (leave grilling open while starting a ralphloop on sth for example)
+        - not too small not to big (whatever that means)
+        - grounded (traceable) - note to self: need to work that one out
+    - And use the right tools (skills, hooks, extensions) where appropriate
+    - And then i stumbled over Lada's augmented coding patterns. What stood out (initially - i am still digesting) was that you can monitor the quality of the context using markers. She uses emoijis in her important instructions, that the agent must print as an indicator.
+
+
+- 2026-10-13: rules can contradict - making a factory end up in an endless loop
+- 2026-10-13: Agent.md is a striong guidance - rules in there are obeyed quite well by agent

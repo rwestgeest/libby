@@ -1,0 +1,2 @@
+- 2026-10-13: What is the most effective thing to use as a seed (examples, markdown, rules)?
+- 2026-10-13: Why are plans so elaborate - tetris was simple - but then it got out of hand
