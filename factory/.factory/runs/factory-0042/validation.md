@@ -1,5 +1,13 @@
 # factory-0042 — Inspection and baseline evidence
 
+## Task 8: blocked resumption at `967f434`
+
+Read the complete seed, plan and referenced validation/selection, including recorded owner feedback. Target-scoped status was clean and `git diff --check -- .` passed. `git log -4 --format='%H %s%n%b' -- .`, `git show --stat HEAD -- .` and `git ls-files -s .factory/runs/factory-0042` verify evidence `969bd6ee1e5b0cadf34ff9df9c544b656e486cfb` followed by plan-only progress `967f434366ba6c6c105d6d0ec5477fb5216ee05a`. Both carry `Factory-Run: factory-0042`, neither carries `Factory-Implementation`. Selected validation and manifest remain committed regular files; evidence adoption does not establish the outstanding exact implementation-linked triple.
+
+`acceptance.md` remains absent; no new genuine owner scope/manual decisions were supplied. Both acceptance checks remain unresolved. Needed inputs remain factory-created related commits and owner clarification on further human acceptance, initial-planning failure gates, blocked-change/evidence disposition and adoption of evidence elsewhere. The doer cannot invent those answers or make/repair factory-owned commits.
+
+No behavior change or conflicting test expectation arises; no test/implementation edit or artificial red warranted. No identical suite rerun; latest recorded full required suite passed 135 scenarios / 1961 steps (44.219s), not fresh validation. Findings `[]`; no finding subtasks required. Preserved selection (`validation.md`), completed progress and outstanding checks. Updated only this run's evidence and plan reference; no commits, advancement, manual approval or task completion. Completion false. Further record-only retries cannot supply missing acceptance inputs.
+
 ## Task 8: blocked resumption at `71a4252`
 
 Read the complete seed, existing plan and all referenced existing evidence/selection, including recorded owner feedback. Target-scoped `git status --short -- .` was clean; `git diff --check -- .` passed. `git log -6 --format='%H %s%n%b' -- .`, `git show --stat HEAD -- .` and `git ls-files -s .factory/runs/factory-0042` confirm selected evidence commit `023035730b887181b2bdccab1a5bc4a7e60a6d93` followed by plan-only progress `71a42521be113f4fb727920ebf02468b77680eb8`. Both carry `Factory-Run: factory-0042`, but neither has `Factory-Implementation`. The manifest and selected validation are committed regular files. This confirms evidence adoption, not the outstanding exact implementation-linked accepted triple.
