@@ -1,5 +1,11 @@
 # factory-0042 — Inspection and baseline evidence
 
+## Planner verification at `e2653d6`
+
+Read complete seed, plan and referenced evidence/selection, including recorded owner feedback. Target-scoped Git history/stat verifies HEAD `e2653d63ecd869cdafa61356e9964294494513b3` changes only selected `validation.md`, follows plan progress `1a90d82`, and has `Factory-Run` but no exact `Factory-Implementation` trailer. Tracked manifest and evidence are regular files; selection unchanged. `acceptance.md` absent. Existing plan edits preserved. Actual related lifecycle and owner scope/manual clarification remain outstanding; task 8 is not done. No product work, test changes, commits, history repair or manual acceptance performed.
+
+After planner edits, `./test -Dkotlin.compiler.daemon=false` exited **0**: **135/135 scenarios, 1961/1961 steps passed**, **51.344s**. Complete required deterministic suite, normal selection unchanged; full transient output in `target/test.log`. Passing automation does not close either acceptance check. No superseded expectation or artificial red arises. Completion false.
+
 ## Task 8: blocked resumption at `1a90d82`
 
 Read the complete seed, plan and all referenced existing evidence/selection, including recorded owner feedback. Target-scoped status was clean; `git diff --check -- .` passed. `git log -4 --format='%H %s%n%b' -- .`, `git show --stat HEAD -- .`, and `git ls-files -s .factory/runs/factory-0042` verify selected-evidence commit `152e5c76f2a5d93e953ee556b01d5207f5d738e7` followed by plan-only progress `1a90d82b37035d78ddc29619aae5cb5a903cfdad`. Both carry `Factory-Run: factory-0042`, neither carries `Factory-Implementation`. Selected validation and manifest remain committed regular files. This does not close the required exact implementation-linked lifecycle check.
