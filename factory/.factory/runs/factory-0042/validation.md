@@ -1,5 +1,13 @@
 # factory-0042 — Inspection and baseline evidence
 
+## Task 8: blocked resumption at `b4e3b82`
+
+Read the complete seed, plan and referenced validation/selection, including recorded owner feedback. Target-scoped status was clean and `git diff --check -- .` passed. `git log -4 --format='%H %s%n%b' -- .`, `git show --stat HEAD -- .`, and `git ls-files -s .factory/runs/factory-0042` verify evidence commit `61e85d9c9a57544accab0f7ad5f23df11b88fdef` followed by plan-only progress `b4e3b8286c7eff2c1dd13c335c14b9eebb63f030`. Both carry `Factory-Run: factory-0042`, neither carries `Factory-Implementation`. Selected validation and manifest remain committed regular files; selection remains exactly `validation.md`. This does not establish the outstanding exact implementation-linked lifecycle.
+
+Run-local inspection confirms `acceptance.md` remains absent. No genuine owner answers were supplied. Both task 8 checks remain blocked pending factory-created related commits and owner clarification on further human acceptance, initial-planning failure gates, blocked-change/evidence disposition and adoption of existing evidence elsewhere. The doer cannot create/repair factory-owned history or invent those decisions; further record-only retries cannot supply them.
+
+No behavior change or superseded test expectation arises; no test/implementation edit, artificial red or identical suite rerun warranted. Latest recorded complete required suite passed 135 scenarios / 1961 steps (51.344s), not fresh validation or acceptance. Findings `[]`; no finding subtasks required. Preserved selection, completed progress and outstanding checks. Updated only this run's evidence and plan reference; no commits, advancement, manual approval or task completion. Completion false.
+
 ## Planner verification at `e2653d6`
 
 Read complete seed, plan and referenced evidence/selection, including recorded owner feedback. Target-scoped Git history/stat verifies HEAD `e2653d63ecd869cdafa61356e9964294494513b3` changes only selected `validation.md`, follows plan progress `1a90d82`, and has `Factory-Run` but no exact `Factory-Implementation` trailer. Tracked manifest and evidence are regular files; selection unchanged. `acceptance.md` absent. Existing plan edits preserved. Actual related lifecycle and owner scope/manual clarification remain outstanding; task 8 is not done. No product work, test changes, commits, history repair or manual acceptance performed.
