@@ -484,6 +484,8 @@ class FactorySteps {
     fun initialPlannerStatus() {
         val prompt = Files.readString(workspace.resolve("calls/0.txt"))
         check(prompt.contains("Otherwise, report its status without changing it.")) { prompt }
+        check(prompt.contains("Return \"complete\": false while any planned product work remains, including after creating a new plan.")) { prompt }
+        check(prompt.contains("If you cannot read or write the designated plan, report the failure; do not claim completion.")) { prompt }
         check(!prompt.contains("The task's work has been committed.")) { prompt }
     }
 
@@ -630,7 +632,9 @@ class FactorySteps {
             val prompt = args.last()
             check(prompt.contains("Read the seed at \"$seed\".")) { prompt }
             check(prompt.contains("The plan is at \"${planPath()}\".")) { prompt }
-            check(prompt.contains("Work only in the current target directory. The factory handles commits.")) { prompt }
+            check(prompt.contains("Read the plan at that exact path, even when it is outside the target directory.")) { prompt }
+            check(prompt.contains("When your job requires plan updates, write them at that exact path too.")) { prompt }
+            check(prompt.contains("Keep product work inside the current target directory. The factory handles commits.")) { prompt }
             check(prompt.contains("End your answer with a single line of JSON.")) { prompt }
         }
     }

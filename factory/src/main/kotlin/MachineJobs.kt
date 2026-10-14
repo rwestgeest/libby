@@ -13,7 +13,10 @@ internal class MachineJobs(
     private val context = """
         Read the seed at "$seed".
         The plan is at "$plan".
-        Work only in the current target directory. The factory handles commits.
+        Read the plan at that exact path, even when it is outside the target directory.
+        When your job requires plan updates, write them at that exact path too.
+        Do not create a substitute plan inside the target.
+        Keep product work inside the current target directory. The factory handles commits.
         End your answer with a single line of JSON.
     """.trimIndent()
 
@@ -31,10 +34,14 @@ internal class MachineJobs(
         val job = when (machine) {
             "planner" -> if (taskAccepted) """
                 The task's work has been committed. Mark the first unfinished task done and report whether the plan is complete.
+                Return "complete": true only when every task in the plan is done.
                 Do not implement product work.
                 ${resultRequest(machine)}
             """.trimIndent() else """
                 If no plan exists, write one from the seed. Otherwise, report its status without changing it.
+                Return "complete": false while any planned product work remains, including after creating a new plan.
+                Return "complete": true only when every task in the plan is done.
+                If you cannot read or write the designated plan, report the failure; do not claim completion.
                 Do not implement product work.
                 ${resultRequest(machine)}
             """.trimIndent()
