@@ -1,0 +1,39 @@
+digraph careful_plan {
+  graph [rankdir=TB, bgcolor="#ffffff", pad="0.35", nodesep="0.4", ranksep="0.55", fontname="sans-serif", fontsize=18, compound=true]
+  node [shape=box, style="rounded,filled", fillcolor="#f1f5f9", color="#94a3b8", fontname="sans-serif", fontsize=13, margin="0.18,0.12"]
+  edge [fontname="sans-serif", fontsize=11, color="#475569", arrowsize=0.75]
+  start [label="Start", shape=oval, fillcolor="#e2e8f0"]
+  finish [label="Finish", shape=oval, fillcolor="#dcfce7", color="#16a34a"]
+  subgraph cluster_planning {
+    label="1  INITIAL PLAN REVIEW"; style="rounded,filled"; color="#bfdbfe"; fillcolor="#eff6ff"; fontcolor="#1e40af";
+    initial [label="Initial planner\nCreate or read the plan", fillcolor="#dbeafe"]
+    revision [label="Revise unfinished plan\nAddress reviewer findings", fillcolor="#dbeafe"]
+    r1 [label="Brain 1\nOpenAI", fillcolor="#ffffff"]
+    r2 [label="Brain 2\nAnthropic", fillcolor="#ffffff"]
+    r3 [label="Brain 3\nGoogle", fillcolor="#ffffff"]
+    {rank=same; r1; r2; r3}
+    consensus [label="All three approve\nthe same plan?", shape=diamond, fillcolor="#dbeafe"]
+    initial -> revision [label="Unfinished work"]
+    revision -> r1
+    revision -> r2
+    revision -> r3
+    r1 -> consensus
+    r2 -> consensus
+    r3 -> consensus
+    consensus -> revision [label="No: revise and repeat", color="#b45309", fontcolor="#92400e"]
+  }
+  subgraph cluster_execution {
+    label="2  EXECUTE EACH TASK"; style="rounded,filled"; color="#bbf7d0"; fillcolor="#f0fdf4"; fontcolor="#166534";
+    doer [label="Doer\nImplement first unfinished task", fillcolor="#dcfce7"]
+    validator [label="OO / RDD validator\nSatisfied with this attempt?", shape=diamond, fillcolor="#dcfce7"]
+    planner [label="Planner\nMark accepted task done\nCheck remaining work", fillcolor="#dcfce7"]
+    doer -> validator
+    validator -> doer [label="No: fix findings", color="#b45309", fontcolor="#92400e"]
+    validator -> planner [label="Yes: factory commits work"]
+    planner -> doer [label="Next task"]
+  }
+  start -> initial
+  initial -> planner [label="Already complete", style=dashed]
+  consensus -> doer [label="Yes: unanimous approval", color="#15803d", fontcolor="#166534", penwidth=2]
+  planner -> finish [label="All tasks complete"]
+}

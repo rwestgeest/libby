@@ -20,3 +20,9 @@
 
 - 2026-10-13: rules can contradict - making a factory end up in an endless loop
 - 2026-10-13: Agent.md is a striong guidance - rules in there are obeyed quite well by agent
+- 2026-10-15: software development is dead - software engineering is not
+- 2026-10-15: keep a kaizen log
+- 2026-10-15: keep a kaizen log - toyota way
+- 2026-10-15: start with the north star - eg: i want a factory
+- 2026-10-15: from north star to target condition
+- 2026-10-15: from target condition to obstacles or challenges
