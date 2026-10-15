@@ -1,0 +1,16 @@
+
+> qubigo-frontend@1.0.0 build
+> vite build
+
+vite v6.4.3 building for production...
+transforming...
+✓ 128 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/assets/qubigo-0JdMDqb7.json       0.50 kB │ gzip:   0.28 kB
+dist/index.html                        1.57 kB │ gzip:   0.69 kB
+dist/assets/index-HmTxTmkz.css        23.64 kB │ gzip:   4.95 kB
+dist/assets/fontawesome-B-o_FWZ5.js   65.57 kB │ gzip:  18.68 kB
+dist/assets/index-4e3HsJsD.js        185.03 kB │ gzip:  47.99 kB
+dist/assets/vendor-55_m3apJ.js       495.49 kB │ gzip: 126.09 kB
+✓ built in 1.11s

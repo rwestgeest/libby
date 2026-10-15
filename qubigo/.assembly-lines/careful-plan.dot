@@ -1,0 +1,18 @@
+digraph assembly_line {
+  start -> plan_initializer
+  plan_initializer -> plan_revision [label="not complete"]
+  plan_initializer -> planner [label="complete"]
+  planner -> doer [label="not complete"]
+  planner -> finish [label="complete"]
+  plan_revision -> plan_reviewer_1
+  plan_revision -> plan_reviewer_2
+  plan_revision -> plan_reviewer_3
+  plan_reviewer_1 -> plan_consensus
+  plan_reviewer_2 -> plan_consensus
+  plan_reviewer_3 -> plan_consensus
+  plan_consensus -> plan_revision [label="not satisfied"]
+  plan_consensus -> doer [label="satisfied"]
+  doer -> rdd_validator
+  rdd_validator -> doer [label="not satisfied"]
+  rdd_validator -> planner [label="satisfied"]
+}

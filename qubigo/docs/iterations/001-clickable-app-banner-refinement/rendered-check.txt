@@ -1,0 +1,326 @@
+{
+  "browser": "156.0.8078.4",
+  "environment": "Linux headless Chromium; iOS UA/viewport emulation, not Safari or physical devices",
+  "cases": [
+    {
+      "name": "narrow-portrait",
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "simulatedSafeArea": {
+        "top": 0,
+        "left": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "geometry": {
+        "link": {
+          "x": 15,
+          "y": 7.5,
+          "width": 242.25,
+          "height": 44,
+          "right": 257.25,
+          "bottom": 51.5
+        },
+        "dismiss": {
+          "x": 268.5,
+          "y": 7.5,
+          "width": 44,
+          "height": 44,
+          "right": 312.5,
+          "bottom": 51.5
+        },
+        "banner": {
+          "x": 0,
+          "y": 0,
+          "width": 320,
+          "height": 60,
+          "right": 320,
+          "bottom": 60
+        },
+        "text": {
+          "x": 35.234375,
+          "y": 20.1875,
+          "width": 201.78125,
+          "height": 18,
+          "right": 237.015625,
+          "bottom": 38.1875
+        },
+        "padding": {
+          "top": "7.5px",
+          "left": "15px",
+          "right": "7.5px"
+        },
+        "color": "rgb(32, 37, 44)",
+        "background": "rgb(255, 255, 255)",
+        "font": "",
+        "textDecoration": "none"
+      },
+      "focus": {
+        "active": true,
+        "visible": true,
+        "outline": "rgb(218, 221, 226) solid 2px",
+        "offset": "2px"
+      },
+      "dismissal": "Enter hides without navigation and persists across reload",
+      "result": "PASS"
+    },
+    {
+      "name": "notched-portrait",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "simulatedSafeArea": {
+        "top": 47,
+        "left": 0,
+        "right": 0,
+        "bottom": 34
+      },
+      "geometry": {
+        "link": {
+          "x": 15,
+          "y": 54.5,
+          "width": 312.25,
+          "height": 44,
+          "right": 327.25,
+          "bottom": 98.5
+        },
+        "dismiss": {
+          "x": 338.5,
+          "y": 54.5,
+          "width": 44,
+          "height": 44,
+          "right": 382.5,
+          "bottom": 98.5
+        },
+        "banner": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 107,
+          "right": 390,
+          "bottom": 107
+        },
+        "text": {
+          "x": 70.234375,
+          "y": 67.1875,
+          "width": 201.78125,
+          "height": 18,
+          "right": 272.015625,
+          "bottom": 85.1875
+        },
+        "padding": {
+          "top": "54.5px",
+          "left": "15px",
+          "right": "7.5px"
+        },
+        "color": "rgb(32, 37, 44)",
+        "background": "rgb(255, 255, 255)",
+        "font": "",
+        "textDecoration": "none"
+      },
+      "focus": {
+        "active": true,
+        "visible": true,
+        "outline": "rgb(218, 221, 226) solid 2px",
+        "offset": "2px"
+      },
+      "dismissal": "Enter hides without navigation and persists across reload",
+      "result": "PASS"
+    },
+    {
+      "name": "phone-landscape",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "simulatedSafeArea": {
+        "top": 0,
+        "left": 47,
+        "right": 47,
+        "bottom": 21
+      },
+      "geometry": {
+        "link": {
+          "x": 62,
+          "y": 7.5,
+          "width": 672.25,
+          "height": 44,
+          "right": 734.25,
+          "bottom": 51.5
+        },
+        "dismiss": {
+          "x": 745.5,
+          "y": 7.5,
+          "width": 44,
+          "height": 44,
+          "right": 789.5,
+          "bottom": 51.5
+        },
+        "banner": {
+          "x": 0,
+          "y": 0,
+          "width": 844,
+          "height": 60,
+          "right": 844,
+          "bottom": 60
+        },
+        "text": {
+          "x": 297.234375,
+          "y": 20.1875,
+          "width": 201.78125,
+          "height": 18,
+          "right": 499.015625,
+          "bottom": 38.1875
+        },
+        "padding": {
+          "top": "7.5px",
+          "left": "62px",
+          "right": "54.5px"
+        },
+        "color": "rgb(32, 37, 44)",
+        "background": "rgb(255, 255, 255)",
+        "font": "",
+        "textDecoration": "none"
+      },
+      "focus": {
+        "active": true,
+        "visible": true,
+        "outline": "rgb(218, 221, 226) solid 2px",
+        "offset": "2px"
+      },
+      "dismissal": "Enter hides without navigation and persists across reload",
+      "result": "PASS"
+    },
+    {
+      "name": "ipad-portrait",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "simulatedSafeArea": {
+        "top": 24,
+        "left": 0,
+        "right": 0,
+        "bottom": 20
+      },
+      "geometry": {
+        "link": {
+          "x": 15,
+          "y": 31.5,
+          "width": 690.25,
+          "height": 44,
+          "right": 705.25,
+          "bottom": 75.5
+        },
+        "dismiss": {
+          "x": 716.5,
+          "y": 31.5,
+          "width": 44,
+          "height": 44,
+          "right": 760.5,
+          "bottom": 75.5
+        },
+        "banner": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 84,
+          "right": 768,
+          "bottom": 84
+        },
+        "text": {
+          "x": 271.609375,
+          "y": 43.1875,
+          "width": 177.015625,
+          "height": 19,
+          "right": 448.625,
+          "bottom": 62.1875
+        },
+        "padding": {
+          "top": "31.5px",
+          "left": "15px",
+          "right": "7.5px"
+        },
+        "color": "rgb(32, 37, 44)",
+        "background": "rgb(255, 255, 255)",
+        "font": "",
+        "textDecoration": "none"
+      },
+      "focus": {
+        "active": true,
+        "visible": true,
+        "outline": "rgb(218, 221, 226) solid 2px",
+        "offset": "2px"
+      },
+      "dismissal": "Enter hides without navigation and persists across reload",
+      "result": "PASS"
+    },
+    {
+      "name": "ipad-landscape",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "simulatedSafeArea": {
+        "top": 24,
+        "left": 0,
+        "right": 0,
+        "bottom": 20
+      },
+      "geometry": {
+        "link": {
+          "x": 15,
+          "y": 31.5,
+          "width": 946.25,
+          "height": 44,
+          "right": 961.25,
+          "bottom": 75.5
+        },
+        "dismiss": {
+          "x": 972.5,
+          "y": 31.5,
+          "width": 44,
+          "height": 44,
+          "right": 1016.5,
+          "bottom": 75.5
+        },
+        "banner": {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 84,
+          "right": 1024,
+          "bottom": 84
+        },
+        "text": {
+          "x": 399.609375,
+          "y": 43.1875,
+          "width": 177.015625,
+          "height": 19,
+          "right": 576.625,
+          "bottom": 62.1875
+        },
+        "padding": {
+          "top": "31.5px",
+          "left": "15px",
+          "right": "7.5px"
+        },
+        "color": "rgb(32, 37, 44)",
+        "background": "rgb(255, 255, 255)",
+        "font": "",
+        "textDecoration": "none"
+      },
+      "focus": {
+        "active": true,
+        "visible": true,
+        "outline": "rgb(218, 221, 226) solid 2px",
+        "offset": "2px"
+      },
+      "dismissal": "Enter hides without navigation and persists across reload",
+      "result": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+
+> qubigo-frontend@1.0.0 lint
+> eslint .
+
+
+/home/rob/dev/qubigo/qubigo-frontend/app/games/components/game-list-component.js
+  5:9  error  'GameType' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+/home/rob/dev/qubigo/qubigo-frontend/deploy/dist/assets/fontawesome-B-o_FWZ5.js
+    1:621   error  'kn' is a function                              no-func-assign
+    1:1902  error  Unsafe usage of ThrowStatement                  no-unsafe-finally
+    3:317   error  Empty block statement                           no-empty
+    3:860   error  Unreachable code                                no-unreachable
+    3:2091  error  Unnecessary escape character: \-                no-useless-escape
+    3:2093  error  Unnecessary escape character: \ .               no-useless-escape
+  760:8541  error  Expected method 'get' to always return a value  getter-return
+  761:3678  error  Empty block statement                           no-empty
+
+/home/rob/dev/qubigo/qubigo-frontend/deploy/dist/assets/index-D6Zqgdje.js
+  165:27512  error  Unnecessary escape character: \:                             no-useless-escape
+  165:27589  error  Unnecessary escape character: \:                             no-useless-escape
+  223:23120  error  Expected to return a value in getter 'currentGameModule'     getter-return
+  223:23145  error  Expected to return a value in getter 'iconRepository'        getter-return
+  223:23167  error  Expected to return a value in getter 'gamePiecesRepository'  getter-return
+  469:939    error  Expected getter 'errorMessage' to always return a value      getter-return
+
+/home/rob/dev/qubigo/qubigo-frontend/deploy/dist/assets/vendor-55_m3apJ.js
+     5:90011   error  Expected a conditional expression and instead saw an assignment  no-cond-assign
+     5:90025   error  Unnecessary escape character: \)                                 no-useless-escape
+     5:90103   error  Expected a conditional expression and instead saw an assignment  no-cond-assign
+     5:90317   error  Expected a conditional expression and instead saw an assignment  no-cond-assign
+     5:90329   error  Unnecessary escape character: \%                                 no-useless-escape
+     5:90343   error  Unnecessary escape character: \%                                 no-useless-escape
+     5:90357   error  Unnecessary escape character: \%                                 no-useless-escape
+     5:90564   error  Expected a conditional expression and instead saw an assignment  no-cond-assign
+     5:90600   error  Unnecessary escape character: \%                                 no-useless-escape
+     5:90620   error  Unnecessary escape character: \%                                 no-useless-escape
+     5:90827   error  Expected a conditional expression and instead saw an assignment  no-cond-assign
+     5:90831   error  Unnecessary escape character: \#                                 no-useless-escape
+  3554:14698   error  Empty block statement                                            no-empty
+  3554:91428   error  '__THREE_DEVTOOLS__' is not defined                              no-undef
+  3554:93091   error  '__THREE_DEVTOOLS__' is not defined                              no-undef
+  3554:141398  error  Unnecessary escape character: \/                                 no-useless-escape
+  3554:142589  error  Unnecessary escape character: \/                                 no-useless-escape
+  3554:151916  error  '__THREE_DEVTOOLS__' is not defined                              no-undef
+
+/home/rob/dev/qubigo/qubigo-frontend/test/pages/confirm-registration-page.test.js
+  15:9  error  'visibilityOf' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+/home/rob/dev/qubigo/qubigo-frontend/test/pages/confirm-registration-success-page.test.js
+  8:9  error  'RegistrationSuccessPage' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+/home/rob/dev/qubigo/qubigo-frontend/test/router.test.js
+  150:7  error  'FakeUserProfileModule' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+✖ 36 problems (36 errors, 0 warnings)
+

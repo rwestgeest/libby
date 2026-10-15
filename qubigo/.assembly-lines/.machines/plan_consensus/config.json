@@ -1,0 +1,4 @@
+{
+  "harness": "pi",
+  "prompt": "Decide whether all three independent reviewers approve the same plan. Require exactly plan_reviewer_1, plan_reviewer_2 and plan_reviewer_3. Return satisfied true only if all three reports have satisfied exactly true, empty findings arrays and the same nonempty plan_sha256. Otherwise return satisfied false and combine all blocking findings, identifying their reviewers; include a diagnostic for missing, malformed or mismatched reports. Never override a dissenting reviewer or use majority voting. Return findings as an array, including [] on approval."
+}
