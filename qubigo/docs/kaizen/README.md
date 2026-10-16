@@ -16,7 +16,7 @@ Use `Review due` only for the agreed review date of an active experiment. Use `�
 | First observed | Kaizen note | Status | Review due |
 | --- | --- | --- | --- |
 | 2026-10-16 | [Problem: validator loop on evidence the line cannot produce (criterion 6)](2026-10-16-validator-loops-on-evidence-no-agent-can-produce.md) | New | — |
-| 2026-10-16 | [Problem: `yx list --ready` unavailable in every task](2026-10-16-yx-command-missing-in-every-task.md) | New | — |
+| 2026-10-16 | [Problem: `yx list --ready` unavailable in every task](2026-10-16-yx-command-missing-in-every-task.md) | Closed | — |
 | 2026-10-16 | [Problem: Java 25 harness; machine-local paths in evidence](2026-10-16-java-25-harness-and-machine-local-paths-in-evidence.md) | New | — |
 | 2026-10-16 | [Problem: agents run `./gradlew` from the wrong directory](2026-10-16-recurring-setup-failures-gradlew-wrong-directory.md) | New | — |
 | 2026-10-16 | [Problem: plan outside repo, doubles as log, stale checkboxes](2026-10-16-plan-lives-outside-repo-and-doubles-as-a-log.md) | New | — |

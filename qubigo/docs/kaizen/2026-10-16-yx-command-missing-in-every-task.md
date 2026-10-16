@@ -31,3 +31,19 @@ Is `yx` meant to be part of this workflow at all now that the factory plan is th
 
 ## Possible prevention ideas
 Remove or condition the `AGENTS.md` instruction; or add a preflight step to the line that checks required tools once and records the result.
+
+## Resolution
+
+**Date:** 2026-10-16
+
+**Root cause:** `yx` was simply not installed on the host. The instruction in `qubigo-backend/AGENTS.md` assumed it was available, but no installation or prerequisite check existed.
+
+**Countermeasure:** `yx` is now installed at `/home/rob/.local/bin/yx` (v0.5.1). The tool is available and the `yx list` commands in `AGENTS.md` work as intended.
+
+**Changed paths:** None beyond an implicit PATH addition — the installation happened outside the repo.
+
+**Validation:** `which yx` resolves to `/home/rob/.local/bin/yx`; `yx list` runs and shows the task tree. All future agents will find the command available.
+
+**Remaining follow-up:** Consider adding a preflight prerequisite check to the assembly line to fail early if a required tool is missing, rather than relying on agents to rediscover the gap.
+
+**Owner:** @rob
