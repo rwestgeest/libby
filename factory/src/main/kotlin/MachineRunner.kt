@@ -17,7 +17,7 @@ internal class MachineConfiguration(private val machinesDirectory: File) {
     }
 
     fun harness(name: String): String =
-        (read(name)["harness"] as? JsonPrimitive)?.contentOrNull ?: "pi"
+        (read(name)["harness"] as? JsonPrimitive)?.contentOrNull ?: "pi-rpc-acp"
 
     fun directory(name: String): File = File(machinesDirectory, name).absoluteFile
 
@@ -25,7 +25,12 @@ internal class MachineConfiguration(private val machinesDirectory: File) {
 
     fun model(name: String): String? = (read(name)["model"] as? JsonPrimitive)?.contentOrNull
 
-    fun kind(name: String): String = File(harness(name)).name
+    fun kind(name: String): String = when (val value = File(harness(name)).name) {
+        "pi-rpc-acp" -> "pi"
+        "claude-agent-acp" -> "claude"
+        "codex-acp" -> "codex"
+        else -> value
+    }
 
     fun apiKeyVariable(name: String, fallbackModel: String?): String {
         (read(name)["apiKeyEnv"] as? JsonPrimitive)?.contentOrNull?.let { return it }
@@ -61,7 +66,9 @@ internal class MachineConfiguration(private val machinesDirectory: File) {
 internal class MachineRunner(
     private val target: File,
     private val configuration: MachineConfiguration,
-    private val model: String?
+    private val model: String?,
+    private val onOutput: (String, String, Pair<Long, Long>?) -> Unit = { _, _, _ -> },
+    private val onMachineState: (String, Boolean) -> Unit = { _, _ -> }
 ) {
     fun run(name: String, prompt: String): JsonObject = run(name, prompt, null)
 
@@ -89,6 +96,7 @@ internal class MachineRunner(
 
     private fun run(name: String, prompt: String, group: BranchProcesses?): JsonObject {
         val harness = configuration.harness(name)
+        if (harness.substringAfterLast('/').endsWith("-acp")) return runAcp(name, prompt, harness, group)
         val process = try {
             val directory = configuration.directory(name)
             val selectedModel = configuration.model(name) ?: model
@@ -120,13 +128,101 @@ internal class MachineRunner(
         } catch (error: IOException) {
             fail("Could not run the $name: ${error.message}")
         }
+        onMachineState(name, true)
         try {
             process.outputStream.close()
-            val answer = process.inputStream.bufferedReader().use { it.readText() }
+            val answer = buildString {
+                process.inputStream.bufferedReader().useLines { lines ->
+                    lines.forEach { line ->
+                        appendLine(line)
+                        onOutput(name, line, null)
+                    }
+                }
+            }
             if (process.waitFor() != 0) fail("The $name exited unsuccessfully\n$answer")
             return readResult(answer, name)
         } finally {
             if (process.isAlive) process.destroyForcibly()
+            onMachineState(name, false)
+        }
+    }
+
+    /** Speaks ACP over the agent's stdio when the configured harness is an ACP bridge. */
+    private fun runAcp(name: String, prompt: String, harness: String, group: BranchProcesses?): JsonObject {
+        val directory = configuration.directory(name)
+        val kind = harness.substringAfterLast('/').substringBefore('-')
+        val selectedModel = configuration.model(name) ?: model
+        val bridgeArgs = buildList {
+            if (kind == "pi") addAll(listOf("--no-context-files", "--append-system-prompt", configuration.instructions(name).path))
+            selectedModel?.let { addAll(listOf("--model", it)) }
+        }
+        if (kind == "claude") {
+            val claudeMd = File(directory, "CLAUDE.md")
+            if (!claudeMd.exists()) claudeMd.writeText("@AGENTS.md\n")
+        }
+        if (kind == "codex") {
+            val config = File(directory, "config.toml")
+            val existing = if (config.exists()) config.readText() else ""
+            if (!existing.contains("project_doc_max_bytes")) config.appendText("\nproject_doc_max_bytes = 0\n")
+        }
+        val builder = ProcessBuilder(listOf(harness) + bridgeArgs).directory(target).redirectError(ProcessBuilder.Redirect.INHERIT)
+        listOf("PI_CODING_AGENT_DIR", "CLAUDE_CONFIG_DIR", "CODEX_HOME").forEach(builder.environment()::remove)
+        val configVariable = when (kind) { "claude" -> "CLAUDE_CONFIG_DIR"; "codex" -> "CODEX_HOME"; else -> "PI_CODING_AGENT_DIR" }
+        builder.environment()[configVariable] = directory.path
+        val process = try { if (group == null) builder.start() else group.start(builder) }
+            catch (error: IOException) { fail("Could not run the $name: ${error.message}") }
+        onMachineState(name, true)
+        val generated = StringBuilder()
+        var usage: Pair<Long, Long>? = null
+        try {
+            val input = process.outputStream.bufferedWriter()
+            val output = process.inputStream.bufferedReader()
+            var requestId = 0
+            fun request(method: String, params: JsonObject): JsonElement {
+                val id = ++requestId
+                input.appendLine(buildJsonObject { put("jsonrpc", "2.0"); put("id", id); put("method", method); put("params", params) }.toString())
+                input.flush()
+                while (true) {
+                    val line = output.readLine() ?: fail("The $name closed ACP before replying to $method")
+                    val message = runCatching { Json.parseToJsonElement(line).jsonObject }.getOrNull() ?: continue
+                    if (message["id"]?.jsonPrimitive?.intOrNull == id) {
+                        message["error"]?.let { fail("The $name ACP request failed: $it") }
+                        return message["result"] ?: JsonObject(emptyMap())
+                    }
+                    val update = message["params"]?.jsonObject?.get("update")?.jsonObject
+                    if (update?.get("sessionUpdate")?.jsonPrimitive?.content == "agent_message_chunk") {
+                        val chunk = update["content"]?.jsonObject?.get("text")?.jsonPrimitive?.content.orEmpty()
+                        generated.append(chunk); onOutput(name, chunk, 0L to 0L)
+                    }
+                }
+            }
+            request("initialize", buildJsonObject {
+                put("protocolVersion", 1); put("clientCapabilities", buildJsonObject {})
+            })
+            val session = request("session/new", buildJsonObject {
+                put("cwd", target.absolutePath); put("mcpServers", JsonArray(emptyList()))
+                if (kind == "claude") put("_meta", buildJsonObject {
+                    put("claudeCode", buildJsonObject { put("options", buildJsonObject { put("settingSources", JsonArray(listOf(JsonPrimitive("user")))) }) })
+                })
+            }).jsonObject
+            val sessionId = session["sessionId"]?.jsonPrimitive?.content ?: fail("The $name ACP agent returned no session id")
+            if (kind != "pi") selectedModel?.let {
+                request("session/set_model", buildJsonObject { put("sessionId", sessionId); put("modelId", it) })
+            }
+            val result = request("session/prompt", buildJsonObject {
+                put("sessionId", sessionId)
+                put("prompt", JsonArray(listOf(buildJsonObject { put("type", "text"); put("text", prompt) })))
+            }).jsonObject
+            val counts = result["usage"]?.jsonObject
+            if (counts != null) usage = (counts["inputTokens"]?.jsonPrimitive?.longOrNull ?: 0L) to
+                (counts["outputTokens"]?.jsonPrimitive?.longOrNull ?: 0L)
+            input.close()
+            process.waitFor()
+            val answer = generated.toString()
+            return readResult(answer, name).also { onOutput(name, "", usage) }
+        } finally {
+            if (process.isAlive) process.destroyForcibly()
+            onMachineState(name, false)
         }
     }
 

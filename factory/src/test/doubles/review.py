@@ -41,6 +41,13 @@ number = len(list(calls.glob("*.json")))
 (calls / f"{number}.txt").write_text(prompt)
 (folder / "pid").write_text(str(os.getpid()))
 
+if (folder / "hold").exists():
+    print("reviewing", flush=True)
+    (folder / "ready").write_text("ready")
+    import time
+    while not (folder / "release").exists():
+        time.sleep(0.02)
+
 gates = folder.parent / "stop-gates"
 if gates.exists():
     if folder.name in ("reviewer_1", "reviewer_3"):

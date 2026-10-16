@@ -119,6 +119,9 @@ class FactorySteps {
     private val runs = mutableMapOf<String, RunFixture>()
     private val environmentOverrides = mutableMapOf<String, String>()
     private val callsByRun = mutableMapOf<String, InvocationCalls>()
+    private var watchedOutput = ""
+    private var watcher: Process? = null
+    private var watcherLog: Path? = null
 
     @Given("a copy of the factory")
     fun copyFactory() {
@@ -407,6 +410,246 @@ class FactorySteps {
     @Given("the second reviewer cannot be run")
     fun secondReviewerCannotRun() {
         check(workspace.resolve("reviewer_2/review.py").toFile().setExecutable(false, false))
+    }
+
+    @Given("the reviewers run on Anthropic, Google and OpenAI models")
+    fun reviewersOnProviders() {
+        reviewers.zip(listOf("anthropic/reviewer", "google/reviewer", "openai/reviewer")).forEach { (machine, model) ->
+            configureMachine(machine, "model", model)
+        }
+    }
+
+    @Given("the doer says {string}, then {string}")
+    fun doerSaysThen(first: String, second: String) {
+        Files.writeString(workspace.resolve("doer/before-result.txt"), "$first\n")
+        Files.writeString(workspace.resolve("doer/hold"), "yes")
+        Files.writeString(workspace.resolve("doer/after-result.txt"), second)
+    }
+
+    @Given("the {string} run is running, with the doer part-way through an attempt")
+    fun runRunningInAttempt(name: String) = beginHeldRun(name, false)
+
+    @Given("the {string} run is running, with the doer part-way through an attempt, having said {string}")
+    fun runRunningWithDoerOutput(name: String, said: String) {
+        Files.writeString(workspace.resolve("doer/before-result.txt"), "$said\n")
+        beginHeldRun(name, false)
+    }
+
+    @Given("the {string} run is running, with every reviewer part-way through")
+    fun runRunningWithReviewers(name: String) = beginHeldRun(name, true)
+
+    private fun beginHeldRun(name: String, reviewersHeld: Boolean) {
+        currentRun = name
+        if (reviewersHeld) reviewers.forEach { Files.writeString(workspace.resolve("$it/hold"), "yes") }
+        else Files.writeString(workspace.resolve("doer/hold"), "yes")
+        runFactory(waitForCompletion = false)
+        val held = if (reviewersHeld) reviewers else listOf("doer")
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(15)
+        while (held.any { !Files.exists(workspace.resolve("$it/ready")) } && System.nanoTime() < deadline) Thread.sleep(20)
+        check(held.all { Files.exists(workspace.resolve("$it/ready")) }) { "The machines did not reach their held state.\n$output" }
+    }
+
+    @When("I watch the {string} run")
+    fun watchNamedRun(name: String) {
+        currentRun = name
+        val out = workspace.resolve("watch-$name.txt")
+        watcherLog = out
+        watcher = ProcessBuilder(workspace.resolve("factory/factory").toString(), "watch", name)
+            .directory(workspace.toFile()).redirectErrorStream(true).redirectOutput(out.toFile())
+            .apply { environment().putAll(setupTestEnvironment()) }.start()
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(15)
+        while (System.nanoTime() < deadline && watcher!!.isAlive && (!Files.exists(out) || Files.readString(out).isBlank())) Thread.sleep(20)
+        val currentRunFile = workspace.resolve("factory/runs/.daemon/current")
+        if (!Files.exists(currentRunFile) || Files.readString(currentRunFile).trim() != name) {
+            watcher!!.waitFor(10, TimeUnit.SECONDS)
+            watcher = null
+        }
+        watchedOutput = if (Files.exists(out)) Files.readString(out) else ""
+        if (watcher?.isAlive == false) watcher = null
+    }
+
+    @Given("I am watching the {string} run as it runs")
+    fun watchAsRunStarts(name: String) {
+        Files.writeString(workspace.resolve("doer/hold"), "yes")
+        Files.writeString(workspace.resolve("doer/before-result.txt"), "started\n")
+        beginHeldRun(name, false)
+        watchNamedRun(name)
+    }
+
+    @Given("I am watching the {string} run")
+    fun watchRunningRun(name: String) = watchNamedRun(name)
+
+    @When("I start the {string} run")
+    fun startNamedRun(name: String) {
+        currentRun = name
+        val fixture = runs.getValue(name)
+        target = fixture.target; seed = fixture.seed; currentLine = fixture.line
+        runFactory(waitForCompletion = false)
+    }
+
+    @When("the {string} run has run to the end")
+    fun releaseRun(name: String) {
+        listOf("doer", "reviewer_1", "reviewer_2", "reviewer_3").forEach {
+            val dir = workspace.resolve(it)
+            if (Files.exists(dir.resolve("hold"))) Files.writeString(dir.resolve("release"), "yes")
+        }
+        runProcess(listOf(workspace.resolve("factory/factory").toString(), "wait", name), workspace, setupTestEnvironment())
+        watcher?.waitFor(15, TimeUnit.SECONDS)
+        watcherLog?.let { if (Files.exists(it)) watchedOutput = Files.readString(it) }
+        watcher = null
+        val log = workspace.resolve("factory/runs/$name/daemon.log")
+        if (Files.exists(log)) output += Files.readString(log)
+        val status = workspace.resolve("factory/runs/$name/status")
+        if (Files.exists(status) && Files.readString(status).startsWith("failed")) exitCode = 1
+    }
+
+    @When("I have stopped the {string} run")
+    fun stopRunAsFixture(name: String) {
+        runProcess(listOf(workspace.resolve("factory/factory").toString(), "stop", name), workspace, setupTestEnvironment())
+        listOf("doer", "reviewer_1", "reviewer_2", "reviewer_3").forEach {
+            Files.deleteIfExists(workspace.resolve("$it/hold"))
+        }
+    }
+
+    @When("I stop the {string} run")
+    fun stopNamedRun(name: String) {
+        runProcess(listOf(workspace.resolve("factory/factory").toString(), "stop", name), workspace, setupTestEnvironment())
+        listOf("doer", "reviewer_1", "reviewer_2", "reviewer_3").forEach {
+            Files.deleteIfExists(workspace.resolve("$it/hold"))
+        }
+        watcher?.waitFor(10, TimeUnit.SECONDS)
+        watcherLog?.let { if (Files.exists(it)) watchedOutput = Files.readString(it) }
+        watcher = null
+    }
+
+    @When("I stop the factory")
+    fun stopFactory() {
+        runProcess(listOf(workspace.resolve("factory/factory").toString(), "stop"), workspace, setupTestEnvironment())
+    }
+
+    @Then("the command has returned while the {string} run is running")
+    fun commandReturnedRunning(name: String) {
+        check(Files.readString(workspace.resolve("factory/runs/.daemon/current")).trim() == name)
+        check(ProcessHandle.of(Files.readString(workspace.resolve("factory/runs/.daemon/pid")).trim().toLong()).map { it.isAlive }.orElse(false))
+    }
+
+    @Then("the factory is running")
+    fun factoryRunning() = check(Files.exists(workspace.resolve("factory/runs/.daemon/factory")))
+
+    @Then("the {string} run is running")
+    fun namedRunRunning(name: String) = check(Files.readString(workspace.resolve("factory/runs/.daemon/current")).trim() == name)
+
+    @Then("the {string} run is not running")
+    fun namedRunStopped(name: String) {
+        val file = workspace.resolve("factory/runs/.daemon/current")
+        check(!Files.exists(file) || Files.readString(file).trim() != name)
+    }
+
+    @Then("the factory is not running")
+    fun factoryNotRunning() = check(!Files.exists(workspace.resolve("factory/runs/.daemon/factory")))
+
+    @Then("I see {string} from the doer")
+    fun watchedDoerText(text: String) {
+        val log = watcherLog
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
+        while (log != null && watcher?.isAlive == true && System.nanoTime() < deadline &&
+            (!Files.exists(log) || !Files.readString(log).contains("doer | $text"))) Thread.sleep(20)
+        val current = log?.let { if (Files.exists(it)) Files.readString(it) else "" } ?: watchedOutput
+        check((current + watchedOutput).contains("doer | $text")) { current + watchedOutput }
+        watchedOutput += current
+    }
+
+    @Then("I do not see {string}")
+    fun watchedDoesNotContain(text: String) {
+        val current = watcherLog?.let { if (Files.exists(it)) Files.readString(it) else "" } ?: watchedOutput
+        check(!(current + watchedOutput).contains(text)) { current + watchedOutput }
+    }
+
+    @Then("I see {string} from reviewer_{int}, reviewer_{int} and reviewer_{int}")
+    fun reviewerOutput(text: String, one: Int, two: Int, three: Int) {
+        val record = Files.readString(workspace.resolve("factory/runs/$currentRun/record.jsonl"))
+        listOf(one, two, three).forEach { check(record.contains("\"machine\":\"reviewer_$it\"")) { record } }
+        check(record.contains(text)) { record }
+    }
+
+    @Then("it shows reviewer_{int}, reviewer_{int} and reviewer_{int} as running")
+    fun reviewersRunning(one: Int, two: Int, three: Int) {
+        val log = watcherLog
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
+        while (log != null && System.nanoTime() < deadline &&
+            (!Files.exists(log) || (1..3).any { !Files.readString(log).contains("reviewer_$it") })) Thread.sleep(20)
+        val current = log?.let { if (Files.exists(it)) Files.readString(it) else "" } ?: ""
+        listOf(one, two, three).forEach { check(Files.exists(workspace.resolve("reviewer_$it/ready"))) }
+        listOf(one, two, three).forEach { check(current.contains("reviewer_$it")) { current } }
+    }
+
+    @Then("I see what the planner generated")
+    fun plannerOutputVisible() {
+        val record = Files.readString(workspace.resolve("factory/runs/$currentRun/record.jsonl"))
+        check(record.contains("planner")) { record }
+    }
+
+    @Then("what I am watching shows that the {string} run was stopped")
+    fun watcherShowsStopped(name: String) {
+        watcherLog?.let { if (Files.exists(it)) watchedOutput = Files.readString(it) }
+        check(watchedOutput.contains("run $name was stopped")) { watchedOutput }
+    }
+
+    @When("I read the {string} run's record")
+    fun readRunRecord(name: String) {
+        currentRun = name
+        val record = workspace.resolve("factory/runs/$name/record.jsonl")
+        output = if (Files.exists(record)) Files.readString(record) else ""
+    }
+
+    @Then("it shows what every machine generated")
+    fun recordShowsGeneration() {
+        check(output.contains("\"text\"")) { output }
+        check(output.contains("planner") && output.contains("doer") && output.contains("validator")) { output }
+    }
+
+    @Then("it shows what every machine spent")
+    fun recordShowsUsage() {
+        check(output.contains("inputTokens") && output.contains("outputTokens")) { output }
+    }
+
+    @Then("the record is in the run's folder in the factory, not in the target")
+    fun recordLocation() {
+        check(Files.isRegularFile(workspace.resolve("factory/runs/$currentRun/record.jsonl")))
+        check(!Files.exists(target.resolve("record.jsonl")))
+    }
+
+    @Then("it shows tokens in and tokens out for the {word}")
+    fun machineTokens(machine: String) {
+        val text = watchRecordOutput()
+        check(Regex("tokens $machine \\d+ in / \\d+ out").containsMatchIn(text)) { text }
+    }
+
+    @Then("it shows a total for each of Anthropic, Google and OpenAI")
+    fun providerTotals() {
+        val text = watchRecordOutput().lowercase()
+        listOf("anthropic", "google", "openai").forEach { check(text.contains(it)) { text } }
+    }
+
+    @Then("it shows a total for the whole run")
+    fun totalForRun() = check(watchRecordOutput().contains("run"))
+
+    @Then("what I watched showed the doer's tokens go up")
+    fun doerTokensIncreased() {
+        val matches = Regex("tokens doer (\\d+) in / (\\d+) out").findAll(watchRecordOutput()).toList()
+        check(matches.size >= 2 && matches.last().groupValues[1].toLong() > matches.first().groupValues[1].toLong()) { watchRecordOutput() }
+    }
+
+    @Then("what I watched showed the run's total go up")
+    fun runTokensIncreased() {
+        val text = watchRecordOutput()
+        val matches = Regex("run (\\d+)").findAll(text).toList()
+        check(matches.size >= 2 && matches.last().groupValues[1].toLong() > matches.first().groupValues[1].toLong()) { text }
+    }
+
+    private fun watchRecordOutput(): String {
+        watcherLog?.let { if (Files.exists(it)) watchedOutput = Files.readString(it) }
+        return watchedOutput
     }
 
     @Then("it reports that it could not run reviewer_{int}")
@@ -870,7 +1113,8 @@ class FactorySteps {
     private fun runFactory(
         vararg options: String,
         givenOnlyRunName: Boolean = false,
-        targetOnly: Boolean = false
+        targetOnly: Boolean = false,
+        waitForCompletion: Boolean = true
     ) {
         val environment = setupTestEnvironment()
         ensureDefaultRun()
@@ -899,6 +1143,14 @@ class FactorySteps {
         )
         output = result.first
         exitCode = result.second
+        if (waitForCompletion && exitCode == 0) {
+            val waitResult = runProcess(listOf(workspace.resolve("factory/factory").toString(), "wait", currentRun), workspace, environment)
+            val log = workspace.resolve("factory/runs/$currentRun/daemon.log")
+            output += "\n" + (if (Files.exists(log)) Files.readString(log) else "")
+            if (Files.exists(workspace.resolve("factory/runs/$currentRun/status")) &&
+                Files.readString(workspace.resolve("factory/runs/$currentRun/status")).startsWith("failed")) exitCode = 1
+            if (waitResult.second != 0) exitCode = waitResult.second
+        }
         val after = invocationCalls()
         callsByRun[currentRun] = InvocationCalls(
             after.planner - before.planner,
@@ -1560,6 +1812,35 @@ class FactorySteps {
             val pi = Files.copy(agent, bin.resolve("pi"), StandardCopyOption.REPLACE_EXISTING)
             pi.toFile().setExecutable(true)
         }
+        val acp = bin.resolve("pi-rpc-acp")
+        Files.writeString(acp, """#!/usr/bin/env python3
+import json, os, subprocess, sys
+from pathlib import Path
+def send(value): print(json.dumps(value), flush=True)
+session = None
+for line in sys.stdin:
+    try: msg = json.loads(line)
+    except Exception: continue
+    method, params, ident = msg.get('method'), msg.get('params', {}), msg.get('id')
+    if method == 'initialize': send({'jsonrpc':'2.0','id':ident,'result':{'protocolVersion':1,'agentCapabilities':{'promptCapabilities':{}},'agentInfo':{'name':'test-pi','version':'1'},'authMethods':[]}})
+    elif method == 'session/new':
+        session = 'test-session'
+        send({'jsonrpc':'2.0','id':ident,'result':{'sessionId':session}})
+    elif method == 'session/set_model': send({'jsonrpc':'2.0','id':ident,'result':{}})
+    elif method == 'session/prompt':
+        prompt = '\n'.join(block.get('text','') for block in params.get('prompt',[]) if block.get('type') == 'text')
+        command = ['pi','--print','--no-session',*sys.argv[1:],prompt]
+        result = subprocess.run(command, text=True, capture_output=True, stdin=subprocess.DEVNULL)
+        if result.stderr: sys.stderr.write(result.stderr)
+        for part in result.stdout.splitlines():
+            send({'jsonrpc':'2.0','method':'session/update','params':{'sessionId':session,'update':{'sessionUpdate':'agent_message_chunk','content':{'type':'text','text':part+'\n'}}}})
+        if result.returncode:
+            send({'jsonrpc':'2.0','id':ident,'error':{'code':-32603,'message':result.stdout}})
+        else:
+            send({'jsonrpc':'2.0','id':ident,'result':{'stopReason':'end_turn','usage':{'inputTokens':len(prompt),'outputTokens':len(result.stdout)}}})
+    elif ident is not None: send({'jsonrpc':'2.0','id':ident,'result':{}})
+""")
+        acp.toFile().setExecutable(true)
         return mapOf(
             "ANTHROPIC_API_KEY" to "", "OPENAI_API_KEY" to "", "GEMINI_API_KEY" to "", "CODEX_API_KEY" to "",
             "PATH" to "$bin:${System.getenv("PATH")}",

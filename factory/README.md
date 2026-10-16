@@ -63,6 +63,21 @@ Targets own their routes and machine configuration. Assembly lines are
 `.assembly-lines` and preserve unrelated repository changes. Optional
 `--model` is forwarded to every machine harness.
 
+## Watching runs (homework 006)
+
+Runs start in the background. The command returns after starting a run; attach
+to its live output or saved record with `bin/factory watch <name>`. A record
+in `runs/<name>/record.jsonl` keeps each machine's generated text and token
+usage. `bin/factory stop <name>` stops that run and leaves the factory
+available for another one; `bin/factory stop` stops the active run and the
+factory. Start a stopped run again with `bin/factory --run <name>`.
+
+Machines use ACP bridges. The default harness is `pi-rpc-acp`, which runs pi
+in RPC mode. Set `harness` in a machine's `config.json` to `claude-agent-acp`
+or `codex-acp` to use those adapters. Each machine keeps its harness and model
+in its own configuration folder; the factory records usage under the model's
+provider and for the whole run.
+
 ## Parallel review (homework 005)
 
 Several unlabelled edges leaving a machine run their destinations concurrently.
@@ -90,7 +105,7 @@ have signed into in Pi. For example (replace `provider/model-id`):
 
 ```json
 {
-  "harness": "pi",
+  "harness": "pi-rpc-acp",
   "model": "provider/model-id",
   "lens": "testability",
   "prompt": "Review only the supplied product changes through the configured lens. Change neither the plan nor the product. Return a JSON result with a boolean satisfied and an array findings."
@@ -104,7 +119,7 @@ name, together with its job and requested result fields. Its prompt can be:
 
 ```json
 {
-  "harness": "pi",
+  "harness": "pi-rpc-acp",
   "prompt": "Assess the reviewers' reports and decide whether to accept this attempt. Return a boolean satisfied and an array findings. Use only the reports; do not inspect or change files."
 }
 ```

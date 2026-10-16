@@ -48,6 +48,15 @@ number = len(list(calls.glob("*.json")))
 }))
 (calls / f"{number}.txt").write_text(prompt)
 
+hold = Path(__file__).parent / "hold"
+if hold.exists():
+    message_file = Path(__file__).parent / "before-result.txt"
+    print(message_file.read_text().strip() if message_file.exists() else "working", flush=True)
+    (Path(__file__).parent / "ready").write_text("ready")
+    while not (Path(__file__).parent / "release").exists():
+        import time
+        time.sleep(0.02)
+
 # The factory must run the agent inside its target, while the prompt points it
 # at the plan belonging to the named run.
 plan_match = re.search(r'The plan is at "([^"]+)"\.', prompt)
@@ -126,3 +135,6 @@ if (Path(__file__).parent / "no-result").exists():
     print("I did some work, but have no structured result.")
 else:
     print(json.dumps(result))
+after_file = Path(__file__).parent / "after-result.txt"
+if after_file.exists():
+    print(after_file.read_text())
