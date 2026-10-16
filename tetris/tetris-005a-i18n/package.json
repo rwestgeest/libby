@@ -1,0 +1,13 @@
+{
+  "name": "terminal-tetris",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A terminal Tetris game",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
