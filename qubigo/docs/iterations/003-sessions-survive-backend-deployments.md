@@ -46,7 +46,7 @@ The required task discovery command, `yx list --ready`, was attempted during thi
 3. Logout revokes the user's refresh tokens according to current behavior. Previously revoked tokens remain rejected after restart, including tokens from multiple sessions for that user.
 4. Expired, malformed, tampered, and unrecognized refresh tokens remain rejected under the existing authentication rules. Restarting never restores expired or revoked access.
 5. The database migration works against an existing database and preserves existing users and game data. A fresh database also starts successfully.
-6. The deployed application's database location and signing configuration persist across releases. Record verification evidence and any operational prerequisites.
+6. The deployed application's database location and signing configuration persist across releases. Verify this from repository deployment configuration (compose volume, datasource path, `JWT_SECRET_KEY` pass-through, release script) and the disposable process-replacement test, and record the operational prerequisites. The product owner's dev-environment confirmation (2026-10-15: backend container restart preserved database and signing key, volume not deleted) is accepted as the live evidence for this iteration; no further operator checklist is required. Live production continuity across an image replacement is not claimed; it is a release-time prerequisite for the first production deployment and is recorded as outstanding.
 7. In a representative client, a deployment may briefly interrupt service, but a player with a valid persisted session can continue without entering credentials. Verify this after access-token expiry and record the tested client and actual result.
 
 ## Validation and handoff
@@ -68,5 +68,6 @@ Changing session duration, token rotation policy, logout semantics, authenticati
 - The requested fix is persistence of refresh-token validation, currently held in memory.
 - Existing expiry and logout behavior must remain unchanged.
 - One final sign-in at the initial rollout is acceptable.
+- 2026-10-16: Criterion 6 relaxed. The owner's dev confirmation plus source/disposable evidence suffices; a detailed operator before/after checklist is not required.
 
 No product code was changed or tests run during this interview.

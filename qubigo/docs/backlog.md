@@ -8,7 +8,7 @@ Cross-cutting feature work not yet assigned to an iteration. Items are ordered b
 
 | Feature | Notes | Status |
 |---|---|---|
-| **Competitions** | Themed events, leaderboards, tournament play to engage players. Brainstorm in `docs/iterations/002-competitions.md`. | placeholder |
+| **Competitions** | Spellenspektakel competition journey and scope interview in `docs/iterations/004-competitions.md`. | discovery |
 | **Clickable app banner** | iOS browsers only: make the “better in the app” banner lead to the Apple App Store. See `docs/iterations/001-clickable-app-banner.md`. Android is deferred until a Google Play link exists. | scoped (iteration 001) |
 | **Onboarding redesign** | Separate iteration after the banner. Known friction: players skip email confirmation and immediately try signing in; players struggle to create a password or understand the password rules indicator. Investigate both independent signup and invitation journeys; scope and solution still to be agreed. | open (needs scoping) |
 | **Game list refresh on focus** | Game list must refresh when app comes back into foreground. Design decision made. | open |
@@ -47,4 +47,4 @@ Completed work is tracked in git history and `docs/design-decisions.md`. Key shi
 
 ---
 
-*Iteration plans: `docs/iterations/001-polish-bugs.md`, `docs/iterations/002-competitions.md`*
+*Iteration plans: see `docs/iterations/`.*

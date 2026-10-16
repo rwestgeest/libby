@@ -1,0 +1,11 @@
+// Test-runtime-only helper; invoked explicitly, never part of production packaging.
+gradle.projectsEvaluated {
+    def servlet = gradle.rootProject.project(':qubigo-servlet')
+    servlet.tasks.register('acceptanceClasspath') {
+        dependsOn servlet.tasks.named('testClasses')
+        doLast {
+            new File(servlet.property('acceptanceClasspathFile')).text =
+                servlet.sourceSets.test.runtimeClasspath.asPath
+        }
+    }
+}

@@ -5,9 +5,9 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 usage() {
   printf 'Usage: %s [SOURCE [DESTINATION]]\n' "${0##*/}"
-  printf 'Copy factory run docs (not application code) for sharing.\n'
+  printf 'Copy factory run docs, kaizen notes and skills (not application code) for sharing.\n'
   printf 'Defaults: %s/q -> %s/qubigo\n' "$repo_root" "$repo_root"
-  printf 'Preserves docs/ and .assembly-lines/ layout, including hidden files.\n'
+  printf 'Preserves docs/, .assembly-lines/ and .pi/skills/ layout, including hidden files.\n'
   printf 'Existing files are updated; unrelated or removed files are not deleted.\n'
 }
 
@@ -21,7 +21,7 @@ fi
 
 source="${1:-$repo_root/q}"
 destination="${2:-$repo_root/qubigo}"
-items=(docs/vision.md docs/backlog.md docs/iterations .assembly-lines)
+items=(docs/vision.md docs/backlog.md docs/iterations docs/kaizen .assembly-lines .pi/skills)
 
 # Validate everything before creating or updating the snapshot.
 source="$(cd "$source" && pwd -P)"
@@ -50,9 +50,11 @@ if [[ -d "$destination" ]] && [[ -n "$(find "$destination" -type l -print -quit)
   exit 1
 fi
 
-mkdir -p "$destination/docs/iterations" "$destination/.assembly-lines"
+mkdir -p "$destination/docs/iterations" "$destination/docs/kaizen" "$destination/.assembly-lines" "$destination/.pi/skills"
 cp -- "$source/docs/vision.md" "$source/docs/backlog.md" "$destination/docs/"
 cp -R -- "$source/docs/iterations/." "$destination/docs/iterations/"
+cp -R -- "$source/docs/kaizen/." "$destination/docs/kaizen/"
+cp -R -- "$source/.pi/skills/." "$destination/.pi/skills/"
 cp -R -- "$source/.assembly-lines/." "$destination/.assembly-lines/"
 printf 'Copied factory run docs to %s\n' "$destination"
 printf 'Review the snapshot for private information before publishing.\n'
