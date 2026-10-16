@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import stringWidth from 'string-width';
-import { Game } from '../src/engine.js';
+import { Game, SHAPES } from '../src/engine.js';
 import { render } from '../src/render.js';
 import { startApp } from '../src/app.js';
 import { english } from '../src/messages.js';
@@ -39,6 +39,32 @@ test('catalogue replaces labels, controls, dynamic values, states and startup er
   assert.ok(render(game, { messages })[20].includes('@gameOver'));
   assert.deepEqual(render(game, { messages, columns: 40 }), ['resize=60,22']);
   assert.throws(() => startApp({ input: {}, output: {}, messages }), { message: '@interactiveRequired' });
+});
+
+test('every preview and terminal boundary fits without wrapping or scrolling', () => {
+  const game = new Game();
+  for (const next of Object.keys(SHAPES)) {
+    game.next = next;
+    for (const [columns, rows] of [[60, 22], [80, 24], [120, 40], [59, 24], [60, 21], [1, 1], [0, 0]]) {
+      for (const state of ['playing', 'paused', 'over']) {
+        game.gameOver = state === 'over';
+        const lines = render(game, { columns, rows, paused: state === 'paused' });
+        assert.ok(lines.length <= Math.min(rows, 24));
+        for (const line of lines) {
+          assert.ok(stringWidth(line) < columns);
+          assert.ok(!/[\r\n\x1b]/.test(line));
+        }
+        if (columns >= 60 && rows >= 22) {
+          assert.equal(lines.length, 22);
+          assert.ok(lines[0].startsWith('+--------------------+'));
+          assert.ok(lines[21].startsWith('+--------------------+'));
+          for (const label of ['Score:', 'Lines:', 'Level:', 'Next:', 'quit']) {
+            assert.ok(lines.some(line => line.includes(label)), label);
+          }
+        }
+      }
+    }
+  }
 });
 
 test('all states stay within 24 rows, including messages containing line breaks', () => {

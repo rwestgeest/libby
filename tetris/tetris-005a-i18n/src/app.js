@@ -12,7 +12,9 @@ export function startApp({ input = process.stdin, output = process.stdout, game 
   let timer;
   let screenEntered = false;
   const wasRaw = Boolean(input.isRaw);
-  const wasPaused = input.isPaused();
+  // A fresh stdin has readableFlowing === null, not isPaused() === true.
+  // Do not leave it resumed on quit: that would keep the CLI alive.
+  const wasPaused = input.readableFlowing !== true;
   const size = () => ({ columns: output.columns ?? 80, rows: output.rows ?? 24 });
   const playable = () => {
     const { columns, rows } = size();
