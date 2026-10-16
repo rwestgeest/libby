@@ -2,87 +2,38 @@ import java.io.File
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 
-/** Owns shared prompt context and the small set of role-specific instructions. */
+/** Supplies run data and result schemas; machine instructions live in AGENTS.md. */
 internal class MachineJobs(
-    seed: File,
-    plan: File,
-    private val configuration: MachineConfiguration,
+    private val seed: File,
+    private val plan: File,
     private val resultFields: (String) -> List<String>,
     private val repository: TargetRepository
 ) {
-    private val context = """
+    fun prompt(machine: String, taskAccepted: Boolean, findings: JsonArray): String = """
         Read the seed at "$seed".
         The plan is at "$plan".
         Read the plan at that exact path, even when it is outside the target directory.
         When your job requires plan updates, write them at that exact path too.
         Do not create a substitute plan inside the target.
         Keep product work inside the current target directory. The factory handles commits.
-        End your answer with a single line of JSON.
+        Task work committed: $taskAccepted.
+        Validator findings from the previous attempt: $findings
+        ${resultRequest(machine)}
+        Product changes:
+        ${repository.uncommittedProductChanges()}
     """.trimIndent()
 
-    fun prompt(machine: String, taskAccepted: Boolean, findings: JsonArray): String {
-        configuration.prompt(machine)?.let { job ->
-            return """
-                $context
-                $job
-                Your validation lens is: ${configuration.validationLens(machine)}.
-                ${resultRequest(machine)}
-                Product changes:
-                ${repository.uncommittedProductChanges()}
-            """.trimIndent()
-        }
-        val job = when (machine) {
-            "planner" -> if (taskAccepted) """
-                The task's work has been committed. Mark the first unfinished task done and report whether the plan is complete.
-                Return "complete": true only when every task in the plan is done.
-                Do not implement product work.
-                ${resultRequest(machine)}
-            """.trimIndent() else """
-                If no plan exists, write one from the seed. Otherwise, report its status without changing it.
-                Return "complete": false while any planned product work remains, including after creating a new plan.
-                Return "complete": true only when every task in the plan is done.
-                If you cannot read or write the designated plan, report the failure; do not claim completion.
-                Do not implement product work.
-                ${resultRequest(machine)}
-            """.trimIndent()
-            "doer" -> """
-                Implement the first unfinished task in the plan.
-                Validator findings from the previous attempt: $findings
-                Record each finding as a subtask of the task in progress, then fix it.
-                Mark resolved subtasks done. Do not create new top-level tasks for findings.
-                Do not mark the task itself done; the planner will do that after the work is committed.
-                ${resultRequest(machine)}
-            """.trimIndent()
-            "validator" -> {
-                val lens = configuration.validationLens(machine)
-                """
-                    Check the doer's uncommitted product work in this target, including new files.
-                    Review the supplied changes only; do not recheck previously committed work.
-                    Your validation lens is: $lens.
-                    Report findings only. Change neither the plan nor the product files.
-                    ${resultRequest(machine)} Include an array "findings" in your JSON result.
-                    Product changes:
-                    ${repository.uncommittedProductChanges()}
-                """.trimIndent()
-            }
-            else -> resultRequest(machine)
-        }
-        return "You are the $machine.\n$context\n$job"
-    }
-
     fun meetingPrompt(machine: String, results: Map<String, JsonObject>): String = """
-        ${configuration.prompt(machine) ?: "Combine the supplied branch results and decide."}
-        Use only these results. Do not read or change files.
-        End your answer with a single line of JSON.
-        ${resultRequest(machine)} Include an array "findings" in your JSON result.
+        ${resultRequest(machine)}
         Branch results:
         ${JsonObject(results)}
     """.trimIndent()
 
     private fun resultRequest(machine: String): String {
         val fields = resultFields(machine)
-        if (fields.isEmpty()) return "Include a JSON object describing the job you did as your result."
-        return "Include boolean ${if (fields.size == 1) "field" else "fields"} " +
-            fields.joinToString(" and ") { "\"$it\"" } + " in your JSON result."
+        val schema = if (fields.isEmpty()) "Include a JSON object describing the job you did as your result."
+            else "Include boolean ${if (fields.size == 1) "field" else "fields"} " +
+                fields.joinToString(" and ") { "\"$it\"" } + " in your JSON result."
+        return "End your answer with a single line of JSON. $schema Include an array \"findings\" in your JSON result."
     }
 }

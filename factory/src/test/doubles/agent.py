@@ -9,6 +9,34 @@ from pathlib import Path
 # Like pi, wait for piped input to finish before processing the prompt.
 sys.stdin.read()
 
+config_keys = ("PI_CODING_AGENT_DIR", "CLAUDE_CONFIG_DIR", "CODEX_HOME")
+active = [key for key in config_keys if os.environ.get(key)]
+assert len(active) == 1, "Expected only the selected machine's configuration"
+configuration = Path(os.environ[active[0]])
+if active[0] == "CLAUDE_CONFIG_DIR":
+    assert sys.argv[sys.argv.index("--setting-sources") + 1] == "user"
+    assert (configuration / "CLAUDE.md").read_text().strip() == "@AGENTS.md"
+    instruction_file = configuration / "AGENTS.md"
+elif active[0] == "CODEX_HOME":
+    assert sys.argv[1] == "exec" and "project_doc_max_bytes=0" in sys.argv
+    instruction_file = configuration / "AGENTS.md"
+else:
+    assert "--no-context-files" in sys.argv
+    instruction_file = Path(sys.argv[sys.argv.index("--append-system-prompt") + 1])
+    assert instruction_file == configuration / "AGENTS.md"
+instructions = instruction_file.read_text()
+prompt = instructions + "\n" + sys.argv[-1]
+login_file = ".credentials.json" if active[0] == "CLAUDE_CONFIG_DIR" else "auth.json"
+auth = "login" if (configuration / login_file).is_file() else "api-key"
+if auth == "api-key":
+    config_file = configuration / "config.json"
+    config = json.loads(config_file.read_text()) if config_file.exists() else {}
+    model_provider = config.get("model", "").split("/")[0]
+    key = config.get("apiKeyEnv") or ("CODEX_API_KEY" if active[0] == "CODEX_HOME" else
+        "GEMINI_API_KEY" if model_provider in ("google", "google-gemini") else "ANTHROPIC_API_KEY")
+    assert os.environ.get(key), "The harness received no provider API key"
+assert not any(os.environ.get(key) for key in ("ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_OAUTH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN"))
+
 # Keep call records beside this double, in the temporary workspace.
 calls = Path(__file__).parent / "calls"
 calls.mkdir(exist_ok=True)
@@ -16,12 +44,12 @@ number = len(list(calls.glob("*.json")))
 (calls / f"{number}.json").write_text(json.dumps({
     "args": sys.argv[1:],
     "cwd": str(Path.cwd()),
+    "configuration": str(configuration), "instructions": instructions, "auth": auth,
 }))
-(calls / f"{number}.txt").write_text("\n".join(sys.argv[1:]))
+(calls / f"{number}.txt").write_text(prompt)
 
 # The factory must run the agent inside its target, while the prompt points it
 # at the plan belonging to the named run.
-prompt = sys.argv[-1]
 plan_match = re.search(r'The plan is at "([^"]+)"\.', prompt)
 if not plan_match:
     raise RuntimeError("The prompt did not name a plan")
@@ -78,7 +106,7 @@ else:
     if task is None:
         result = {"complete": True}
     elif planner:
-        if "The task's work has been committed." in prompt:
+        if "Task work committed: true." in prompt:
             plan.write_text(next_plan)
             complete = ("Both alpha and beta are ready." in next_plan if prose_plan
                         else "- [ ] " not in next_plan)

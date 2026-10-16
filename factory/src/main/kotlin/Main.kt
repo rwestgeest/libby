@@ -35,15 +35,16 @@ private fun executeFactory(args: Array<String>) {
 
     val maxAttempts = option("--max-attempts")?.toInt() ?: 3
 
+    val configuration = MachineConfiguration(namedRun.machinesDirectory)
+    assemblyLine.validate { configuration.requireCredentials(it, option("--model")) }
+
     val repository = TargetRepository(namedRun.target)
     repository.prepare()
 
-    val configuration = MachineConfiguration(namedRun.machinesDirectory)
     val runner = MachineRunner(namedRun.target, configuration, option("--model"))
     val jobs = MachineJobs(
         namedRun.seed,
         namedRun.plan,
-        configuration,
         assemblyLine::resultFields,
         repository
     )

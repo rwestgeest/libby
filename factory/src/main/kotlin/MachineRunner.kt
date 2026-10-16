@@ -19,12 +19,42 @@ internal class MachineConfiguration(private val machinesDirectory: File) {
     fun harness(name: String): String =
         (read(name)["harness"] as? JsonPrimitive)?.contentOrNull ?: "pi"
 
-    fun validationLens(name: String): String =
-        (read(name)["lens"] as? JsonPrimitive)?.contentOrNull ?: "testability"
+    fun directory(name: String): File = File(machinesDirectory, name).absoluteFile
 
-    fun prompt(name: String): String? = (read(name)["prompt"] as? JsonPrimitive)?.contentOrNull
+    fun instructions(name: String): File = File(directory(name), "AGENTS.md")
 
     fun model(name: String): String? = (read(name)["model"] as? JsonPrimitive)?.contentOrNull
+
+    fun kind(name: String): String = File(harness(name)).name
+
+    fun apiKeyVariable(name: String, fallbackModel: String?): String {
+        (read(name)["apiKeyEnv"] as? JsonPrimitive)?.contentOrNull?.let { return it }
+        return when (kind(name)) {
+            "codex" -> "CODEX_API_KEY"
+            "claude" -> "ANTHROPIC_API_KEY"
+            else -> {
+                val provider = (model(name) ?: fallbackModel).orEmpty()
+                    .takeIf { '/' in it }?.substringBefore('/') ?: ""
+                when (provider) {
+                    "google", "google-gemini" -> "GEMINI_API_KEY"
+                    "openai-codex" -> "OPENAI_API_KEY"
+                    "" -> "ANTHROPIC_API_KEY"
+                    else -> provider.uppercase().replace('-', '_') + "_API_KEY"
+                }
+            }
+        }
+    }
+
+    fun requireCredentials(name: String, fallbackModel: String?) {
+        if (!instructions(name).isFile) fail("There are no instructions for $name")
+        // Ordinary executable machines need no coding-agent login.
+        if (kind(name) !in setOf("pi", "claude", "codex")) return
+        val login = File(directory(name), if (kind(name) == "claude") ".credentials.json" else "auth.json")
+        if (!login.isFile && System.getenv(apiKeyVariable(name, fallbackModel)).isNullOrBlank()) {
+            fail("The $name cannot sign in: supply its own login or ${apiKeyVariable(name, fallbackModel)}")
+        }
+    }
+
 }
 
 /** Runs one machine in the target and decodes its last JSON line. */
@@ -60,14 +90,32 @@ internal class MachineRunner(
     private fun run(name: String, prompt: String, group: BranchProcesses?): JsonObject {
         val harness = configuration.harness(name)
         val process = try {
+            val directory = configuration.directory(name)
+            val selectedModel = configuration.model(name) ?: model
             val builder = ProcessBuilder(buildList {
                 add(harness)
-                addAll(listOf("--print", "--no-session"))
-                (configuration.model(name) ?: model)?.let { addAll(listOf("--model", it)) }
+                when (configuration.kind(name)) {
+                    "claude" -> addAll(listOf("--print", "--no-session-persistence", "--setting-sources", "user"))
+                    "codex" -> addAll(listOf("exec", "-c", "project_doc_max_bytes=0"))
+                    else -> addAll(listOf("--print", "--no-session", "--no-context-files",
+                        "--append-system-prompt", configuration.instructions(name).path))
+                }
+                selectedModel?.let { addAll(listOf("--model", it)) }
                 add(prompt)
             })
                 .directory(target)
                 .redirectError(ProcessBuilder.Redirect.INHERIT)
+            // A parent agent may itself have a redirected configuration directory.
+            listOf("PI_CODING_AGENT_DIR", "CLAUDE_CONFIG_DIR", "CODEX_HOME",
+                "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_OAUTH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN").forEach {
+                builder.environment().remove(it)
+            }
+            val variable = when (configuration.kind(name)) {
+                "claude" -> "CLAUDE_CONFIG_DIR"
+                "codex" -> "CODEX_HOME"
+                else -> "PI_CODING_AGENT_DIR"
+            }
+            builder.environment()[variable] = directory.path
             if (group == null) builder.start() else group.start(builder)
         } catch (error: IOException) {
             fail("Could not run the $name: ${error.message}")

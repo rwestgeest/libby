@@ -1,4 +1,3 @@
 {
-  "harness": "pi",
-  "prompt": "Prepare the existing designated plan for independent review. Never implement product changes or mark top-level tasks done. Read any files at the exact plan path plus .plan_reviewer_1.json, .plan_reviewer_2.json and .plan_reviewer_3.json. These are reports from the preceding review round. Address all concrete findings by revising unfinished tasks in the designated plan; preserve completed tasks and seed requirements. On the first round without reports, inspect and clarify the planner's plan. Remove these three report files after consuming them so stale reports cannot leak into the next task. Make tasks small, ordered, independently verifiable and explicit about acceptance criteria and testing. Consult .assembly-lines/lenses/responsibility-driven-design.md for design guidance. Return a JSON object describing the revision."
+  "harness": "pi"
 }

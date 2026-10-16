@@ -117,6 +117,7 @@ class FactorySteps {
     private var targetNumber = 0
     private var seedNumber = 0
     private val runs = mutableMapOf<String, RunFixture>()
+    private val environmentOverrides = mutableMapOf<String, String>()
     private val callsByRun = mutableMapOf<String, InvocationCalls>()
 
     @Given("a copy of the factory")
@@ -177,7 +178,7 @@ class FactorySteps {
     @Given("the target has the machines planner, doer and validator")
     fun targetHasStandardMachines() {
         for (name in listOf("planner", "doer", "validator")) {
-            Files.createDirectories(machineDirectory(name))
+            prepareMachineFolder(name)
         }
     }
     
@@ -208,7 +209,35 @@ class FactorySteps {
         configureMachine("validator", "harness", validator.toString())
     }
 
+    private fun prepareMachineFolder(name: String) {
+        val directory = machineDirectory(name)
+        Files.createDirectories(directory)
+        if (!Files.exists(directory.resolve("AGENTS.md"))) {
+            val role = if (name.startsWith("reviewer_")) "reviewer" else name
+            val example = Path.of("examples/.machines/$role/AGENTS.md")
+            Files.writeString(directory.resolve("AGENTS.md"),
+                if (Files.exists(example)) Files.readString(example) else "Report the result of your job.\n")
+            Files.writeString(directory.resolve("auth.json"), "{\"test_login\": true}\n")
+            Files.writeString(directory.resolve(".gitignore"), "auth.json\n.credentials.json\n")
+        }
+    }
+
     private fun configureMachine(name: String, key: String, value: String?) {
+        prepareMachineFolder(name)
+        if (key == "prompt") {
+            Files.writeString(machineDirectory(name).resolve("AGENTS.md"), value.orEmpty() + "\n")
+            return
+        }
+        if (key == "lens") {
+            val instructions = machineDirectory(name).resolve("AGENTS.md")
+            val previous = Files.readString(instructions)
+            val lens = "Your validation lens is: $value."
+            val text = if (previous.contains("Your validation lens is:"))
+                previous.replace(Regex("Your validation lens is: [^\n]+"), lens)
+                else previous.trimEnd() + "\n" + lens + "\n"
+            Files.writeString(instructions, text)
+            return
+        }
         val file = machineDirectory(name).resolve("config.json")
         val entries = if (Files.exists(file)) {
             Json.parseToJsonElement(Files.readString(file)).jsonObject
@@ -231,7 +260,7 @@ class FactorySteps {
 
     @Given("the target has the three big brains")
     fun threeBigBrains() {
-        (reviewers + "synthesiser").forEach { Files.createDirectories(machineDirectory(it)) }
+        (reviewers + "synthesiser").forEach(::prepareMachineFolder)
     }
 
     @Then("it reports that the branches from doer do not meet")
@@ -358,7 +387,11 @@ class FactorySteps {
     }
 
     @Then("it was not given {string}")
-    fun retryNotGiven(report: String) { check(!reviewPrompt("doer", 1).contains(report)) }
+    fun retryNotGiven(report: String) {
+        val prompt = if (Files.exists(workspace.resolve("synthesiser/calls"))) reviewPrompt("doer", 1)
+            else validatorPrompt()
+        check(!prompt.contains(report)) { prompt }
+    }
 
     @Given("the second reviewer answers in prose, with no result")
     fun secondReviewerNoResult() { Files.writeString(workspace.resolve("reviewer_2/no-result"), "yes") }
@@ -483,6 +516,8 @@ class FactorySteps {
     @Then("the initial planner is asked only for plan status")
     fun initialPlannerStatus() {
         val prompt = Files.readString(workspace.resolve("calls/0.txt"))
+        check(prompt.contains("Task work committed: false.")) { prompt }
+        check(!prompt.contains("Task work committed: true.")) { prompt }
         check(prompt.contains("Otherwise, report its status without changing it.")) { prompt }
         check(prompt.contains("Return \"complete\": false while any planned product work remains, including after creating a new plan.")) { prompt }
         check(prompt.contains("If you cannot read or write the designated plan, report the failure; do not claim completion.")) { prompt }
@@ -626,8 +661,9 @@ class FactorySteps {
         for (call in listOf("calls/0.json", "doer/calls/0.json", "validator/calls/0.json")) {
             val record = Json.parseToJsonElement(Files.readString(workspace.resolve(call))).jsonObject
             val args = record.getValue("args").jsonArray.map { it.jsonPrimitive.content }
-            check(args.take(4) == listOf("--print", "--no-session", "--model", model)) { args }
-            check(args.size == 5) { args }
+            check(args.take(3) == listOf("--print", "--no-session", "--no-context-files")) { args }
+            check(args[args.indexOf("--model") + 1] == model) { args }
+            check(args[args.indexOf("--append-system-prompt") + 1].endsWith("/AGENTS.md")) { args }
             check(record.getValue("cwd").jsonPrimitive.content == target.toString()) { record }
             val prompt = args.last()
             check(prompt.contains("Read the seed at \"$seed\".")) { prompt }
@@ -638,6 +674,133 @@ class FactorySteps {
             check(prompt.contains("End your answer with a single line of JSON.")) { prompt }
         }
     }
+
+    @Given("the {word}'s AGENTS.md says {string}")
+    fun machineInstructions(machine: String, instructions: String) {
+        Files.createDirectories(machineDirectory(machine))
+        Files.writeString(machineDirectory(machine).resolve("AGENTS.md"), instructions + "\n")
+    }
+
+    @Then("the doer was given {string}")
+    fun doerGiven(value: String) {
+        check(Files.readString(workspace.resolve("doer/calls/0.txt")).contains(value)) {
+            "Doer was not given $value"
+        }
+    }
+
+    private fun usePiDoer() {
+        val executable = workspace.resolve("doer/pi")
+        if (!Files.exists(executable)) {
+            Files.copy(workspace.resolve("doer/agent.py"), executable)
+            executable.toFile().setExecutable(true)
+        }
+        configureMachine("doer", "harness", executable.toString())
+    }
+
+    @Given("the doer has its own login")
+    fun doerOwnLogin() {
+        usePiDoer()
+        Files.writeString(machineDirectory("doer").resolve("auth.json"), "{\"test_login\": true}\n")
+    }
+
+    @Given("the doer has no login")
+    fun doerNoLogin() {
+        usePiDoer()
+        Files.deleteIfExists(machineDirectory("doer").resolve("auth.json"))
+    }
+
+    @Given("there is an API key for the doer's provider")
+    fun doerApiKey() { environmentOverrides["ANTHROPIC_API_KEY"] = "test-api-key" }
+
+    @Given("there is no API key for the doer's provider")
+    fun noDoerApiKey() { environmentOverrides["ANTHROPIC_API_KEY"] = "" }
+
+    private fun doerRecord(): JsonObject = Json.parseToJsonElement(
+        Files.readString(workspace.resolve("doer/calls/0.json"))).jsonObject
+
+    @Then("the doer signed in with its own login")
+    fun signedInWithLogin() {
+        check(doerRecord().getValue("configuration").jsonPrimitive.content == machineDirectory("doer").toString())
+        check(doerRecord().getValue("auth").jsonPrimitive.content == "login")
+    }
+
+    @Then("the doer signed in with the API key")
+    fun signedInWithApiKey() {
+        check(doerRecord().getValue("configuration").jsonPrimitive.content == machineDirectory("doer").toString())
+        check(doerRecord().getValue("auth").jsonPrimitive.content == "api-key")
+    }
+
+    @Then("the doer's login is ignored by Git")
+    fun loginIgnored() {
+        repo.git("check-ignore", machineDirectory("doer").resolve("auth.json").toString())
+        check(repo.git("ls-files", "--", "**/auth.json", "**/.credentials.json").isEmpty())
+    }
+
+    @Then("it reports that the doer cannot sign in")
+    fun cannotSignIn() = diagnosticReported("The doer cannot sign in")
+
+    @Given("the doer uses {word}")
+    fun doerHarness(harness: String) {
+        val executable = workspace.resolve("doer/$harness")
+        Files.copy(workspace.resolve("doer/agent.py"), executable, StandardCopyOption.REPLACE_EXISTING)
+        executable.toFile().setExecutable(true)
+        configureMachine("doer", "harness", executable.toString())
+        if (harness == "claude") {
+            Files.writeString(machineDirectory("doer").resolve("CLAUDE.md"), "@AGENTS.md\n")
+            Files.writeString(machineDirectory("doer").resolve(".credentials.json"), "{\"test_login\": true}\n")
+        }
+    }
+
+    @Given("personal and target instructions conflict with the machine")
+    fun conflictingInstructions() {
+        for (directory in listOf(workspace, target)) {
+            Files.writeString(directory.resolve("AGENTS.md"), "WRONG_INSTRUCTIONS")
+            Files.writeString(directory.resolve("CLAUDE.md"), "WRONG_INSTRUCTIONS")
+        }
+        val personal = Files.createDirectories(workspace.resolve("personal-config"))
+        Files.writeString(personal.resolve("AGENTS.md"), "WRONG_INSTRUCTIONS")
+        Files.writeString(personal.resolve("auth.json"), "{\"personal_login\": true}")
+        for (key in listOf("PI_CODING_AGENT_DIR", "CLAUDE_CONFIG_DIR", "CODEX_HOME")) {
+            environmentOverrides[key] = personal.toString()
+        }
+    }
+
+    @Then("the doer ran with isolated {word} configuration")
+    fun isolatedHarness(harness: String) {
+        val record = doerRecord()
+        val args = record.getValue("args").jsonArray.map { it.jsonPrimitive.content }
+        check(record.getValue("configuration").jsonPrimitive.content == machineDirectory("doer").toString()) { record }
+        val instructions = record.getValue("instructions").jsonPrimitive.content
+        check(instructions.contains("ONLY_DOER_INSTRUCTIONS") && !instructions.contains("WRONG_INSTRUCTIONS")) { record }
+        check(record.getValue("cwd").jsonPrimitive.content == target.toString()) { record }
+        when (harness) {
+            "pi" -> {
+                check("--no-context-files" in args) { args }
+                check(args[args.indexOf("--append-system-prompt") + 1] == machineDirectory("doer").resolve("AGENTS.md").toString()) { args }
+            }
+            "claude" -> check(args[args.indexOf("--setting-sources") + 1] == "user") { args }
+            "codex" -> check(args.first() == "exec" && "project_doc_max_bytes=0" in args) { args }
+        }
+    }
+
+    @Given("the validator has no login or API key")
+    fun validatorNoCredentials() {
+        val executable = workspace.resolve("validator/pi")
+        Files.copy(workspace.resolve("validator/validator.py"), executable)
+        executable.toFile().setExecutable(true)
+        configureMachine("validator", "harness", executable.toString())
+        Files.delete(machineDirectory("validator").resolve("auth.json"))
+        environmentOverrides["ANTHROPIC_API_KEY"] = ""
+    }
+
+    @Then("it reports that the validator cannot sign in")
+    fun validatorCannotSignIn() = diagnosticReported("The validator cannot sign in")
+
+    @Given("the doer's model is {string}")
+    fun doerModel(model: String) = configureMachine("doer", "model", model)
+
+    @Given("the Google provider has an API key")
+    fun googleApiKey() { environmentOverrides["GEMINI_API_KEY"] = "test-google-key" }
 
     @Given("the doer cannot be run")
     fun doerCannotBeRun() {
@@ -1398,12 +1561,13 @@ class FactorySteps {
             pi.toFile().setExecutable(true)
         }
         return mapOf(
+            "ANTHROPIC_API_KEY" to "", "OPENAI_API_KEY" to "", "GEMINI_API_KEY" to "", "CODEX_API_KEY" to "",
             "PATH" to "$bin:${System.getenv("PATH")}",
             "FACTORY_TEST_WORKSPACE" to workspace.toString(),
             "GIT_CONFIG_COUNT" to "2",
             "GIT_CONFIG_KEY_0" to "user.name", "GIT_CONFIG_VALUE_0" to "Factory Test",
             "GIT_CONFIG_KEY_1" to "user.email", "GIT_CONFIG_VALUE_1" to "factory-test@example.invalid"
-        )
+        ) + environmentOverrides
     }
 
     @After

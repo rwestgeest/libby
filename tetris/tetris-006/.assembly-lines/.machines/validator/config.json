@@ -1,4 +1,3 @@
 {
-  "harness": "pi",
-  "lens": "testability"
+  "harness": "pi"
 }
