@@ -34,6 +34,6 @@ internal class MachineJobs(
         val schema = if (fields.isEmpty()) "Include a JSON object describing the job you did as your result."
             else "Include boolean ${if (fields.size == 1) "field" else "fields"} " +
                 fields.joinToString(" and ") { "\"$it\"" } + " in your JSON result."
-        return "End your answer with a single line of JSON. $schema Include an array \"findings\" in your JSON result."
+        return "End your answer with a single line of JSON. $schema Include an array \"findings\" in your JSON result. If progress requires unavailable external input, access or human attestation, include \"blocked\": true and findings naming the missing input and who can supply it. This stops the run without accepting or committing the task. Use blocked only when you cannot proceed with the available tools and inputs; ordinary defects remain retryable."
     }
 }

@@ -1,5 +1,6 @@
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 /** Owns attempt state and the work/plan commit boundary; never reads the plan. */
 internal class TaskLifecycle(
@@ -22,6 +23,9 @@ internal class TaskLifecycle(
     }
 
     fun receiveResult(machine: String, result: JsonObject) {
+        if (result["blocked"] == JsonPrimitive(true)) {
+            throw FactoryBlocked("Blocked on external input at $machine. Findings: ${result["findings"] ?: "[]"}")
+        }
         if (machine == "validator") {
             findings = result["findings"] as? JsonArray
                 ?: fail("Could not read the validator's result")

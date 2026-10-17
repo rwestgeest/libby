@@ -134,7 +134,14 @@ if message_file.exists():
 if (Path(__file__).parent / "no-result").exists():
     print("I did some work, but have no structured result.")
 else:
-    print(json.dumps(result))
+    if (Path(__file__).parent / "blocked").exists():
+        result.update(blocked=True, findings=["Owner must confirm signing key persistence."])
+    if workspace and (Path(workspace) / "pretty-json-result").exists():
+        print("```json")
+        print(json.dumps(result, indent=2))
+        print("```")
+    else:
+        print(json.dumps(result))
 after_file = Path(__file__).parent / "after-result.txt"
 if after_file.exists():
     print(after_file.read_text())

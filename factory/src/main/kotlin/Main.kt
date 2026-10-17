@@ -1,11 +1,13 @@
 import java.io.File
+import java.io.RandomAccessFile
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 import kotlinx.serialization.json.*
 
-internal class FactoryFailure(message: String) : RuntimeException(message)
+internal open class FactoryFailure(message: String) : RuntimeException(message)
+internal class FactoryBlocked(message: String) : FactoryFailure(message)
 internal fun fail(message: String): Nothing = throw FactoryFailure(message)
 
 fun main(args: Array<String>) {
@@ -64,7 +66,7 @@ private fun executeNamedRun(factoryDir: File, runName: String, args: Array<Strin
         runFactory(assemblyLine, runner, TaskLifecycle(maxAttempts, jobs, repository), repository)
         control.finished(runName, "finished")
     } catch (error: Throwable) {
-        control.finished(runName, "failed", error.message)
+        control.finished(runName, if (error is FactoryBlocked) "blocked" else "failed", error.message)
         if (error is FactoryFailure) throw error
         throw error
     }
@@ -124,18 +126,40 @@ private class RunControl(private val factoryDir: File) {
     }
 }
 
+internal class RunRecordReader(private val file: File) {
+    private var offset = 0L
+
+    fun readLines(): List<String> {
+        if (!file.isFile) return emptyList()
+        return RandomAccessFile(file, "r").use { input ->
+            input.seek(offset)
+            val lines = mutableListOf<String>()
+            val pending = java.io.ByteArrayOutputStream()
+            while (true) {
+                val byte = input.read()
+                if (byte == -1) break
+                if (byte == 10) {
+                    lines.add(pending.toString(Charsets.UTF_8))
+                    pending.reset()
+                    offset = input.filePointer
+                } else pending.write(byte)
+            }
+            lines
+        }
+    }
+}
+
 private fun watchRun(factoryDir: File, name: String) {
     val control = RunControl(factoryDir); val runFolder = File(factoryDir, "runs/$name")
     val file = File(runFolder, "record.jsonl")
-    var offset = 0L
+    val records = RunRecordReader(file)
     val totalsByMachine = mutableMapOf<String, Pair<Long, Long>>()
     val providerTotals = mutableMapOf<String, Long>()
     val runningMachines = linkedSetOf<String>()
     var wholeRun = 0L
     while (true) {
-        if (file.isFile && file.length() > offset) {
-            val content = file.readText().drop(offset.toInt()); offset = file.length()
-            content.lineSequence().filter(String::isNotBlank).forEach { line ->
+        run {
+            records.readLines().filter(String::isNotBlank).forEach { line ->
                 val item = Json.parseToJsonElement(line).jsonObject
                 if (item["type"]?.jsonPrimitive?.content == "run-status") {
                     println(item.getValue("text").jsonPrimitive.content)

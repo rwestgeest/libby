@@ -35,3 +35,10 @@ Feature: Fan out keeps branch jobs independent and stops active siblings
     And the held reviewers have stopped
     And the synthesiser has not been called
     And there are no new commits
+
+  Scenario: A blocked reviewer stops before consensus or acceptance
+    Given the reviewer_2 is blocked on operator evidence
+    When the factory runs the "tetris" run
+    Then it reports the missing operator evidence
+    And the synthesiser has not been called
+    And there are no new commits

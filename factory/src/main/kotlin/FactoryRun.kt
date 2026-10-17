@@ -16,7 +16,10 @@ internal fun runFactory(
         if (branches.isNotEmpty()) {
             val prompts = branches.associateWith { lifecycle.prepareExecution(it) }
             branchResults = runner.runBranches(prompts)
-            branchResults.values.forEach(::println)
+            branchResults.forEach { (branch, report) ->
+                println(report)
+                lifecycle.receiveResult(branch, report)
+            }
             machine = assemblyLine.meetingPoint(machine)
             continue
         }

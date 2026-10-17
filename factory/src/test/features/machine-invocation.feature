@@ -32,6 +32,12 @@ Feature: Machine invocation and job context preserve the current protocol
     Then it accepts it
     And the validator was given "Your validation lens is: testability."
 
+  Scenario: Fenced multiline JSON results are accepted
+    Given agents format results as fenced multiline JSON
+    When the factory runs
+    Then it accepts it
+    And the plan shows every task as done
+
   Scenario: Configured lens and model forwarding preserve shared prompt context
     Given the validator uses the lens "responsibility-driven design"
     And the chosen model is "provider/model"

@@ -226,10 +226,54 @@ internal class MachineRunner(
         }
     }
 
-    private fun readResult(answer: String, machine: String): JsonObject {
-        val result = answer.lineSequence().mapNotNull { line ->
-            runCatching { Json.parseToJsonElement(line) }.getOrNull()
-        }.lastOrNull()
+    private fun readResult(answer: String, machine: String): JsonObject = readMachineResult(answer, machine)
+
+    private fun readMachineResult(answer: String, machine: String): JsonObject {
+        // Agents commonly wrap their requested JSON in a Markdown fence or
+        // pretty-print it over several lines. Keep all valid JSON values in
+        // order so a later (but invalid for our schema) value still wins, as
+        // it did when results were restricted to single lines.
+        val text = answer.replace(Regex("(?m)^\\s*```(?:json)?\\s*$"), "")
+        val candidates = mutableListOf<Pair<Int, JsonElement>>()
+        var lineOffset = 0
+        text.lineSequence().forEach { line ->
+            runCatching { Json.parseToJsonElement(line) }.getOrNull()?.let { value ->
+                candidates.add(lineOffset + line.length to value)
+            }
+            lineOffset += line.length + 1
+        }
+        var start = 0
+        while (start < text.length) {
+            if (text[start] != '{' && text[start] != '[') { start++; continue }
+            val stack = ArrayDeque<Char>()
+            var inString = false
+            var escaped = false
+            var end = start
+            while (end < text.length) {
+                val char = text[end]
+                if (inString) {
+                    if (escaped) escaped = false
+                    else if (char == '\\') escaped = true
+                    else if (char == '"') inString = false
+                } else when (char) {
+                    '"' -> inString = true
+                    '{' -> stack.addLast('}')
+                    '[' -> stack.addLast(']')
+                    '}', ']' -> {
+                        if (stack.lastOrNull() != char) break
+                        stack.removeLast()
+                        if (stack.isEmpty()) {
+                            runCatching { Json.parseToJsonElement(text.substring(start, end + 1)) }
+                                .getOrNull()?.let { candidates.add(end + 1 to it) }
+                            break
+                        }
+                    }
+                }
+                end++
+            }
+            start++
+        }
+        val result = candidates.maxByOrNull { it.first }?.second
         return result as? JsonObject ?: fail("Could not read the $machine's result")
     }
 

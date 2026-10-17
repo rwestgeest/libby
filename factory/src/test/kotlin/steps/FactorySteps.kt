@@ -194,6 +194,11 @@ class FactorySteps {
         configureMachine("doer", "harness", doer.toString())
     }
 
+    @Given("agents format results as fenced multiline JSON")
+    fun agentsFormatResultsAsFencedMultilineJson() {
+        Files.writeString(workspace.resolve("pretty-json-result"), "yes\n")
+    }
+
     @Given("the planner plans the tasks alpha and beta")
     fun preparePlanner() {
         agent = workspace.resolve("agent.py")
@@ -770,6 +775,19 @@ class FactorySteps {
     @Then("it prints the stop message")
     fun stopMessage() {
         check(output.trimEnd().endsWith("factory stopped")) { output }
+    }
+
+    @Given("the {word} is blocked on operator evidence")
+    fun machineBlocked(machine: String) {
+        Files.writeString(workspace.resolve("$machine/blocked"), "yes")
+    }
+
+    @Then("it reports the missing operator evidence")
+    fun reportsBlocked() {
+        val status = Files.readString(workspace.resolve("factory/runs/$currentRun/status"))
+        check(status.startsWith("blocked: Blocked on external input")) { status }
+        check(output.contains("Blocked on external input")) { output }
+        check(output.contains("Owner must confirm signing key persistence.")) { output }
     }
 
     @Given("the validator is never satisfied")

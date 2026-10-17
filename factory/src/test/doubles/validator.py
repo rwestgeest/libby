@@ -64,8 +64,9 @@ else:
     field_file = folder / "result-field.txt"
     field = field_file.read_text().strip() if field_file.exists() else "satisfied"
     print(json.dumps({
+        "blocked": (folder / "blocked").exists(),
         field: not rejected,
-        "findings": ["Separate game logic from terminal input so it can be tested."] if rejected else [],
+        "findings": ["Owner must confirm signing key persistence."] if (folder / "blocked").exists() else ["Separate game logic from terminal input so it can be tested."] if rejected else [],
     }))
     trailing = folder / "after-result.txt"
     if trailing.exists():

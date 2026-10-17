@@ -87,3 +87,16 @@ Feature: Task lifecycle follows assembly-line routing
     And there are no new commits
     And the initial planner is asked only for plan status
     And it prints the stop message
+
+  Scenario Outline: Unavailable operator evidence stops the task without acceptance
+    Given the <machine> is blocked on operator evidence
+    When the factory runs
+    Then it reports the missing operator evidence
+    And the doer has been called once
+    And the plan shows every task as not done
+    And there are no new work commits
+
+    Examples:
+      | machine   |
+      | doer      |
+      | validator |

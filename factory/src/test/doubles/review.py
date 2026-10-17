@@ -82,4 +82,6 @@ if (folder / "no-result").exists():
 else:
     rejected = (folder / "never-satisfied").exists() or ((folder / "reject-first").exists() and number == 0)
     finding = folder / "finding.txt"
-    print(json.dumps({"satisfied": not rejected, "findings": [finding.read_text()] if rejected else []}))
+    blocked = (folder / "blocked").exists()
+    print(json.dumps({"blocked": blocked, "satisfied": not rejected, "findings":
+        ["Owner must confirm signing key persistence."] if blocked else [finding.read_text()] if rejected else []}))

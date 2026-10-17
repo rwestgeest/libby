@@ -144,3 +144,11 @@ can be tried manually through the CLI after configuring the machines above.
 The default suite uses
 external doubles, including FIFO barriers that prove concurrent execution and
 keep sibling reviewers at work until the factory stops them on a failure.
+
+Any machine may return `"blocked": true` with `findings` naming missing external
+input, access or human attestation and who can supply it. The run stops with a
+`blocked` status before routing, retrying or committing that task. Existing work
+and unfinished plan entries remain for inspection. After supplying the input,
+start the same named run again to use its existing plan. Fixable product defects
+should use normal rejection and retry findings instead. Omit `blocked` (or use
+`false`) for normal results.
