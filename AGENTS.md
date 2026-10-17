@@ -26,6 +26,7 @@ Skills, in `.agents/skills/` at the repository's root:
 - **implement-it** — when the student wants you to build the iteration and demo it.
 - **implement-fast** — when the student wants you to just build the iteration.
 - **capture-homework-log** — capture session learning in the homework log, refresh the Qubigo sharing snapshot, and commit and push the capture.
+- **analyze-factory-run** — analyze run evidence in `q/.factory/runs/<run>/`, diagnose problems and propose solutions when relevant.
 
 If your harness doesn't load skills, read the skill's `SKILL.md` and follow it.
 
