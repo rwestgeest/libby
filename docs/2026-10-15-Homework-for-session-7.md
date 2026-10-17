@@ -54,3 +54,84 @@ After provider access is available, restart and inspect the saved run with
 whether task 6's existing changes satisfy the acceptance checks before
 accepting the task; do not infer completion from the earlier plan reviews.
 
+## 2026-10-17 — Provider usage analysis and reviewer cycle audit
+
+Inspected the live `qubigo-004` run's `record.jsonl` and `daemon.log` to
+understand why OpenAI Codex credits were still being consumed after the
+model config changes that switched the doer and plan_revision to
+DeepSeek.
+
+### Config change effect
+
+The following machines had explicit model overrides in
+`.assembly-lines/.machines/`:
+
+| Machine | Model | Burns OpenAI? |
+|---------|-------|--------------|
+| doer | `deepseek/deepseek-v4-flash` | No |
+| plan_revision | `deepseek/deepseek-v4-flash` | No |
+| planner | `deepseek/deepseek-v4-flash` | No |
+| plan_reviewer_2 | `openrouter/anthropic/claude-opus-4.8` | No |
+| plan_reviewer_3 | `openrouter/~google/gemini-pro-latest` | No |
+| **plan_reviewer_1** | **`openai-codex/gpt-6-astra`** | **Yes** |
+| plan_initializer | *(no config — uses harness default)* | Yes |
+| plan_consensus | *(no config — uses harness default)* | Yes |
+| validator/rdd_validator | *(no config — uses harness default)* | Yes |
+
+### Reviewers ran 4 times, not once
+
+The `careful-plan.md` line promises the three-reviewer brain runs only
+during initial planning. In practice it ran four complete cycles:
+
+1. **Initial plan** (normal) — all satisfied → doer tasks 1–5
+2. **After usage-limit crash** — plan_initializer re-ran during recovery,
+   plan got revised, reviewers ran again → reviewer_1 found 4 issues
+3. **Revision round 2** — reviewers ran again → reviewer_1 still found 1
+   issue
+4. **Revision round 3** — all satisfied → doer for task 6
+
+The extra cycles were caused by the crash/recovery re-triggering the
+initialization path (`plan_initializer` → `plan_revision` → reviewers).
+
+### Current pipeline status (as of inspection)
+
+The doer completed task 6 (fixed `AcceptInvitationPage.open()` async race
+condition). The `rdd_validator` was running. Going forward the flow is
+`planner → doer → rdd_validator → planner` for each remaining task
+(7–18) — the reviewers will **not** run again unless a plan revision cycle
+is triggered.
+
+### Still burning OpenAI credits
+
+While the reviewers are done, these machines still use the harness default
+(Codex/OpenAI) and run on every task:
+- `rdd_validator` — runs after every doer task
+- `plan_consensus` — runs during review cycles (done for now)
+- `plan_initializer` — only if recovery triggers again
+
+To fully stop OpenAI consumption, give them explicit models matching the
+doer, e.g.:
+```json
+{"harness": "pi", "model": "deepseek/deepseek-v4-flash"}
+```
+
+### Useful commands
+```
+# Inspect machine configs
+cat .assembly-lines/.machines/{machine}/config.json
+
+# Count reviewer cycles from the record
+python3 -c "
+import json
+with open('factory/runs/qubigo-004/record.jsonl') as f:
+    for i, line in enumerate(f):
+        rec = json.loads(line)
+        if rec.get('type') == 'machine-state' and rec.get('running'):
+            print(f'line {i:3d}: ▶ {rec[\"machine\"]}')
+"
+```
+
+Open question: whether the Codex daemon's default model for unconfigured
+machines can be set globally, or each machine needs an explicit model
+override.
+

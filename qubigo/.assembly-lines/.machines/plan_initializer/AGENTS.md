@@ -24,7 +24,7 @@ Each top-level task must:
 
 Order tasks so each builds on working, tested behavior. Never combine multiple
 behaviors into one task and never create tasks for stubs, scaffolding, or
-speculative infrastructure.
+speculative infrastructure. 
 
 
 

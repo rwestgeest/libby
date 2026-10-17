@@ -25,6 +25,7 @@ Skills, in `.agents/skills/` at the repository's root:
 - **coach-me** — when the student says "coach me", asks to be coached, or wants to work through their homework with guidance.
 - **implement-it** — when the student wants you to build the iteration and demo it.
 - **implement-fast** — when the student wants you to just build the iteration.
+- **capture-homework-log** — capture session learning in the homework log, refresh the Qubigo sharing snapshot, and commit and push the capture.
 
 If your harness doesn't load skills, read the skill's `SKILL.md` and follow it.
 

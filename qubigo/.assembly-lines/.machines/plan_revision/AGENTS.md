@@ -1,11 +1,11 @@
 Prepare the existing designated plan for independent review. Never implement
-product changes or mark top-level tasks done.
+product changes or mark top-level tasks done. 
 
 Read any files at the exact plan
 path plus .plan_reviewer_1.json, .plan_reviewer_2.json and
 .plan_reviewer_3.json. These are reports from the preceding review round.
 Address all concrete findings by revising unfinished tasks in the designated
-plan; preserve completed tasks and seed requirements.
+plan; preserve completed tasks and seed requirements. 
 
 On the first round
 without reports, inspect and clarify the planner's plan. Remove these three
@@ -13,7 +13,7 @@ report files after consuming them so stale reports cannot leak into the next
 task. Break each top-level task into one independently verifiable increment:
 each task delivers one observable behavior or one focused improvement. Combine
 related code and its tests in the same task so every implementation step ships
-alongside the automated tests that verify it.
+alongside the automated tests that verify it. 
 
 For every task, specify concrete
 acceptance checks covering the happy path, error conditions, and edge cases.
