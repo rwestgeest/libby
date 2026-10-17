@@ -41,12 +41,21 @@ reconstructed from an event journal; a separate projection supplies game lists.
 
 The ordinary move path currently reads as:
 
-```text
-MakeMove -> Game.move -> GameRepositoryWithView.save
-                         -> game event repository (JPA)
-                         -> game-list projection
-         -> post-processors -> notification
+```mermaid
+flowchart LR
+    command[MakeMove] --> rules[Game.move]
+    rules --> save[GameRepositoryWithView.save]
+    subgraph persistence[Repository collaboration]
+        save --> journal[Game event repository / JPA]
+        journal --> projection[Game-list projection]
+    end
+    projection --> post[Post-processors]
+    post --> notify[Notification]
+    style persistence fill:#e8f2ff,stroke:#4277a5
 ```
+
+Read left to right: game behavior produces a move; the repository collaboration
+saves it; successful saving allows post-processing and notification.
 
 This gives a familiar place to look for each responsibility, although existing
 framework annotations and persistence details already complicate the ideal
@@ -73,6 +82,23 @@ admitted prefix, store one idempotent result, and release active assignment slot
 If this fails after the move commits, recovery must retry result derivation.
 Notifications follow the committed move and do not depend on result persistence.
 
+```mermaid
+flowchart LR
+    before[Move strictly before deadline] --> advance[Persist event and advance admitted revision]
+    after[Move at or after deadline] --> freeze[Persist event and freeze admission marker]
+    advance --> snapshot[Admitted journal prefix]
+    freeze --> snapshot
+    snapshot --> points[Competition outcome]
+    freeze --> later[Later legal moves can continue underlying game]
+    later -.-> excluded[Excluded from frozen competition outcome]
+    style snapshot fill:#e8f2ff,stroke:#4277a5
+    style excluded fill:#fff0d9,stroke:#b87920
+```
+
+The marker separates the underlying game's continuing history from the history
+that counts for the competition. Once cutoff is observed, a regressed clock must
+not allow the marker to advance again.
+
 These are real consistency and product concerns. The open design question is
 whether the chosen collaboration structure is the clearest way to express them.
 
@@ -90,20 +116,40 @@ whether the chosen collaboration structure is the clearest way to express them.
 
 The competition path currently reads as:
 
-```text
-MakeMove -> CompetitionMoveProtocol
-           -> identify competition
-           -> BEGIN IMMEDIATE
-           -> sample clock, reload game, Game.move
-           -> writer: event + projections + admission marker
-           -> COMMIT
-         -> CompetitionGameFinalizer
-           -> read journal + marker, derive outcome
-           -> separate result transaction + slot release
-         -> notification
-
-ApplicationReadyEvent -> result reconciler -> finalizer
+```mermaid
+flowchart TD
+    command[MakeMove: load game and current user] --> protocol[CompetitionMoveProtocol: identify competition]
+    protocol --> belongs{Competition game?}
+    belongs -->|No: null return| ordinary[Ordinary Game.move and repository save]
+    belongs -->|Yes| begin[BEGIN IMMEDIATE]
+    subgraph moveTx[Transaction 1: competition move]
+        begin --> time[Sample clock and reload game]
+        time --> rules[Game.move]
+        rules --> writer[CompetitionMoveWriter / TransactionalGameWriter]
+        writer --> facts[Write event, projections and admission marker]
+        facts --> commit[COMMIT]
+    end
+    commit --> post[Post-processors: CompetitionGameFinalizer]
+    ordinary --> post
+    post --> full{Full competition game?}
+    full -->|Yes| derive[Replay journal up to durable admission marker]
+    derive --> result[Transaction 2: result and slot release]
+    result --> notify[Notification after committed move]
+    full -->|No| notify
+    startup[ApplicationReadyEvent] --> recovery[Scan for missing results]
+    recovery -.-> derive
+    style moveTx fill:#e8f2ff,stroke:#4277a5
+    style result fill:#fff0d9,stroke:#b87920
+    style recovery fill:#fff0d9,stroke:#b87920
 ```
+
+Blue groups the atomic move writes. Orange shows the separate result write and
+its recovery route. A returned result-write failure is logged by the finalizer;
+the already committed move can still be notified. A rolled-back move must not
+reach notification. The diagram omits exceptional exits and most read adapters.
+
+The extra split is visible here: saving a move and recording its competition
+outcome are separate durable steps, with recovery needed between them.
 
 The protocol and finalizer are useful named concepts, but the complete behavior
 is distributed across the command, protocol, writers, transaction helper,
@@ -143,6 +189,33 @@ has accumulated detailed SQL, wiring, test fixture and recovery instructions as
 review findings were repaired. Its roughly 99 KB size is an observation at this
 capture, not a measure of design quality by itself.
 
+```mermaid
+flowchart TD
+    start[Start or restart named run] --> init[Initialize / read existing plan]
+    init --> revise[Revise plan]
+    revise --> reviews[Three independent plan reviewers]
+    reviews --> consensus{Unanimous approval of same plan?}
+    consensus -->|No| revise
+    consensus -->|Yes| doer[Doer implements first unfinished task]
+    doer --> json{Readable JSON result?}
+    json -->|No: latest stop| failed[Factory fails before validation]
+    json -->|Yes| validator[Implementation / RDD validator]
+    validator --> decision{Accepted?}
+    decision -->|No: findings, within attempt limit| doer
+    decision -->|Yes| planner[Factory commits; planner records completion]
+    planner --> next{More authorized work?}
+    next -->|Yes| doer
+    next -->|No| stop[Stop at scope boundary]
+    style failed fill:#ffe4e0,stroke:#b5483a
+    style revise fill:#fff0d9,stroke:#b87920
+    style doer fill:#e8f2ff,stroke:#4277a5
+```
+
+This shows the relevant unfinished-plan route. Plan revision and implementation
+repair form different loops. Implementation attempts are bounded; plan review
+continues until consensus or a stop. External-input blocking and completed-plan
+shortcuts are omitted. The task-7 repair's authorized boundary is before task 8.
+
 A plausible explanation for the student's concern is that review is increasingly
 guiding implementation through local fixes to prescribed machinery, while the
 end-to-end collaboration remains hard to see. The repeated production-wiring
@@ -162,6 +235,20 @@ command wiring, and record one result. Add cutoff and crash cases as explicit
 variations after the basic ownership is understandable. Keep acceptance criteria
 about behavior and invariants; defer SQL and class choices until the example
 requires them. This is a proposal for discussion, not a selected redesign.
+
+```mermaid
+flowchart LR
+    story[Describe one game in domain terms] --> owners[Sketch responsibility and ownership]
+    owners --> example[One vertical example through real wiring]
+    example --> inspect[Walk through code and evidence together]
+    inspect --> cases[Add cutoff and crash variations]
+    cases --> decide[Decide what to retain or redesign]
+    style story fill:#e8f2ff,stroke:#4277a5
+    style decide fill:#fff0d9,stroke:#b87920
+```
+
+This is a possible learning experiment, not an approved implementation workflow.
+Its purpose is to make the collaboration understandable before adding mechanics.
 
 Preserve the current work as evidence before any restart. Decide explicitly which
 requirements, accepted increments and useful code to retain. No rewrite, deletion,
