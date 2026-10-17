@@ -21,6 +21,120 @@ so we can analyse machine configuration
 
 Ability to steer. 007
 
+## 2026-10-16 — Kaizen on iteration 003 tests; start of qubigo iteration 004
+
+Started by reviewing the iteration 003 factory run output. The tests the model
+had written for session persistence (Process, Restart, Wiring scenario tests in
+`qubigo-backend/qubigo-servlet/src/test/kotlin/.../repositories/`) were long,
+scenario-style, hard to read, used boolean flags, duplicated helpers, and slept
+on wall-clock time. This triggered a kaizen deep-dive:
+[2026-10-16-session-persistence-tests-hard-to-read-and-badly-structured.md
+](../qubigo/docs/kaizen/2026-10-16-session-persistence-tests-hard-to-read-and-badly-structured.md)
+— the most detailed kaizen note yet, covering root causes (no test standard,
+plan prescribed test mechanics, no validator checked test code), recommendations
+and a resolution that deleted the scenario tests, replaced them with one simple
+wiring test, and added test-design guidelines to `qubigo-backend/AGENTS.md` and
+the machine prompts.
+
+Reviewed the other iteration 003 kaizen notes that the run exposed simultaneously:
+
+- [Java 25 harness breaks the build](../qubigo/docs/kaizen/2026-10-16-java-25-harness-and-machine-local-paths-in-evidence.md)
+  — default JDK 25 fails Gradle; disposable JDK 21 paths in evidence are machine-local
+  and not reproducible.
+- [Recurring setup failures — gradlew wrong directory](../qubigo/docs/kaizen/2026-10-16-recurring-setup-failures-gradlew-wrong-directory.md)
+  — each task rediscovers that `./gradlew` lives in `qubigo-backend`, not the repo root.
+- [Plan lives outside repo and doubles as a log](../qubigo/docs/kaizen/2026-10-16-plan-lives-outside-repo-and-doubles-as-a-log.md)
+  — the plan at `factory/runs/qubigo-003/plan.md` is not in the repo; checkboxes
+  are unreliable.
+- [Uninformative factory commits](../qubigo/docs/kaizen/2026-10-16-uninformative-record-factory-task-commits.md)
+  — every commit reads "Record factory task", no subject or task number.
+- [yx list missing in every task](../qubigo/docs/kaizen/2026-10-16-yx-command-missing-in-every-task.md)
+  — `yx` was not installed, so every task wasted a command. Resolved by installing
+  yx v0.5.1 at `~/.local/bin/yx`.
+- [Tests after implementation split by task](../qubigo/docs/kaizen/2026-10-16-tests-after-implementation-split-by-task.md)
+  — the plan decomposed work by test layer rather than behaviour slice, so
+  implementation landed before acceptance tests existed.
+- [Validator loops on evidence no agent can produce](../qubigo/docs/kaizen/2026-10-16-validator-loops-on-evidence-no-agent-can-produce.md)
+  — validator kept demanding operator evidence the runner could not supply.
+
+Then started the sizable change for **qubigo iteration 004 (competitions)**.
+The seed is at `docs/iterations/004-competitions.md` and the implementation
+evidence at `docs/iterations/004-competitions-implementation.md`. The
+`careful-plan` assembly line was used with DeepSeek for doer/planner/plan_revision
+and Claude/Gemini for reviewers, though several machines still used the default
+OpenAI Codex.
+
+## 2026-10-17 — Factory run issues on the qubigo-004 sizable change
+
+Continued the qubigo-004 run and inspected its outputs. The run progressed
+through tasks 1–5 (competition drafts, publication/invitations, enrollment,
+competition context, manual start/matching) but stalled repeatedly:
+
+### Stop causes
+
+- **Codex usage-limit errors** hit the doer and plan_initializer three times
+  (recorded in `daemon.log`). Machines without explicit model config still used
+  `openai-codex/gpt-6-astra` by default, burning quota even though the main
+  doer was switched to DeepSeek.
+- **Unparseable plan_revision results** — the machine returned fenced,
+  pretty-printed JSON. The factory's ACP reader accumulated streamed text but
+  only parsed single lines, stopping with `Could not read the plan_revision's
+  result`. Fixed by updating the factory result reader to accept fenced and
+  multiline JSON. Factory suite passed: 136 scenarios, 1,966 steps.
+- **Unparseable rdd_validator result** — the run ended with `Could not read
+  the rdd_validator's result` (same root cause as plan_revision, presumably).
+  Task 6 work was left uncommitted.
+
+### Plan revision cycles
+
+Reviewers ran 4 times, not once as designed. The crash/recovery re-triggered
+the initialization path (`plan_initializer` → `plan_revision` → reviewers).
+Reviewer 1 found multiple contradictions in tasks 6–7 (read-only linkage,
+board-full semantics, transaction contract, move-notification ownership),
+each requiring a revision round until all three reviewers were satisfied.
+
+### Friction throughout the run
+
+A detailed `plan.md.friction.md` was produced (see
+`factory/runs/qubigo-004/plan.md.friction.md`). Notable items:
+
+- **Java 25** — `./gradlew` fails with `What went wrong: 25.0.4`; must use
+  existing documented `/tmp/qubigo-jdk21`.
+- **Wrong directory** — validators launched commands from `qubigo/` root
+  instead of `qubigo-backend/` or `qubigo-frontend/`, causing ENOENT errors.
+- **Edit tool collisions** — repeated `Found N occurrences` rejections on
+  batched edits (tasks 2, 3, 4, 5, 6), each needing a retry.
+- **Test-report lookup** — result XML is under `build/reports/`, not
+  `build/test-results/`.
+- **Missing acceptance runner** — `browser.cjs` reference in iteration 003
+  docs was deleted by the kaizen resolution, causing a rebuild of a disposable
+  runner.
+- **Spring devtools** — disposable acceptance runner restarted repeatedly due
+  to devtools; had to disable them.
+- **Local browser proxy** — security config only allowed port 9090; acceptance
+  runner on 5196 returned 403 before reconfiguring.
+- **Multiple edit retries** — tasks 3, 4, 5, 6 each needed at least one
+  retried edit call because the replacement text was not unique.
+
+### Validator findings on task 5
+
+The rdd_validator found a test-design violation introduced by the doer:
+`CompetitionMatchingTest` passed positional boolean flags to `ReservedPair`,
+obscuring intent. The doer replaced those with `completedPair`/`pendingPair`
+fixture helpers in a follow-up, and the validator accepted the fix.
+
+### Cross-cutting kaizen from this run
+
+All the 2026-10-16 kaizen notes (Java 25, gradlew directory, plan location,
+commit messages, yx, tests-after-implementation, validator loops) were
+initiated by reviewing iteration 003 and are stored in the qubigo snapshot
+at `qubigo/docs/kaizen/`. Their resolutions vary: some were fixed (yx
+installed, test guidelines added, scenario tests deleted), others are
+still open (plan lifecycles, commit messages, JDK toolchain).
+
+The run's `plan.md`, `record.jsonl` and `daemon.log` are in the ignored
+local `factory/runs/qubigo-004/`.
+
 ## 2026-10-17 — Competition run and structured results
 
 Continued iteration 004 on the live QubiGo target through the `careful-plan`
