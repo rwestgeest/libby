@@ -363,3 +363,37 @@ selects `openai-codex/gpt-6.1-sol:medium`; this capture did not change the live
 machine configuration. See the [careful-plan workflow](../qubigo/.assembly-lines/careful-plan.md)
 for restart and review behavior. Local run artifacts are not part of the
 sharing snapshot.
+
+
+## 2026-10-17 — Task 7 repair stopped; reconsidering the design approach
+
+Re-inspected `qubigo-004` after the repair restart. Tasks 1–6 remain recorded as
+complete; task 7 remains open. The latest stop is `Could not read the doer's
+result`: the final doer returned a Markdown summary without the required JSON.
+This differs from the earlier fenced/multiline JSON parsing problem. Its claims
+of fixes and passing backend tests received no subsequent validator acceptance.
+Earlier reviews repeatedly found tests bypassing the production move wiring,
+so suite success alone still does not establish task-7 completion.
+
+After reading the code and plan, I find the design overly complicated. I need
+time to consider starting again and using a different approach to guide both
+implementation and design. This is an open direction to think through, not a
+decision to discard the current work or authorize a rewrite.
+
+The linked [design review and comparison](2026-10-17-qubigo-004-design-review.md)
+captures the established application structure, the competition design prescribed
+by the plan, how the current implementation changes responsibility and transaction
+ownership, and the factory workflow behind it. It also distinguishes remaining
+acceptance gaps from proposed alternatives. In particular, competition moves now
+follow a separate persistence protocol, followed by result recording in another
+transaction; the full collaboration is harder to see across the added layers.
+
+Next: step back from repeated task repairs, explain the intended collaboration
+in domain terms, and compare simpler implementation-guidance approaches before
+choosing whether to restart. Preserve existing work and requirements while making
+that decision. A small vertical example through real command wiring is one
+possible experiment, not an agreed replacement plan.
+
+Refreshed the Qubigo sharing snapshot with `bin/take-over-qubigo`. This capture
+changes documentation only, does not restart the factory, and reruns no application
+or factory tests. The latest implementation report remains agent-reported evidence.
