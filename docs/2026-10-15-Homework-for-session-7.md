@@ -249,3 +249,42 @@ Open question: whether the Codex daemon's default model for unconfigured
 machines can be set globally, or each machine needs an explicit model
 override.
 
+## 2026-10-17 — RDD validator omitted its JSON result
+
+**Problem.** `qubigo-004` stopped during task 6 with
+`Could not read the rdd_validator's result`. Tasks 1–5 remain accepted;
+task 6 remains unchecked. The validator's recorded response was a prose
+assessment ending with “No blocking findings”, without the JSON decision
+the factory needs to route to the planner. This differs from the earlier
+fenced/multiline JSON failures: there was no JSON for the improved parser
+to extract. The stop does not establish a product defect or task acceptance.
+
+**Cause.** The agent omitted a required response format, and the factory
+depends on a textual instruction rather than enforced structured output.
+The validator now uses Pi with `deepseek/deepseek-v4-flash`. That switch is
+a possible trigger, but the evidence does not isolate the harness from
+the model or prove why the instruction was missed. The current invocation
+passes the machine instructions via `--append-system-prompt` and includes
+the JSON requirement in the task prompt; the run does not capture the
+complete effective model request. Prose approval must not be interpreted
+as a machine-readable acceptance decision.
+
+**Fix.** Added a final response contract to the live
+[RDD validator instructions](../qubigo/.assembly-lines/.machines/rdd_validator/AGENTS.md#final-response-contract).
+It requires a single-line JSON object as the final line, without Markdown
+fences or trailing prose, and supplies examples for acceptance, fixable
+defects and unavailable external input. Acceptance explicitly returns
+`{"satisfied":true,"findings":[]}`. The validator must check the JSON syntax
+and field types before sending. Refreshed the sharing snapshot with this
+instruction change; `git diff --check` passed.
+
+The fix has not yet been verified in a new agent invocation. No logs,
+status or plan history were rewritten, and this change did not restart
+the run. Next: restart with `bin/factory --run qubigo-004`, inspect with
+`bin/factory watch qubigo-004`, and confirm a valid validator decision
+before accepting task 6. Restart enters the assembly line at its start,
+so planning/review work may repeat. If the format failure persists,
+inspect the effective Pi prompt and compare with the previous working
+harness/model configuration. A bounded response-repair step is a proposed
+later factory improvement, not part of this instruction fix.
+
