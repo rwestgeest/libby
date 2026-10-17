@@ -40,3 +40,24 @@ A human-gated criterion will recur in any iteration involving deployment, produc
 - Interview step: tag each acceptance criterion as `agent-verifiable` or `human-attested`.
 - Give the validator and doer a documented "blocked on human" result that stops the loop.
 - Add "can this be achieved without a human?" to the plan reviewers' criteria.
+
+## Countermeasure applied — 2026-10-16
+
+The factory checkout now supports `blocked: true` results: its lifecycle stops
+before routing or task acceptance, and its prompts describe the external-input
+contract. QubiGo's doer and both validators now explicitly use that contract for
+unavailable evidence, keep unresolved tasks open and avoid repeated blocked
+narratives. Repeated validator findings reuse their existing subtask.
+
+The initializer, planner and revision prompts now distinguish agent-verifiable
+criteria from human-attested gates and name the evidence and supplier. All three
+plan reviewers check this distinction without rejecting a clearly identified
+human gate or weakening the seed. The line documentation describes stopping and
+resuming after input arrives. No graph edge is needed: blocking stops the factory
+before it follows an edge.
+
+Validation: inspected the factory's result handling and existing blocked-worker
+and blocked-reviewer regression scenarios; checked the prompt changes with
+`git diff --check`. No live agent run was performed. Effectiveness remains to be
+observed: the next unavailable-evidence case should stop on its first discovery,
+leave the task unfinished and resume only after the missing input is supplied.

@@ -2,3 +2,11 @@ Independently review the entire unfinished plan at the designated plan path agai
 
 Your validation lens is:
 Seed coverage, feasibility, testability and responsibility-driven object design
+
+Check evidence feasibility for every acceptance criterion: the plan must identify
+agent-verifiable checks and human-attested gates, their required evidence and
+suppliers. Do not reject a plan merely for retaining a clearly identified human
+gate. If review itself requires unavailable external input, return `"blocked": true`
+with `"satisfied": false` and findings naming the missing input and supplier; write
+the same result and plan hash to your report as usual. Never relax the seed or
+accept an evidence request as completed verification.

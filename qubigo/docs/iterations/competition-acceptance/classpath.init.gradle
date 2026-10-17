@@ -1,0 +1,12 @@
+allprojects {
+    afterEvaluate { project ->
+        if (project.name == 'qubigo-servlet') {
+            tasks.register('competitionAcceptanceClasspath') {
+                dependsOn tasks.named('classes')
+                doLast {
+                    file(project.property('acceptanceClasspathFile')).text = sourceSets.main.runtimeClasspath.asPath
+                }
+            }
+        }
+    }
+}

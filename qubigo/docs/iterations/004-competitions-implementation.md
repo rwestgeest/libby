@@ -1,0 +1,451 @@
+# Iteration 004 implementation evidence
+
+## Task 1 — durable admin competition drafts (2026-10-16)
+
+Implemented in the uncommitted working tree based on `df120f51`. Task completion
+is reserved for the planner after the factory commits accepted work. No publish,
+enrollment, matching, results, native-device or product-approval claim is made.
+
+### Delivered behavior
+
+- Admin profile links to `#/admin/competitions/new`. A successful save opens
+  `#/admin/competitions/<id>`; that durable URL supports reload and editing.
+- POST `/api/admin/competitions`, GET/PUT `/api/admin/competitions/{id}` require
+  the existing ADMIN role. Anonymous requests receive 401; ordinary players 403.
+  The page resolves the existing profile before requesting draft details and
+  does not show forms/data to non-admins.
+- Draft fields: name, closing instant, positive integral game allowance,
+  nonnegative advisory minimum. Zero minimum is supported. Names are plain text,
+  1–120 characters, rejecting blank/control/markup characters (`<`, `>`, `&`).
+  UI values and messages use DOM value/textContent, not interpolated markup.
+- Closing input explicitly requires ISO date/time with UTC offset. Detail shows
+  browser-local time, timezone abbreviation and IANA zone. Explicit offsets
+  distinguish the repeated DST hour; the backend normalizes to UTC. The browser
+  sends the original text, allowing strict server calendar validation and keeping
+  nanosecond precision when an unrelated field is edited. SQLite TEXT round trips
+  `2026-11-07T15:00:00.123456789Z` exactly. This establishes draft storage precision,
+  not yet game-journal/ranking precision.
+- Flyway adds a separate competitions table without modifying ordinary data.
+  Prepared JDBC statements implement the repository port. A single conditional
+  UPDATE checks persisted DRAFT state and expected revision atomically, so stale
+  edits cannot overwrite another edit or a concurrent publication. Publication
+  itself is task 2; this task exercises its persisted state in a fixture.
+- Invalid edits do not write; database failures preserve prior values. UI failures
+  retain entered values and show retryable errors, never a saved message. Detail
+  failures disable editing and offer reload. Duplicate submits and late responses
+  after navigation do not create false success or replace another page.
+
+### Verification
+
+Environment: Linux x86_64, Gradle wrapper 8.14.4, Temurin JDK 21.0.12.1+1,
+Node v24.18.0, npm 11.16.0, existing installed node_modules.
+The default JDK 25.0.4 fails Gradle configuration (`What went wrong: 25.0.4`).
+JDK 21 was downloaded from Adoptium to `/tmp/qubigo-jdk21`; no project toolchain
+or dependency configuration was changed. Backend commands below used:
+
+```sh
+cd qubigo-backend
+export JAVA_HOME=/tmp/qubigo-jdk21 PATH=/tmp/qubigo-jdk21/bin:$PATH
+```
+
+| Command (in relevant service directory) | Observed result |
+| --- | --- |
+| `./gradlew :qubigo-servlet:test --tests '*CompetitionDraftTest'` before implementation | Expected compile failure: Competition/DraftFields did not exist. |
+| `npm test -- --runInBand test/competitions/pages/competition-draft-page.test.js` before implementation | Expected missing page/module failure. |
+| Precision/invalid-calendar UI regressions before fix | 5 failures; browser normalization lost original offset/precision and changed invalid dates. |
+| `./gradlew :qubigo-servlet:test --tests '*Competition*Test'` | PASS: 50 cases across domain (13), conversion (14), MVC (17), SQLite (6). |
+| `./gradlew test` | PASS: servlet 765, CLI 18; no failures/errors/skips. |
+| `npm test -- --runInBand test/competitions` | PASS: 2 suites, 18 tests. |
+| `npm test -- --runInBand` | Exit 1 after summary: 67 passed suites, 1 skipped; 719 passed tests, 11 skipped. Unhandled asynchronous jumper assertion described below. NOT a passing full command. |
+| `npm run lint` | Exit 1: 36 existing errors, none in changed files; baseline comparison below. |
+| `npx eslint app/competitions test/competitions app/app.js app/pages/profile-page.js` | PASS. |
+| `npm run build` | PASS: Vite 6.4.3, 132 modules transformed. |
+| `git diff --check` | PASS. |
+
+SQLite tests migrate an empty file database through all migrations, reopen it
+with a new datasource/repository, and round-trip edited values. A separate
+upgrade fixture applies the previous migration target, inserts a user, ordinary
+invitation and game event, applies the new migration, and asserts their values
+survive. State/revision conflicts and a SQLite ABORT trigger prove failed edits
+leave original values unchanged. No sleeps or clock polling were added.
+
+Backend reports: `qubigo-backend/build/reports/{qubigo-servlet,qubigo-cli}/tests/test/`
+and corresponding `test-results/test/` XML. Existing `build-reports/` is not the
+current Gradle output and was not used for final counts.
+
+### Independently reproduced frontend baseline failures
+
+Archived unmodified HEAD `df120f51` under `.factory/qubigo-004-baseline`, reused
+installed node_modules and the unchanged deploy/dist assets, and ran the same
+commands with the same Node/npm. Removed the disposable baseline afterward.
+
+- `npm test -- --runInBand`: also exit 1, after 65 passed suites / 701 passed tests
+  and the same 1 skipped suite / 11 skipped tests. Both runs end in
+  `test/domain/jumper.test.js:78`: expected `2`, received `2.0000000000000004`,
+  emitted asynchronously through `test/utils/eventually.js`. The new work adds
+  exactly 2 passed suites and 18 passed tests. No skipped tests count as evidence.
+- `npm run lint`: also exit 1 with 36 errors. Outputs compare exactly after
+  normalizing the baseline directory prefix. Errors are in the unchanged
+  game-list-component unused import, generated deploy/dist bundles, and unused
+  imports in confirm-registration-page, confirm-registration-success-page and
+  router tests. No baseline errors were waived as passes or changed in task 1.
+
+The full frontend commands remain non-green for these reproduced unrelated
+baseline defects; the eventual integration acceptance must retain/review this
+limitation rather than infer a green suite. No physical-device or rendered
+browser acceptance was required or performed for this draft increment.
+
+### Validator follow-up — pending Router navigation
+
+The validator found that Router did not own a page until its asynchronous open
+finished. The prior manual-close test bypassed that collaboration. Replaced it
+with two deferred-request cases through the actual Router and ProfilePage:
+leave the draft during profile resolution or detail loading, then resolve the
+request. Both tests failed before the fix (profile overwritten; detail rejected
+with `Cannot set properties of null (setting 'value')`).
+
+Router now assigns ownership before calling open and does not assign it again
+after awaiting initialization. Navigation therefore closes pending draft visits,
+activating their existing visit/generation guards. The regressions assert that
+late opens resolve without error, Profile remains unchanged, and the next
+navigation closes Profile rather than a superseded draft page.
+
+Verification on Node v24.18.0 / npm 11.16.0:
+
+| Command in `qubigo-frontend` | Observed result |
+| --- | --- |
+| `npm test -- --runInBand test/competitions/pages/competition-draft-page.test.js` before Router fix | 2 failed, 15 passed; both validator reproductions. |
+| `npm test -- --runInBand test/competitions test/router.test.js` | PASS: 3 suites, 27 tests. |
+| `npx eslint app/router.js app/competitions test/competitions` | PASS. |
+| `npm test -- --runInBand` | Exit 1: 67 passed suites, 1 skipped; 720 passed tests, 11 skipped, followed by the same asynchronous jumper assertion recorded above. |
+| `npm run lint` | Exit 1: same 36 baseline errors; none in changed files. |
+| `npm run build` | PASS: 132 modules transformed. |
+| `git diff --check` | PASS. |
+
+No backend changes were made in this follow-up; prior backend evidence remains
+above. Task 1 remains open pending factory commit and planner acceptance.
+
+## Task 2 — publish and share a read-only invitation (2026-10-16)
+
+Implemented in the working tree; task acceptance remains with the planner after
+factory commit. No enrollment, automatic closure, matching, native association,
+physical scanning or device acceptance is claimed by this increment.
+
+### Delivered behavior
+
+- Admin POST `/api/admin/competitions/{id}/publish` transitions a future-deadline
+  DRAFT to WAITING and increments its revision. Existing ADMIN security protects
+  this action; anonymous and ordinary-player requests are rejected.
+- Publication obtains SQLite `BEGIN IMMEDIATE` on a dedicated JDBC connection,
+  reads the persisted draft, then samples the injected authoritative clock and
+  invokes domain validation under the write boundary. Equality/past deadline,
+  non-draft state and an existing WAITING/RUNNING competition reject publication.
+  SQLite's partial unique index also enforces the single-active constraint across
+  connections/processes. Drafts are not restricted by that index. Failures roll
+  back state/revision; lock/storage errors return retryable server failures.
+- Conditional draft edits continue checking persisted DRAFT/revision; all fields
+  become read-only after publication. The admin UI explicitly publishes the saved
+  draft, not unsaved input, explains the permanent deadline/allowance lock, and
+  shows a share link and QR only after authoritative successful publication or
+  detail reload. Failure leaves the draft retryable and never shows success.
+- Anonymous GET `/api/competitions/{id}/invitation` exposes an explicit DTO containing
+  only ID, name, closing instant, allowance, state and rules. Drafts and unknown
+  IDs both return 404. No revision, advisory management minimum, roster or standings
+  is exposed. This read cannot create membership or an invitation/game.
+- Public `#/competitions/{id}` renders that metadata and the rules as text, with
+  local closing time including zone. Rules summarize full-board play, 3/1/0,
+  points-before-speed/shared ties, allowance/prize eligibility, own-turn closure
+  loss, pending-invitation/no-game/no-result, explicit join and manual start.
+  This task's public page is deliberately read-only; account continuity and join
+  controls belong to tasks 3–4. Unknown/private/network failures offer retry;
+  late requests cannot overwrite a page after navigation.
+- Share links use the configured public `VITE_API_URL`, as existing invitation
+  sharing does, rather than a native WebView localhost origin. Production is
+  `https://app.qubigo.com`, development `https://qubigo.labs.qwan.it`. Deployment
+  must keep that base address serving the frontend. QR generation is local using
+  `qrcode-generator` (no external QR service); `jsqr` is test-only. The decoder
+  test reads the rendered canvas pixels and asserts the exact escaped URL.
+  A real-Router regression also verifies decoded special-character identity
+  reaches the repository without double encoding. This initially failed before
+  adding one decode at the route/page boundary.
+
+### Verification
+
+Environment unchanged: Linux x86_64, Gradle 8.14.4 with Temurin JDK 21.0.12.1+1
+at `/tmp/qubigo-jdk21`, Node v24.18.0, npm 11.16.0. Backend commands used
+`export JAVA_HOME=/tmp/qubigo-jdk21 PATH=/tmp/qubigo-jdk21/bin:$PATH` as above.
+
+| Command (in relevant service directory) | Observed result |
+| --- | --- |
+| `./gradlew :qubigo-servlet:test --tests '*CompetitionDraftTest'` before domain implementation | Expected compile failure: unresolved `publish`. |
+| `npm test -- --runInBand test/competitions/pages/competition-invitation-page.test.js` before implementation | Expected missing invitation-page module failure. |
+| Same public-page command before route decoding fix | 1 failed, 5 passed: repository received encoded identity instead of original identity. |
+| `./gradlew :qubigo-servlet:test --tests '*Competition*Test'` | PASS: 65 cases (17 domain, 14 conversion, 24 MVC, 10 SQLite). |
+| `./gradlew test` | PASS: servlet 780, CLI 18, zero failures/errors/skips. |
+| `npm test -- --runInBand test/competitions` | PASS: 3 suites, 30 tests. |
+| `npx eslint app/competitions test/competitions app/app.js` | PASS. |
+| `npm test -- --runInBand` | Exit 1: 68 passed suites, 1 skipped; 731 passed tests, 11 skipped, followed by the previously reproduced asynchronous jumper assertion (expected 2, received 2.0000000000000004). Not a full-suite pass. |
+| `npm run lint` | Exit 1: same 36 previously documented baseline errors in unchanged files/deploy bundles; no changed-file errors. |
+| `npm run build` | PASS: Vite 6.4.3, 135 modules transformed. |
+| `git diff --check` | PASS after removing one extra EOF blank line. |
+
+SQLite tests use actual Flyway file databases and independent connections with
+barrier-synchronized threads, no sleeps: exactly one concurrent publication
+succeeds and recreated repositories read one WAITING/one unchanged DRAFT.
+Separate assertions cover deterministic second-publication conflict, expired
+publication rollback, injected write failure preserving the draft and stale edit
+protection. Existing migration tests still prove ordinary data survives upgrades.
+The frontend additions account for 11 tests/one suite over accepted task-1
+follow-up evidence. The backend additions account for 15 tests. Skipped frontend
+tests are not acceptance evidence. `npm install` reported 48 audit findings in the
+installed dependency tree; no broad dependency remediation was attempted here.
+
+Final test reports remain under
+`qubigo-backend/build/reports/{qubigo-servlet,qubigo-cli}/test-results/test/`.
+The plan's task 2 remains unchecked for factory commit/planner review.
+
+## Task 3 — explicit enrollment and admin roster (2026-10-16)
+
+Implemented in the working tree; task 3 remains unchecked pending factory commit
+and planner acceptance. No matchmaking, start action, account-context retention,
+deployment restart, device evidence or product approval is claimed here.
+
+### Delivered behavior
+
+- Authenticated POST `/api/competitions/{id}/join` resolves the current User and
+  returns the same durable membership on repeated requests while enrollment is
+  open. ID/name are obtained from the server, never from request fields. The
+  response includes competition ID, own user ID, original joining instant and
+  `WAITING` status; no roster, rankings or automatic matching is returned.
+- Existing onboarding has no separate verified flag: email confirmation promotes
+  a pending UserRegistration into a User. Pending registrations cannot authenticate
+  as users. The command additionally rejects an authenticated identity with no
+  established User (403). Existing established users remain eligible; no new
+  verification schema or migration of existing accounts was invented.
+- `Competition.allowEnrollment` owns eligibility: only WAITING/RUNNING, strictly
+  before cutoff at full authoritative Instant precision. Draft/closed and
+  equality/past cutoff fail with useful conflicts; unknown IDs return 404.
+  Advisory minimum never starts a competition. Persisted RUNNING fixtures prove
+  late entry without claiming that the later start UI has shipped.
+- A Flyway table stores unique `(competition_id, user_id)` membership with name
+  at enrollment and original timestamp. Participant names follow the existing
+  snapshot approach and work with either persisted or dev-profile in-memory Users;
+  the membership adapter does not reach into Users storage to reconstruct names.
+- Publication and membership writes share an extracted SQLite `BEGIN IMMEDIATE`
+  boundary. Time is sampled only under that lock, domain validation precedes the
+  insert, and failure rolls back. Duplicate joins use targeted ON CONFLICT DO
+  NOTHING, then read the original membership. Publication concurrency tests still
+  pass after extraction. No in-memory-only lock or auto-start behavior was added.
+- Admin GET `/api/admin/competitions/{id}/participants` returns enrolled names,
+  IDs, joining times and count, not emails/standings. Existing ADMIN security
+  protects all methods/direct paths. Unknown competitions do not fabricate empty
+  rosters; anonymous/ordinary-player roster requests fail. No public roster route
+  exists.
+- The published admin detail links to `#/admin/competitions/{id}/participants`.
+  The roster page resolves admin access before making a request, renders names
+  with textContent, shows count/empty state, and offers manual refresh/retry.
+  It does not claim a failed read is an empty roster. Pending profile/detail
+  responses cannot overwrite another page, verified through the real Router.
+- The existing public invitation now offers an explicit Join competition button
+  for WAITING/RUNNING, with sign-in/verification guidance, duplicate-click guard,
+  waiting acknowledgment only after success, and retryable failure messaging.
+  Reading alone never joins. Closed invitations offer no join action; the server
+  independently enforces deadlines even if a page was loaded earlier. Late join
+  responses after navigation are ignored. Retaining the intended competition
+  through account flows remains task 4; this increment makes no such promise.
+
+### Verification
+
+Environment unchanged: Linux x86_64, Gradle wrapper 8.14.4 with Temurin JDK
+21.0.12.1+1 at `/tmp/qubigo-jdk21`, Node v24.18.0, npm 11.16.0. Backend commands
+used `export JAVA_HOME=/tmp/qubigo-jdk21 PATH=/tmp/qubigo-jdk21/bin:$PATH`.
+
+| Command (in relevant service directory) | Observed result |
+| --- | --- |
+| `./gradlew :qubigo-servlet:test --tests '*CompetitionEnrollmentTest'` before domain implementation | Expected compile failure: unresolved `allowEnrollment`. |
+| `./gradlew :qubigo-servlet:test --tests '*SqliteBasedCompetitionRepositoryTest'` before membership adapter | Expected compile failure: unresolved membership adapter. |
+| `./gradlew :qubigo-servlet:test --tests '*Competition*Test'` before command/controller implementation | Expected missing JoinCompetition/controller compilation failures. |
+| `npm test -- --runInBand test/competitions` before enrollment/roster pages | Expected failure: missing roster page, four missing join-method failures. |
+| `npm test -- --runInBand test/competitions/adapters/api-based-competition-enrollment.test.js` before adapter | Expected module-not-found failure. |
+| `./gradlew :qubigo-servlet:test --tests '*Competition*Test'` | PASS: 91 competition cases, including 26 new cases. |
+| `./gradlew test` | PASS: servlet 806, CLI 18; no failures/errors/skips. |
+| `npm test -- --runInBand test/competitions` | PASS: 5 suites / 44 cases (14 new). |
+| `npx eslint app/competitions test/competitions app/app.js` | PASS. |
+| `npm test -- --runInBand` | Exit 1: 70 passed suites, 1 skipped; 745 passed tests, 11 skipped, then the previously reproduced asynchronous jumper assertion (expected 2, received 2.0000000000000004). Not a full-suite pass. |
+| `npm run lint` | Exit 1: same 36 documented baseline errors in unchanged sources/generated deploy bundles. Changed-file lint passes. |
+| `npm run build` | PASS: Vite 6.4.3, 137 modules transformed. |
+| `git diff --check` | PASS. |
+
+Real SQLite tests cover simultaneous duplicate joins using independent connections
+and a barrier, later duplicate timestamp retention, unknown/deadline-equal rejection,
+no enrollment from invitation reads, advisory-minimum non-start, persisted RUNNING
+late entry, and an AFTER INSERT abort trigger leaving no membership. Closing and
+recreating adapter Spring bean contexts over the same migrated file retains the
+membership/name; this is adapter context evidence, not deployment-style full-app
+restart acceptance (task 15). Existing migration tests still preserve ordinary
+users, invitations and game events. Domain examples additionally cover draft,
+closed, past and just-before (one nanosecond) cutoff states. No sleeps were added.
+Skipped frontend cases do not count as evidence. Backend XML reports remain under
+`qubigo-backend/build/reports/{qubigo-servlet,qubigo-cli}/test-results/test/`.
+
+## Task 4 — invitation context through account flows (2026-10-16)
+
+Implemented in the working tree; acceptance remains with the planner after factory
+commit. No native association or store-install continuity is claimed.
+
+### Delivered behavior
+
+- The existing `#/competitions/:id` invitation offers registration/sign-in, the
+  existing `#/demo` tutorial, public API rules, allowance/deadline and explicit
+  join. The existing global app banner is unchanged; no new installation funnel.
+  Installation is optional. After installing or changing device/browser, the page
+  advises scanning the original QR/reopening the original competition link.
+- `IntendedCompetition` persists only the most recent competition identity in
+  same-origin localStorage, never credentials, verification tokens or enrollment.
+  It encodes a fixed competition route and rejects invalid/control/oversized IDs
+  and malformed Unicode. Disabled/full storage falls back to current-session
+  memory; reload/new-tab recovery then requires reopening the QR/link.
+- Registration/confirmation preserve intent without changing account APIs or
+  verification links. Successful sign-in/profile resolution at neutral root/sign-in
+  returns to the invitation rather than home/welcome, without joining. Anonymous
+  startup and failed sign-in remain at sign-in. Existing deep links always win,
+  including a newer link opened during delayed profile resolution. Authentication
+  now awaits the profile/navigation decision. Ordinary invited-by is unchanged.
+- Only the explicit button enrolls. Existing duplicate-click suppression remains.
+  Join failure retains intent; success clears it. Closed/expired invitations clear
+  obsolete intent and offer no join; unknown/read errors are retryable and never
+  claim membership. Client deadline presentation is advisory; existing serialized
+  backend join validation remains authoritative. Cold/warm link protocol tests
+  retain competition hashes/encoding, without claiming real OS association.
+
+### Verification
+
+Environment: Linux x86_64, Node v24.18.0, npm 11.16.0, Vite 6.4.3. Local acceptance
+backend compilation used Gradle 8.14.4 and Temurin 21.0.12.1+1 (`/tmp/qubigo-jdk21`).
+No backend production/test source or schema changed. Commands below run in
+`qubigo-frontend` unless stated otherwise.
+
+| Command | Observed result |
+| --- | --- |
+| `npm test -- --runInBand test/competitions/competition-account-flow.test.js test/competitions/adapters/intended-competition.test.js` before implementation | Expected missing-module failures for `IntendedCompetition`. |
+| `npm test -- --runInBand test/competitions/adapters/intended-competition.test.js` before Unicode/quota fix | 2 failed / 8 passed: unpaired surrogate URIError; quota-exhausted storage lost session intent. Both fixed. |
+| `npm test -- --runInBand test/competitions test/modules/user-profile-module.test.js test/modules/authentication.module.test.js test/adapters/incoming-link-handler.test.js test/pages test/Invitations/pages/invited-by-page.test.js test/router.test.js test/components/app-banner-component.test.js` | PASS: 24 suites / 302 tests, including ordinary onboarding, invited-by, startup, banner and router regressions. |
+| `npm test -- --runInBand` | Exit 1: 72 passed suites / 769 passed tests, 1 skipped suite / 11 skipped tests, then the documented baseline async jumper assertion at `test/domain/jumper.test.js:78` (expected 2, received 2.0000000000000004). NOT a full-suite pass. |
+| `npm run lint` | Exit 1: same 36 baseline errors in unchanged source/deploy bundles. Initial run found one new no-control-regex error; fixed and rerun. |
+| `npx eslint app/competitions test/competitions app/app.js app/modules/authentication.module.js app/modules/user-profile-module.js test/adapters/incoming-link-handler.test.js ../docs/iterations/competition-acceptance/invitation-browser.cjs --config .eslintrc.js` | PASS. |
+| `npm run build` | PASS: 138 modules transformed. |
+| `git diff --check` (repository root) | PASS. |
+
+Outputs: `/tmp/qubigo-004-task4-{red,storage-red,focused,full,lint,build,browser,compile}.log`.
+Independent baseline reproduction is documented above. Skipped tests do not count
+as evidence. No new sleeps/polling were added to the test suite.
+
+### Disposable rendered browser journey
+
+Local aids under `docs/iterations/competition-acceptance/` are not application/test
+source or packaged code. `InvitationBackend.java` starts the real non-dev Spring
+application with Flyway SQLite, seeds one synthetic organizer, and substitutes only
+external push and email delivery. The production welcome/verification message body
+is captured to a disposable file; account registration, confirmation, security,
+invitation reads and joining remain real. There are no mocked HTTP app responses
+or manually promoted entrants. Failed-run artifacts may contain synthetic tokens
+and must not be published; successful-run artifacts are removed.
+
+The Node runner starts that JVM with devtools restart disabled, and Vite on
+localhost:5196 proxying `/api` to localhost:8096. Both ports must be free. The
+same-origin proxy removes Origin on the backend hop: this is not cross-origin/CORS
+deployment evidence. Local HTTP uses non-secure synthetic cookies, not production
+cookie-security evidence. No product security configuration was changed.
+
+Final run: PASS, exit 0, headless Playwright Chromium build 1248. Assertions:
+public invitation and existing tutorial link → rendered registration → failed
+pre-verification sign-in with guidance → actual captured email in a separate
+same-origin tab → confirmation → reload → successful sign-in back at the original
+invitation → another reload → exactly one explicit join and cleared intent.
+There were zero join requests before that button. Expected anonymous 401s and
+pre-verification login 400 were observed.
+
+Reproduce from the repository root, substituting available tool paths:
+
+```sh
+export JAVA_HOME=/tmp/qubigo-jdk21
+export PATH="$JAVA_HOME/bin:$PATH"
+(cd qubigo-backend && ./gradlew -I ../docs/iterations/competition-acceptance/classpath.init.gradle :qubigo-servlet:competitionAcceptanceClasspath -PacceptanceClasspathFile=/tmp/qubigo-004-task4-classpath)
+export ACCEPTANCE_CLASSPATH_FILE=/tmp/qubigo-004-task4-classpath
+export PLAYWRIGHT_MODULE=/home/rob/.npm/_npx/e41f203b7505f1fb/node_modules/playwright
+export LD_LIBRARY_PATH=/tmp/qubigo-002-browser-libs/usr/lib64
+node docs/iterations/competition-acceptance/invitation-browser.cjs
+```
+
+Actual Android/iOS cold/warm association, physical-device fallback, and voluntary
+store-install recovery remain task 16. Same-origin browser storage is not assumed
+to transfer to another browser or newly installed native app. Protocol doubles and
+this local browser run do not satisfy that human gate.
+
+## Task 5 — Manual start and reserved first-round invitations
+
+Implemented; task remains open pending factory commit and acceptance.
+
+- Admin-only `POST /api/admin/competitions/{id}/start` delegates through
+  `StartCompetition` and the assignment port. WAITING only, strictly before the
+  UTC cutoff; suggested minimum never blocks start. The existing admin detail
+  page offers manual start, disables duplicate submission and retains retryable
+  waiting state on failure. No automatic start.
+- `CompetitionMatching` owns eligibility, unseen-opponent preference, repeat
+  fallback, randomized equal choices and combined absolute first/second imbalance
+  minimization. The first player is the invitee. All reserved assignments count
+  toward allowance/orientation; pending assignments exclude both players from any
+  additional pairing. Zero/one entrants wait; odd rosters leave one waiting.
+- Flyway adds durable invitation linkage and numbered participant slots, unique
+  per member/slot and per active member. Existing `BEGIN IMMEDIATE` serialization
+  includes the lifecycle change, existing invitation/participant rows and slot
+  reservation. Failure anywhere rolls everything back; lock errors remain
+  retriable, not partial success. Late running joins drive matching inside this
+  same boundary; a failed pairing also rolls back that join.
+- Invitations are persisted through the invitations adapter's narrow
+  `TransactionalInvitationWriter`, on the caller's connection, and read by the
+  existing invitation repository/list API. A JPA round-trip regression verifies
+  UTC millisecond TEXT timestamps and both participants, including the test JVM's
+  non-UTC zone. Invitation time is not game response time. The ordinary ten-day
+  list filter is retained except for still-open RUNNING competition invitations;
+  an older pending competition invitation is explicitly tested. No expiry,
+  cancellation, release, re-pairing, or game creation is introduced here.
+- Tests cover seeded choices and orientations, repeat fallback, unseen preference,
+  capacity/active exclusions, zero/one/odd rosters, below-minimum manual start,
+  invalid lifecycle/cutoff, admin authorization, rollback/retry, pending retention,
+  late joins, concurrent starts and concurrent start/joins with adapter recreation.
+  Invitation acceptance/link conversion is task 6; completion-triggered matching
+  and startup/tick recovery are task 8, not claimed here.
+
+### Verification
+
+Environment: Linux x86_64, Temurin 21.0.12.1+1 at `/tmp/qubigo-jdk21`, Gradle
+8.14.4, Node v24.18.0, npm 11.16.0. Backend commands use
+`export JAVA_HOME=/tmp/qubigo-jdk21 PATH=/tmp/qubigo-jdk21/bin:$PATH`.
+Backend commands below run in `qubigo-backend`; frontend commands in
+`qubigo-frontend`.
+
+| Command | Result |
+| --- | --- |
+| `./gradlew :qubigo-servlet:test --tests '*CompetitionMatchingTest'` before domain implementation | Expected compile failure: missing matching/start types and behavior. |
+| `npm test -- --runInBand test/competitions/pages/competition-draft-page.test.js` before start UI | Expected red: 3 new cases fail, 20 existing cases pass. |
+| `./gradlew :qubigo-servlet:test --tests '*Competition*Test' --tests '*SqliteBasedInvitationRepositoryTest'` | PASS, including real SQLite reservation/concurrency/rollback and existing JPA invitation reader. |
+| `./gradlew test` | PASS: 836 servlet + 18 CLI cases; zero failures/errors/skips. |
+| `npm test -- --runInBand test/competitions` | PASS: 7 suites / 70 cases. |
+| `npm test -- --runInBand` | Nonzero: runner reports 72 suites / 773 cases passing, 1 suite / 11 cases skipped, then the existing unhandled jumper assertion (`Expected: 2`, `Received: 2.0000000000000004`, `test/domain/jumper.test.js:78`). Not a full-suite pass. |
+| `npm run lint` | Nonzero: the same 36 pre-existing errors; no changed-file errors. |
+| `npx eslint app/competitions/adapters/api-based-competition-drafts.js app/competitions/domain/competition-draft.module.js app/competitions/pages/competition-draft-page.js test/competitions/pages/competition-draft-page.test.js test/competitions/adapters/api-based-competition-drafts.test.js` | PASS. |
+| `npm run build` | PASS (Vite 6.4.3). |
+| `git diff --check` | PASS. |
+
+### Validator follow-up — matching history fixtures
+
+Replaced positional `ReservedPair` boolean flags in `CompetitionMatchingTest.kt`
+with intention-revealing `completedPair` and `pendingPair` helpers. Helpers name
+`active` explicitly; existing test behaviors and assertions are unchanged.
+Using the backend toolchain above, reran
+`./gradlew :qubigo-servlet:test --tests '*CompetitionMatchingTest'` and
+`./gradlew test`: both PASS (CLI test task up-to-date). No frontend changes in
+this follow-up.
+
+No native device, push-delivery or final product approval evidence is claimed.
