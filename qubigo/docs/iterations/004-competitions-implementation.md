@@ -448,4 +448,267 @@ Using the backend toolchain above, reran
 `./gradlew test`: both PASS (CLI test task up-to-date). No frontend changes in
 this follow-up.
 
+## Task 6 — Accepting a competition invitation creates exactly one correctly labeled game (2026-10-17)
+
+Acceptance creates one competition game with invitee-first turn at acceptance
+clock, consumes the reserved slot (does not allocate a new one), and labels both
+the invitation and game DTOs with the competition name. The underlying
+`SqliteBasedCompetitionAcceptance` writes game_event_records, game_list_items,
+game_participants, invitation archive, invitation_participant status and the
+assignment `game_id` link inside the same serialized `BEGIN IMMEDIATE` transaction.
+Any failure rolls all changes back atomically.
+
+### New files
+
+- `competitions/domain/CompetitionLabels.kt` — read-only interface with `None` sentinel.
+- `competitions/adapters/repositories/SqliteBasedCompetitionLabels.kt` — label lookup via
+  JOIN on `competition_assignments`.
+- `competitions/adapters/repositories/SqliteBasedCompetitionAcceptance.kt` —
+  `CompetitionInvitationAcceptance` implementation using transaction-bound JDBC,
+  player validation, deadline gating, replay safety and rollback.
+- `games/adapters/repositories/TransactionalGameWriter.kt` — persists the
+  normal creation payload on the caller's serialized connection.
+- `invitations/domain/CompetitionInvitationAcceptance.kt` — functional interface;
+  null return means "not a competition invitation", delegating to ordinary creation.
+- `competitions/adapters/competition-label.js` — escaped-text label utility.
+- `test/competitions/competition-game-labels.test.js` — frontend rendering tests.
+
+### Modified backend files
+
+- `Competition.kt` — added `allowGameCreation(now)` guard.
+- `GameDto.kt` — `OnlineGameDto`, `GameListItemDto`, `asGameDto`, `asGameListDto`,
+  `asGameListItemDto`, `asMoveWasMadeDto` accept optional `competitionName`.
+- `GamesController.kt` — injected `CompetitionLabels` to pass names into DTOs.
+- `InvitationDtos.kt` — `InvitationDto`, `InvitationListEntryDto`, `asInvitationDto`,
+  `asInvitationListDto` accept optional `competitionName`.
+- `InvitationsController.kt` — injected `CompetitionLabels` for both endpoints.
+- `InvitationsControllerBeans.kt` — wired `CompetitionInvitationAcceptance` and `Clock`.
+- `AcceptInvitation.kt` — tries `competitionAcceptance.accept()` first; if null returned,
+  proceeds with ordinary game creation. Competition decision never falls back.
+
+### Modified frontend files
+
+- `api-based-invitations-repository.js`, `invitation-list-component.js`,
+  `invitation-list.js`, `invitation.js`, `invitations-module.js`,
+  `accept-invitation-page.js` — added `competitionName` field/rendering.
+- `game-dto-converters.js`, `game-list-component.js`, `game.js`, `gameList.js`,
+  `game-page.js` — added `competitionName` field/rendering.
+
+### Verification
+
+Environment: Linux x86_64, Temurin 21.0.12.1+1 at `/tmp/qubigo-jdk21`, Gradle
+8.14.4, Node v24.18.0, npm 11.16.0. Backend commands use
+`export JAVA_HOME=/tmp/qubigo-jdk21 PATH=/tmp/qubigo-jdk21/bin:$PATH`.
+Backend commands below run in `qubigo-backend`; frontend commands in
+`qubigo-frontend`.
+
+| Test scope | Command | Result |
+| --- | --- | --- |
+| Competition acceptance (real SQLite, fake clock) | `./gradlew :qubigo-servlet:test --tests '*SqliteBasedCompetitionRepositoryTest*'` | 43/43 pass, 0 failures |
+| AcceptInvitation domain | `./gradlew :qubigo-servlet:test --tests '*AcceptInvitationTest*'` | 6/6 pass, 0 failures |
+| Invitation controller | `./gradlew :qubigo-servlet:test --tests '*InvitationControllerGetInvitation*' --tests '*InvitationControllerAcceptInvitationTest*'` | 14/14 pass, 0 failures |
+| Game controller detail/list | `./gradlew :qubigo-servlet:test --tests '*GameControllerGetGame*' --tests '*GameControllerGetGameList*'` | 13/13 pass, 0 failures |
+| Game repository (transactional write) | `./gradlew :qubigo-servlet:test --tests '*SqliteBasedGameRepositoryTest*'` | Pass |
+| Full backend suite | `./gradlew test --rerun-tasks` | PASS (servlet + CLI) |
+| Game list component | `npm test -- --runInBand --testPathPattern='game-list-component'` | Pass |
+| Invitation list component | `npm test -- --runInBand --testPathPattern='invitation-list-component'` | Pass |
+| Accept invitation page | `npm test -- --runInBand --testPathPattern='accept-invitation-page'` | Pass |
+| Competition game labels | `npm test -- --runInBand --testPathPattern='competition-game-labels'` | 4/4 pass |
+| Full frontend tests | `npm test -- --runInBand` | 73/74 suites pass, 1 skipped (pre-existing jumper assertion); 782/793 tests pass, 11 skipped |
+| Lint (changed files only) | `npx eslint app/Invitations/... app/adapters/... app/games/... app/competitions/...` | 1 pre-existing unused `GameType` import in game-list-component.js |
+| Build | `npm run build` | PASS (Vite 6.4.3) |
+
+### Acceptance criteria coverage
+
+- **Game creation**: acceptance creates exactly one game_event_records row with
+  invitee-first turn, acceptance timestamp, and slot numbers unchanged.
+- **Transactional atomicity**: game list trigger ABORT rolls back game_event_records
+  and leaves assignment.game_id null; link-update trigger ABORT rolls back archive,
+  game_event_records and participant status unchanged.
+- **Label persistence**: `SqliteBasedCompetitionLabels` recreated from fresh
+  `JdbcTemplate` returns same name; ordinary IDs return null.
+- **Authorization**: opposite player (not assigned to the invitation) cannot accept;
+  non-competition IDs return null from the protocol, delegating to ordinary creation.
+- **Repeat/concurrent safety**: CyclicBarrier concurrency returns identical
+  `QResult` and a single game_event_records row. Serial replay after cutoff
+  retrieves the existing game ID without creating another.
+- **Deadline gating**: acceptance with `now >= closesAt` or after state change to
+  CLOSED fails without side effects. Sub-millisecond pre-cutoff admission succeeds.
+- **Invalid-state rejection**: CLOSED competition rejects even if clock regresses.
+- **CompetitionInvitationAcceptance delegation**: `accept("ordinary",…)=null`;
+  outer `AcceptInvitation` proceeds normally with `CreateGame` and archival.
+- **UI error rendering**: failed acceptance displays `role="alert"` textContent and
+  leaves Accept button enabled for retry.
+- **Unsafe name escaping**: competition names with HTML tags render as escaped
+  `textContent` in `.competition-label`; no child SVG/IMG elements exist.
+
 No native device, push-delivery or final product approval evidence is claimed.
+
+## Task 7 — normally finished competition games record one durable points result (2026-10-17)
+
+Task 7 adds durable competition result recording for games that finish normally
+(board full). It establishes the admission marker protocol for cutoff reconstruction
+and fixes deterministic journal ordering.
+
+### Changes
+
+- **Fixed `JpaGameRepository.journalFor` ORDER BY** — Added `order by record.revision`
+  to the JPQL query for deterministic event replay.
+- **Flyway migrations** —
+  - `V20261016160000__competition_admission_markers.sql`: adds `last_cutoff_revision`
+    (INTEGER) and `cutoff_observed` (INTEGER NOT NULL DEFAULT 0) columns to
+    `competition_assignments`.
+  - `V20261016170000__competition_results.sql`: creates `competition_results` table
+    with game_id PK, competition_id FK, player/opponent IDs, points (0/1/3), and
+    finalized_at timestamp. Removed invalid FK reference to `game_event_records(aggregate_id)`
+    (`aggregate_id` is not unique).
+- **Domain types** — `CompetitionGameResult`, `CompetitionResultRepository`,
+  `AssignmentAdmissionMarker`, `CompetitionAdmissionMarkerRepository` defined in
+  `CompetitionAssignments.kt`. `CompetitionScoreTable` with 3/1/0 constants.
+- **Result derivation** — `CompetitionGameResultDerivation.kt`: replays a game
+  journal up to the cutoff revision, detects board-full via `GameField.isFull()`,
+  and assigns 3/1/0 points based on score comparison.
+- **Marker initialization at creation** — `SqliteBasedCompetitionAcceptance.kt`
+  now writes `last_cutoff_revision = created.revision.value` and `cutoff_observed = 0`
+  in the same serialized competition write boundary as game creation.
+- **Result persistence with adapter-level `writeResult` helper** —
+  `SqliteBasedCompetitionResultRepository.kt` now exposes a `writeResult(transaction, result, now)`
+  method that accepts an already-open `JdbcTemplate`. The standalone `recordResult`
+  opens its own `competitionWrite` and delegates to `writeResult`. This enables
+  composition within an existing transaction (used by closure worker in task 9).
+- **Marker queries** — `SqliteBasedCompetitionGameMarker.kt`: reads admission
+  markers by invitation_id or game_id. Also implements `findCompetitionIdByGameId`
+  for the finalizer to look up the parent competition.
+- **CompetitionMoveWriter** — New `CompetitionMoveWriter.kt` provides the single
+  authoritative implementation for persisting a competition game event, the game-list
+  projection, and the admission marker update atomically in one `competitionWrite`
+  transaction. Both `SqliteBasedGameRepository.saveCompetitionEvent()` and tests
+  use this class, ensuring tests exercise the same production code path.
+- **Single-connection competition write boundary** — For competition games, the
+  move command (`SqliteBasedGameRepository.saveEvent()`) acquires the serialized
+  `competitionWrite` once and persists the event, game-list projection
+  (`game_list_items`, `game_participants`), and admission marker on the same
+  JdbcTemplate connection. The authoritative `Instant.now()` is obtained inside
+  the write boundary for cutoff comparison. Non-competition games continue
+  unchanged via the JPA path.
+- **Wiring fix** — `GameRepositoryConfig.gameRepository()` now injects
+  `JdbcTemplate` into `SqliteBasedGameRepository` and passes an `isCompetitionGame`
+  predicate to `GameRepositoryWithView` so that the duplicate `gameListView.save()`
+  call is skipped for competition games (the game-list was already written in the
+  competitionWrite).
+- **Separate-transaction contract** — Game events are committed through the
+  competition write boundary. Result persistence uses a separate competition
+  write boundary (`BEGIN IMMEDIATE`). A result-write failure does not roll back
+  game events; retry re-derives the same result idempotently.
+- **MakeMove save-result propagation** — `MakeMove.kt` changed from
+  `.onSuccess(gameRepository::save)` (which discards the save result) to
+  `.map { result -> gameRepository.save(result).map { Success(result) } }`
+  so that a `Failure` from `save()` propagates through the chain, preventing
+  post-processors and notifications from firing on an uncommitted move.
+- **CompetitionGameFinalizer as MakeMovePostProcessor** —
+  `CompetitionGameFinalizer.kt` now implements `MakeMovePostProcessor` and is
+  wired into `GameCommandBeans` as a `MakeMovePostProcessor` bean so that
+  board-full competition games trigger result recording automatically after a
+  move is committed. Failures from `recordResult` are logged (not discarded).
+  Also adds `reconcileUnfinishedResults()` for startup/tick recovery of games
+  whose result write failed or never ran.
+- **Active slot release on result** —
+  `SqliteBasedCompetitionResultRepository.recordResult` now updates
+  `competition_assignment_slots SET active = 0` in the same transaction as the
+  result insert, releasing both participants for matching (task 8).
+
+### Tests
+
+**Domain tests** (`CompetitionGameResultDerivationTest.kt`, 6 tests):
+- `derive returns null for an incomplete game` — Board not full.
+- `derive returns null for empty events` — Empty journal.
+- `derive returns null when cutoff revision excludes all events` — Cutoff -1.
+- `derive returns win-loss for a full-board game where first player has more points` — 3/0.
+- `derive returns loss-win when second player has more points` — 0/3.
+- `derive returns draw for equal scores on a full board` — 1/1.
+
+**Integration tests** (`SqliteBasedCompetitionRepositoryTest.kt`, 14 new tests,
+plus 6 marker-advancement tests using `CompetitionMoveWriter` shared helper):
+- `admission marker is initialized on acceptance` — Marker set to 0 after game creation.
+- `admission marker survives repository recreation` — Marker readable after recreated JdbcTemplate.
+- `non-competition game has no admission marker` — Null for nonexistent game/invitation.
+- `competition result records and retrieves a game outcome` — 3/0 stored and read back.
+- `competition result is idempotent on duplicate record` — Only one result row.
+- `competition results for a competition lists all entries` — List query returns results.
+- `result persistence failure rolls back without losing game events` — ABORT trigger
+  on competition_results fails result write but game_event_records survive.
+- `pre-cutoff advances admission marker to move revision`
+- `multiple pre-cutoff moves advance the marker to the latest revision`
+- `at-cutoff move does not advance marker and sets cutoff_observed`
+- `post-cutoff move does not advance marker after cutoff is observed`
+- `clock regression after cutoff observation cannot advance marker`
+- `admission marker survives repository recreation after moves`
+- `atomic write failure on marker update leaves no game event`
+
+**Game repository tests** (`SqliteBasedGameRepositoryTest.kt`, 2 new tests split
+from combined ordered-journal test):
+- `journal returns events ordered by revision with ORDER BY sensitivity` — 5 moves,
+  strictly increasing revisions.
+- `journal preserves timestamp through SQLite TEXT round trip` — Creation and move
+  timestamps round-trip within 1 ms.
+
+### Verification
+
+Environment: Linux x86_64, Gradle 8.14.4 with Temurin JDK 21.0.12.1+1
+at `/tmp/qubigo-jdk21`. Backend commands use
+`export JAVA_HOME=/tmp/qubigo-jdk21 PATH=/tmp/qubigo-jdk21/bin:$PATH`.
+
+| Test scope | Command | Result |
+| --- | --- | --- |
+| Domain derivation | `./gradlew :qubigo-servlet:test --tests '*CompetitionGameResultDerivationTest'` | 6/6 pass, 0 failures |
+| MakeMove save propagation | `./gradlew :qubigo-servlet:test --tests '*MakeMoveTests*'` | All pass (includes save-propagation tests) |
+| Competition integration | `./gradlew :qubigo-servlet:test --tests '*SqliteBasedCompetitionRepositoryTest*'` | 50/50 pass, 0 failures |
+| Full competition suite | `./gradlew :qubigo-servlet:test --tests '*Competition*'` | All pass |
+| Competition integration (admission markers) | `./gradlew :qubigo-servlet:test --tests '*SqliteBasedCompetitionRepositoryTest*'` | 65/65 pass, 0 failures |
+| Ordered journal | `./gradlew :qubigo-servlet:test --tests '*SqliteBasedGameRepositoryTest*'` | 13/13 pass, 0 failures |
+| Full backend | `./gradlew test` | PASS (servlet + CLI), 0 failures |
+
+### Acceptance criteria coverage
+
+- **Win (3), Draw (1), Loss (0)** — Domain derivation tests cover all three outcomes.
+- **Board-full detection** — Derivation returns null for incomplete games.
+- **Idempotent recording** — Duplicate result call produces exactly one row.
+- **Separate-transaction contract** — ABORT trigger on result table leaves game events intact.
+- **Ordered journal** — `JpaGameRepository.journalFor` now queries with `order by record.revision`.
+- **Marker initialization at creation** — Acceptance sets last_cutoff_revision = 0 and cutoff_observed = 0.
+- **Marker survives restart** — Recreated JdbcTemplate reads back same marker values.
+- **Non-competition games unaffected** — Marker queries return null for non-competition IDs.
+- **Save-result propagation** — MakeMove propagates save failures; post-processors
+  and notifications are not called when save returns a Failure.
+- **MakeMovePostProcessor chain** — Post-processors registered in
+  `movePostProcessors` are called after a successful save.
+- **CompetitionGameFinalizer as MakeMovePostProcessor** — Finalizer implements
+  the `MakeMovePostProcessor` interface and is wired into the Spring bean
+  container through `GameCommandBeans.competitionGameFinalizerPostProcessor`.
+- **Active slot release on result** — `recordResult` releases both participants'
+  slots by setting `competition_assignment_slots.active = 0` in the same
+  transaction as the result insert.
+
+### Validator findings resolved (2026-10-17, second attempt)
+
+| Finding | File | Resolution |
+| --- | --- | --- |
+| 1 | `CompetitionMoveWriter.kt:30` | Changed `saveMove()` to use `gameWithEvent.event.timestamp.toInstant()` instead of a fresh `Instant.now(clock)`, ensuring the marker comparison uses the same timestamp as the persisted event. |
+| 2 | `GameRepositoryWithView.kt:21` | Added `saveGameMove()` method that bypasses `@Transactional` by delegating directly to the inner repository. `MakeMove` now calls `saveGameMove()` for competition games (detected via `isCompetitionGame()`) and `save()` for non-competition games. |
+| 3 | `CompetitionGameFinalizer.kt:76` | `reconcileUnfinishedResults()` now reuses `finalizeGame()` instead of duplicating derivation, and propagates actual save failures. Wired into a `CompetitionStartupReconciler` bean that runs on `ApplicationReadyEvent`. |
+| 4 | `SqliteBasedCompetitionRepositoryTest.kt:707` | Removed test-only `saveMoveAndMarker()` method from `CompetitionMoveWriter`. Replaced `simulateCompetitionMove()` with `playCompetitionMove()` which reads the game from `game_event_records` via JDBC, makes a legal `game.move()` with an injected clock, and saves through `CompetitionMoveWriter.saveMove()` — the exact production path. |
+| 5 | `SqliteBasedGameRepositoryTest.kt:57` | Ordering test now saves 5 moves in deliberately scrambled revision order (5, 1, 3, 2, 4) via JDBC, then asserts `journalFor()` returns them in strictly increasing revision order. Also asserts each expected revision at each index. |
+| 6 | `SqliteBasedCompetitionResultRepository.kt:17` | Added 3 new integration tests: `writeResult inside existing competitionWrite commits result and releases slot`, `writeResult slot-release ABORT rolls back result and companion state`, and `writeResult is idempotent when composed inside competitionWrite`. |
+
+### Updated test verification
+
+| Test scope | Command | Result |
+| --- | --- | --- |
+| Domain derivation | `./gradlew :qubigo-servlet:test --tests '*CompetitionGameResultDerivationTest'` | 6/6 pass, 0 failures |
+| MakeMove save propagation | `./gradlew :qubigo-servlet:test --tests '*MakeMoveTests*'` | 9/9 pass, 0 failures |
+| Competition integration | `./gradlew :qubigo-servlet:test --tests '*SqliteBasedCompetitionRepositoryTest*'` | 60/60 pass, 0 failures |
+| Game repository | `./gradlew :qubigo-servlet:test --tests '*SqliteBasedGameRepositoryTest*'` | 13/13 pass, 0 failures |
+| Full backend | `./gradlew test` | PASS (servlet + CLI), 0 failures |
+
+No native device, push-delivery, final product-owner approval or deployment restart
+evidence is claimed by this increment.

@@ -288,3 +288,78 @@ inspect the effective Pi prompt and compare with the previous working
 harness/model configuration. A bounded response-repair step is a proposed
 later factory improvement, not part of this instruction fix.
 
+
+## 2026-10-17 — Task 7 failed review; factory asked to repair it
+
+Analyzed `qubigo-004` from its saved settings, status, plan, daemon log and
+machine record. This run lives under `factory/runs/qubigo-004/`, rather than
+the older target-owned run location. It uses `careful-plan` against the live
+Qubigo repository for [iteration 004 — event competitions](../qubigo/docs/iterations/004-competitions.md).
+At the failure recorded at 17:30 CEST, tasks 1–6 were checked complete;
+task 7 (durable competition results and admission markers) had exhausted
+three implementation attempts. Tasks 8–18 remained unchecked.
+
+The doer repeatedly reported completion and passing backend tests, but the
+final validator still found five substantive gaps:
+
+- Move execution and time sampling happen before acquiring the competition
+  write boundary. A request waiting across the deadline can therefore use a
+  stale pre-cutoff timestamp. Reusing the event timestamp did not correct
+  when that timestamp was sampled.
+- Missing admission markers or marker-read failures fall back to the latest
+  journal revision, risking points awarded from excluded post-cutoff moves.
+- Helper tests bypass the wired `MakeMove` command, its decorator, finalizer
+  and notifications. They do not establish complete-game result recording,
+  concurrent final-move safety, rollback or restart recovery through that path.
+- Scrambling five journal inserts does not prove the test detects removal of
+  `ORDER BY`: an existing index may still return revision order. Complete
+  creation-plus-26-move reconstruction also needs evidence.
+- Result-composition tests claim companion-state rollback without actually
+  modifying companion state inside the enclosing transaction.
+
+The main lesson is that a passing suite and an implementation completion
+claim do not establish the planned collaboration contract. Tests must cross
+its real production boundary. Earlier plan revisions had already converged
+on an injectable move protocol: acquire the serialized write boundary,
+sample authoritative time once, execute the move, and persist the event,
+projections and admission marker together. The remaining implementation
+still diverged from that contract. Require a valid durable marker for
+finalization; a read failure should remain retryable rather than silently
+substitute unrestricted game state.
+
+The run also contains earlier provider-limit interruptions, plan-review
+churn over cutoff reconstruction and transaction ownership, and an earlier
+task-7 attempt-limit failure. These are separate from the final correctness
+findings. All three plan reviewers accepted the final reviewed plan; that
+approval did not establish implementation acceptance.
+
+The student asked the factory to fix task 7. Added all five final findings
+and a repair scope to the existing external run plan, preserving prior work,
+then launched:
+
+```sh
+bin/factory --run qubigo-004
+bin/factory watch qubigo-004
+```
+
+Restart does not automatically carry the previous validator findings into
+its first attempt, so recording them in the plan makes them available to
+the new machines. The plan asks the factory to validate and commit task 7,
+mark it complete only after acceptance, then pause before task 8 pending
+further authorization. The whole iteration must remain incomplete.
+
+The restart was observed running: the initializer started and a subsequent
+plan reviewer returned approval. No repaired task-7 implementation, new test
+success or acceptance is claimed by this capture. Next: inspect the new
+validator decision and the task-7 commit, and confirm the requested pause.
+The analysis itself changed no application code and reran no tests.
+
+Refreshed the sharing snapshot, including the current
+[implementation report](../qubigo/docs/iterations/004-competitions-implementation.md)
+and [validator configuration](../qubigo/.assembly-lines/.machines/rdd_validator/config.json).
+The report contains the doer's task-7 success claims; the unresolved findings
+above qualify those claims. The copied validator configuration currently
+selects `openai-codex/gpt-6.1-sol:medium`; this capture did not change the live
+machine configuration. See the [careful-plan workflow](../qubigo/.assembly-lines/careful-plan.md)
+for restart and review behavior. Local run artifacts are not part of the
+sharing snapshot.
