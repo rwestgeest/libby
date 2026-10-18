@@ -40,6 +40,9 @@ the student choosing to work on it. Use **discuss-factory-design** when asked to
 pick one up. If automatic skill loading is unavailable, read
 `.agents/skills/discuss-factory-design/SKILL.md` explicitly. This is discussion
 discovery, not an instruction to restart blocked factory runs.
+When the student asks to resolve a discussion, the skill resumes the blocked
+run after all decisions are recorded; an unresolved question or unavailable
+human evidence remains a stopping point.
 
 ## Checks
 

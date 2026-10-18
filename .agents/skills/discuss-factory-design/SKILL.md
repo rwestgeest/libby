@@ -1,6 +1,6 @@
 ---
 name: discuss-factory-design
-description: Pick up an open factory design discussion with the user, walk through journeys, events and policies, and record decisions before detailed planning. Use when asked to discuss a factory design sketch or resolve a design checkpoint; does not implement or resume the run.
+description: Pick up an open factory design discussion with the user, walk through journeys, events and policies, record decisions, then resume the blocked run so planning and implementation continue.
 ---
 
 # Discuss factory design
@@ -94,9 +94,20 @@ changes materially, record the change and reopen affected questions.
 
 End each session with a link to this file and the next question or readiness.
 Preserve notes even when the conversation ends before decisions are complete.
-Do not edit run status, mark implementation tasks complete, change production or
-machine behavior, launch/resume a factory run, or commit/push merely by invoking
-this skill. Separate explicit user instructions may authorize those actions.
+
+## Continue the run after a decision
+
+When the owner has answered every open question and the handoff is marked
+resolved, continue the factory automatically. Read the run's settings and use
+the exact run name; from the factory repository root, restart a blocked/stopped
+run with `bin/factory --run <run>`. Do not start a second copy if that run is
+already active. Watch the existing run instead and report its current progress.
+Let the factory proceed through revision, review and implementation until it
+finishes, fails, or reaches a new genuine blocker. A new owner decision or
+unavailable human evidence remains a legitimate stopping point. Do not mark
+implementation tasks complete or commit/push outside the factory's own process.
+
+If questions remain open, preserve the handoff and stop without restarting.
 
 ## Invocation from this repository
 
