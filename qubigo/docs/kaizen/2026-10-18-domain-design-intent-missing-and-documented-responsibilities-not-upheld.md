@@ -105,3 +105,17 @@ Document the missing design intent with the established Games example, and
 separately examine how the factory applies already documented responsibilities.
 The proposed collaborative event-storming/responsibility walkthrough may expose
 boundary changes early. These are candidates, not fixes or active experiments.
+
+## Countermeasure implemented — 18 October 2026
+
+On main, ADR 0007 records Domain Primitives and validated inputs; ADR 0008
+records immutable aggregates with behavior. Both reference command decisions
+0002/0005 and use the existing Games flow as an example. Backend AGENTS.md links it. Design walkthrough, revision, doer,
+plan reviewers and RDD validator explicitly read ADRs 0002/0005/0007/0008 and trace
+responsibilities along changed behavior, rather than infer conformance from
+package/class names. No product code was changed.
+
+This addresses missing intent and gives discovery/application an explicit route.
+It is not evidence that machines apply it reliably. The note remains Open;
+observe a subsequent capability for typed inputs, aggregate-owned rules and
+command-owned coordination. No active experiment or review date is claimed.

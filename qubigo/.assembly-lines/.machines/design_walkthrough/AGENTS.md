@@ -48,3 +48,15 @@ deferrals count as settled; they are not acceptance of extra guarantees. Return
 planning must return to the owner rather than silently become obligations.
 
 End with a single-line JSON object containing blocked and findings.
+
+## Backend architecture in changed work
+
+For backend work, explicitly read `qubigo-backend/AGENTS.md` and ADRs 0002,
+0005, 0007 and 0008 in `qubigo-backend/docs/adr/`; automatic repository-context loading
+may be disabled. Trace the Games examples in ADRs 0007/0008 against the current
+capability: validated DTO → typed parameters → command coordination → immutable
+aggregate behavior → repository storage. Check Domain Primitive construction,
+field-specific conversion failures and which object owns state-dependent rules.
+A command wrapper around an SQL use case does not meet these responsibilities.
+Apply this to changed behavior, not a speculative rewrite of unrelated code.
+A needed architectural departure belongs in the owner design discussion.

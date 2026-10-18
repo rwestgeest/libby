@@ -231,3 +231,17 @@ factory parser. A real planning-only conversation/rerun trial remains pending;
 installation is not evidence of effectiveness. No application implementation
 or factory run was launched. Qubigo main also received the two documentation-only
 investigation commits; unfinished competition code stays on its feature branch.
+
+## Countermeasure for thread 03: explicit domain design and application
+
+On Qubigo main, [ADR 0007](../../../q/qubigo-backend/docs/adr/0007-domain-primitives-and-validated-domain-inputs.md)
+records Domain Primitives and controller-boundary conversion to clean typed inputs.
+[ADR 0008](../../../q/qubigo-backend/docs/adr/0008-immutable-aggregates-with-behavior.md)
+records immutable aggregate behavior; both reference command decisions 0002/0005. Backend guidance
+and the architecture overview link it. Walkthrough/revision, implementation and
+review instructions explicitly read the relevant ADRs and trace a changed path
+through those responsibilities. Source links require the live target checkout.
+The [kaizen note](../../../qubigo/docs/kaizen/2026-10-18-domain-design-intent-missing-and-documented-responsibilities-not-upheld.md)
+records implementation and the pending effectiveness check; ledger status is Open.
+No product code changed. Documentation links/ledger consistency and whitespace
+were checked; machine conformance still needs observation in a later increment.
