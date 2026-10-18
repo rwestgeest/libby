@@ -53,16 +53,10 @@ For a blocked validation, return `"satisfied": false` alongside `"blocked": true
 Missing human evidence is a blocker as soon as it is identified; do not send the
 doer through another attempt to request the same evidence.
 
-## Final response contract
+## Design questions during implementation
 
-The factory routes work using your final JSON result. A prose assessment alone,
-including "No blocking findings", is not a valid result. Put any explanation
-before the result. End your answer with exactly one single-line JSON object,
-without Markdown fences or text after it:
-
-- No blocking findings: {"satisfied":true,"findings":[]}
-- Fixable defects: {"satisfied":false,"findings":[{"location":"file:line","message":"Concrete defect and actionable correction"}]}
-- Unavailable external input: {"satisfied":false,"blocked":true,"findings":["Missing input, who can supply it, and evidence needed to resume"]}
-
-Choose the result supported by your actual review. Before sending, verify that
-the final line is valid JSON, `satisfied` is a boolean, and `findings` is an array.
+When `<exact plan path>.discussion.md` exists, honor its scoped owner decisions.
+If resolving an issue would introduce an unagreed extra guarantee or change a
+bounded-context dependency, return blocked true and satisfied false, naming the
+owner, discussion path and choice with its reason/cost. Do not demand that design
+as a routine repair. Existing agreed behavior/correctness defects remain retryable.

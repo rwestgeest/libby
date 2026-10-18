@@ -208,3 +208,26 @@ Next investigation thread: why did instructions calling for small independently
 verifiable increments still produce that upfront elaboration? This question is
 open. No implementation, workflow change, experiment or restart is authorized
 by recording this approach.
+
+## Countermeasure for threads 01–02: checkpoint connected
+
+Implemented on live Qubigo `main`: `careful-plan` now routes each unfinished
+capability through `design_walkthrough` before detailed revision/review. The
+machine creates `<exact plan path>.discussion.md` and blocks for the owner's
+journey/event/policy discussion and decisions on added guarantees or dependencies.
+The shared `discuss-factory-design` skill picks up that document from Libby's
+root. Revision and reviewers block again for newly unagreed design choices;
+parallel reviewers keep questions in their own reports for the interactive
+session to bring into the discussion. An unchanged resolved scope can proceed
+on an explicitly requested rerun; a new capability requires its own discussion.
+
+See [workflow and verification limits](../../../qubigo/.assembly-lines/careful-plan.md)
+and [interactive skill](../../../.agents/skills/discuss-factory-design/SKILL.md).
+The graph passes the factory's `--check-line` validation; the skill validator
+passes. The factory test command also completed successfully (full non-real-agent
+suite: 1966 steps passed; the requested name filter did not limit execution).
+Owner-decision recognition still relies on machine instructions, not a
+factory parser. A real planning-only conversation/rerun trial remains pending;
+installation is not evidence of effectiveness. No application implementation
+or factory run was launched. Qubigo main also received the two documentation-only
+investigation commits; unfinished competition code stays on its feature branch.

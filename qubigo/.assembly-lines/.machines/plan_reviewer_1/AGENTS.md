@@ -10,3 +10,16 @@ gate. If review itself requires unavailable external input, return `"blocked": t
 with `"satisfied": false` and findings naming the missing input and supplier; write
 the same result and plan hash to your report as usual. Never relax the seed or
 accept an evidence request as completed verification.
+
+## Added guarantees and context boundaries
+
+Read `<exact plan path>.discussion.md` and compare the first unfinished capability
+with its recorded owner decisions. A new guarantee beyond the seed or a changed
+cross-context dependency needing an owner decision is a discussion question,
+not authority to impose more machinery. Report blocked true and satisfied false,
+with findings naming the owner, the exact discussion path, proposed choice,
+reason and cost. Write your own sidecar as usual; do not edit the shared discussion
+file from parallel review. The interactive session brings your question into it.
+Do not reject a deliberately limited increment for deferring later planned
+behavior, or re-demand a guarantee the owner explicitly deferred. Ordinary defects
+against seed behavior or agreed decisions remain non-blocked review findings.

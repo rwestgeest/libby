@@ -22,6 +22,19 @@ No rewrite has been selected.
 [Full collaborative account](collaborative-analysis.md) ·
 [Kaizen ledger](../../../qubigo/docs/kaizen/README.md)
 
-The linked picture carries the individual thread links. Earlier solo assessments
+The picture has a separate underlined ledger link on every row:
+
+| Map thread | Kaizen ledger item |
+| --- | --- |
+| 01 Requirements | [Related: plan repairs](../../../qubigo/docs/kaizen/README.md#plan-repairs) |
+| 02 Collaboration | [Related: design intent](../../../qubigo/docs/kaizen/README.md#domain-design) |
+| 03 Design guidance | [Design intent and responsibilities](../../../qubigo/docs/kaizen/README.md#domain-design) |
+| 04 Increments / TDD | [Related: test design](../../../qubigo/docs/kaizen/README.md#test-design) |
+| 05 Handoff format | [Prose-only output](../../../qubigo/docs/kaizen/README.md#output-format) |
+
+“Related” marks supporting context, not a dedicated ledger item for that thread.
+Threads 01, 02 and 04 do not yet have dedicated entries.
+
+The linked picture also carries the individual discussion links. Earlier solo assessments
 are provisional. We stopped causal chains where evidence ended; we did not force
 five answers. This engineering pattern also occurs in human teams.

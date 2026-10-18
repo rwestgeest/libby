@@ -1,4 +1,3 @@
 {
-  "harness": "pi",
-  "model" : "deepseek/deepseek-v4-flash"
+  "harness": "pi"
 }

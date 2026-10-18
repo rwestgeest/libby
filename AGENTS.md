@@ -26,9 +26,20 @@ Skills, in `.agents/skills/` at the repository's root:
 - **implement-it** — when the student wants you to build the iteration and demo it.
 - **implement-fast** — when the student wants you to just build the iteration.
 - **capture-homework-log** — capture session learning in the homework log, refresh the Qubigo sharing snapshot, and commit and push the capture.
+- **discuss-factory-design** — pick up a factory design sketch with the student and record decisions before detailed planning; shared with pi through `.pi/skills/`.
 - **analyze-factory-run** — analyze run evidence in `q/.factory/runs/<run>/`, diagnose problems and propose solutions when relevant.
 
 If your harness doesn't load skills, read the skill's `SKILL.md` and follow it.
+
+## Open design discussions
+
+On session startup, look for `plan.md.discussion.md` handoffs under
+`factory/runs/` and the live target's `.factory/runs/` when present. Briefly
+surface files with `Status: open`; do not start or resolve a discussion without
+the student choosing to work on it. Use **discuss-factory-design** when asked to
+pick one up. If automatic skill loading is unavailable, read
+`.agents/skills/discuss-factory-design/SKILL.md` explicitly. This is discussion
+discovery, not an instruction to restart blocked factory runs.
 
 ## Checks
 

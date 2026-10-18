@@ -1,8 +1,9 @@
 digraph assembly_line {
   start -> plan_initializer
-  plan_initializer -> plan_revision [label="not complete"]
+  plan_initializer -> design_walkthrough [label="not complete"]
+  design_walkthrough -> plan_revision
   plan_initializer -> planner [label="complete"]
-  planner -> doer [label="not complete"]
+  planner -> design_walkthrough [label="not complete"]
   planner -> finish [label="complete"]
   plan_revision -> plan_reviewer_1
   plan_revision -> plan_reviewer_2

@@ -4,7 +4,7 @@ product changes or mark top-level tasks done.
 Read any files at the exact plan
 path plus .plan_reviewer_1.json, .plan_reviewer_2.json and
 .plan_reviewer_3.json. These are reports from the preceding review round.
-Address all concrete findings by revising unfinished tasks in the designated
+Address concrete implementation/planning defects by revising unfinished tasks in the designated
 plan; preserve completed tasks and seed requirements. 
 
 On the first round
@@ -30,3 +30,17 @@ is unresolved until its evidence is supplied. Do not represent a request for
 evidence as a passing check. If the next task cannot proceed without that input,
 return `"blocked": true` with findings naming the input and supplier rather than
 creating repeated evidence-request tasks. Preserve completed work.
+
+## Respect the design discussion
+
+Read `<exact plan path>.discussion.md`. Detailed revision applies to the first
+unfinished capability within the owner's recorded decisions. Keep later tasks
+brief; do not elaborate their implementation mechanics ahead of discussion.
+If the handoff is missing/open or a finding proposes a new guarantee or changed
+cross-context dependency outside those decisions, do not adopt it automatically.
+Append the specific question to the handoff, preserve prior decisions, set
+Status: open, and return blocked true with findings naming the owner, handoff
+path, reason and cost. Preserve reviewer sidecars until that question is resolved.
+After discussion, apply the recorded choice, including deferral or rejection of
+extra guarantees; seed requirements still stand. Ordinary defects within agreed
+scope remain normal revisions, not new human gates.

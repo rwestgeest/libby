@@ -6,7 +6,7 @@
 <text x="40" y="48" font-size="15" fill="#516655">LEARNING FROM A SOFTWARE FACTORY · 18 OCTOBER 2026</text>
 <text x="40" y="94" font-size="34" font-weight="750">Correct machinery. But was it needed?</text>
 <text x="40" y="129" font-size="19">Qubigo 004: a collaborative five-whys investigation with Rob</text>
-<text x="40" y="160" class="small">Click a thread for its notes. Read across: observation → explanation → candidate next step.</text>
+<text x="40" y="160" class="small">Click a row for notes; use its underlined ledger link to locate the kaizen item.</text>
 <text x="40" y="201" class="label">THREAD / STATUS</text><text x="285" y="201" class="label">WHAT WE SAW</text><text x="605" y="201" class="label">WHY / WHERE EVIDENCE ENDS</text><text x="975" y="201" class="label">POSSIBLE NEXT STEP</text>
 <a href="collaborative-analysis.md#agreed-finding-1-speculative-risks-acquired-requirement-status"><rect x="28" y="219" width="1224" height="120" rx="14" fill="#edf2ff" stroke="#5368ac" stroke-width="1"/>
 <text x="44" y="249" class="label">01  REQUIREMENTS</text>
@@ -19,6 +19,7 @@
 <text x="975" y="255" class="body">Discuss added guarantees</text>
 <text x="975" y="280" class="body">against actual needs and risk.</text>
 </a>
+<a href="../../../qubigo/docs/kaizen/README.md#plan-repairs"><text x="44" y="325" class="small" style="fill:#244e82;text-decoration:underline;font-size:13px">Related ledger: plan repairs ↗</text></a>
 <a href="collaborative-analysis.md#agreed-finding-2-intended-boundaries-were-not-checked-with-their-author"><rect x="28" y="355" width="1224" height="120" rx="14" fill="#eaf6f2" stroke="#367967" stroke-width="1"/>
 <text x="44" y="385" class="label">02  COLLABORATION</text>
 <text x="44" y="412" class="small">Agreed finding</text>
@@ -30,6 +31,7 @@
 <text x="975" y="391" class="body">Walk through events, policies</text>
 <text x="975" y="416" class="body">and responsibilities together.</text>
 </a>
+<a href="../../../qubigo/docs/kaizen/README.md#domain-design"><text x="44" y="461" class="small" style="fill:#244e82;text-decoration:underline;font-size:13px">Related ledger: design intent ↗</text></a>
 <a href="../../../qubigo/docs/kaizen/2026-10-18-domain-design-intent-missing-and-documented-responsibilities-not-upheld.md"><rect x="28" y="491" width="1224" height="120" rx="14" fill="#fff3e7" stroke="#a76b2b" stroke-width="1"/>
 <text x="44" y="521" class="label">03  DESIGN GUIDANCE</text>
 <text x="44" y="548" class="small">Agreed gap; cause still</text>
@@ -42,6 +44,7 @@
 <text x="975" y="527" class="body">Clarify missing intent; examine</text>
 <text x="975" y="552" class="body">how machines apply existing ADRs.</text>
 </a>
+<a href="../../../qubigo/docs/kaizen/README.md#domain-design"><text x="44" y="597" class="small" style="fill:#244e82;text-decoration:underline;font-size:13px">Ledger: design intent ↗</text></a>
 <a href="collaborative-analysis.md#robs-implementation-approach-releasable-capabilities-and-design-through-tdd"><rect x="28" y="627" width="1224" height="120" rx="14" fill="#f3eefb" stroke="#7e5b9e" stroke-width="1"/>
 <text x="44" y="657" class="label">04  INCREMENTS &amp; TDD</text>
 <text x="44" y="684" class="small">Approach clarified; why</text>
@@ -54,6 +57,7 @@
 <text x="975" y="663" class="body">Admin-only create + join first;</text>
 <text x="975" y="688" class="body">test-drive the next capability.</text>
 </a>
+<a href="../../../qubigo/docs/kaizen/README.md#test-design"><text x="44" y="733" class="small" style="fill:#244e82;text-decoration:underline;font-size:13px">Related ledger: test design ↗</text></a>
 <a href="../../../qubigo/docs/kaizen/2026-10-18-doer-prose-output-stops-before-validation.md"><rect x="28" y="763" width="1224" height="120" rx="14" fill="#f0f2f4" stroke="#66717d" stroke-width="1"/>
 <text x="44" y="793" class="label">05  HANDOFF FORMAT</text>
 <text x="44" y="820" class="small">Separate failure; omission</text>
@@ -66,5 +70,6 @@
 <text x="975" y="799" class="body">Keep separate from design work;</text>
 <text x="975" y="824" class="body">format repair is provisional.</text>
 </a>
+<a href="../../../qubigo/docs/kaizen/README.md#output-format"><text x="44" y="869" class="small" style="fill:#244e82;text-decoration:underline;font-size:13px">Ledger: output format ↗</text></a>
 <text x="40" y="934" font-size="20" font-weight="650">Lesson: ask whether a guarantee is needed before elaborating how to enforce it.</text>
-<text x="40" y="965" class="small">Candidate improvements are untested. No rewrite decided. Five whys means follow evidence—not force five answers.</text></svg>
+<text x="40" y="965" class="small">Candidate improvements are untested. No rewrite decided. Five whys means follow evidence—not force five answers.</text><text x="40" y="989" class="small">“Related ledger” means supporting context: threads 01, 02 and 04 have no dedicated ledger item yet.</text></svg>

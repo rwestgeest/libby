@@ -1,0 +1,4 @@
+interface:
+  display_name: "Discuss Factory Design"
+  short_description: "Discuss factory design checkpoints and record decisions"
+  default_prompt: "Use $discuss-factory-design to pick up an open factory design discussion."

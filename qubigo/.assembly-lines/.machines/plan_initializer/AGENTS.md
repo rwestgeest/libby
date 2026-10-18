@@ -38,3 +38,11 @@ is unresolved until its evidence is supplied. Do not represent a request for
 evidence as a passing check. If the next task cannot proceed without that input,
 return `"blocked": true` with findings naming the input and supplier rather than
 creating repeated evidence-request tasks. Preserve completed work.
+
+## Design checkpoint
+
+For careful-plan, create only a short capability sequence initially. Leave new
+cross-context collaboration choices and guarantees beyond seed requirements
+undecided for design_walkthrough. Do not prescribe transaction/retry/SQL machinery
+or exhaustive failure scenarios before that discussion. Preserve an existing
+plan; do not treat its earlier design prescriptions as owner decisions.
