@@ -276,3 +276,14 @@ original omission; 004a will provide further operational evidence.
 05 verification/commit: Libby `07aa81b`; full factory suite 140 scenarios passed,
 plus the subsequently added pi ACP regression (1 scenario) passed. The original
 prose-only regression failed before the fix. No real-agent run was launched.
+
+## Checkpoint frequency corrected
+
+The first graph revisited discussion after every accepted task, conflating task
+completion with a new design choice. We agreed that is too disruptive. Initial
+journey/collaboration discussion remains mandatory; the planner then returns
+routine tasks directly to the doer within recorded decisions. Only an unagreed
+scope, context dependency or guarantee routes through walkthrough/review again.
+Reviewers and validator may still block for such questions. The walkthrough now
+uses `openai-codex/gpt-6.1-sol:medium` explicitly. This correction supersedes the
+earlier per-capability checkpoint descriptions; effectiveness is for 004a.

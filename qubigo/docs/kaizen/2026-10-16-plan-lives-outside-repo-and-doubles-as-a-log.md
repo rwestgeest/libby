@@ -131,3 +131,17 @@ transaction is feasible within existing Spring/SQLite ownership; which accepted
 increments exist on main; and whether simplifying current work is cheaper than
 rebuilding. These need inspection/experiments, not assumptions. No redesign,
 experiment or run 004a is authorized or launched by this assessment.
+
+### Checkpoint frequency correction — 18 October 2026
+
+The first checkpoint graph required another walkthrough after every accepted
+task. We identified that task completion need not imply a new design decision.
+It now requires the initial journey/collaboration discussion, then routes routine
+work directly from planner to doer within recorded decisions. The planner sends
+new scope/dependency/guarantee choices through walkthrough and review. Existing
+reviewer/validator blocking remains available for new design questions.
+
+The walkthrough uses `openai-codex/gpt-6.1-sol:medium`. Structural validation and
+all four complete/needs_design_discussion routing combinations passed against
+the actual graph. Human question quality and scope judgment remain to observe
+in 004a; no new run was launched by this change.

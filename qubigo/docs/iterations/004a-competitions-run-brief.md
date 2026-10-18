@@ -42,7 +42,8 @@ Inspect main's actual baseline before planning; reuse suitable existing work
 without merging the unfinished iteration-004 branch. Use a fresh working branch
 and run `qubigo-004a`; preserve the original run and competition branch.
 
-After each accepted capability, use the checkpoint for the next discussion.
+After accepted work, continue routine tasks within the recorded decisions.
+Return to discussion only for new scope, dependency or guarantee decisions.
 Keep all unimplemented requirements open. A released increment is not completion
 of iteration 004. Use this attempt to observe whether the kaizen adjustments
 produce collaborative decisions, clean domain design and test-driven increments.

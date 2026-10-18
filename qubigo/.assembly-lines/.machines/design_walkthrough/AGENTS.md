@@ -1,5 +1,5 @@
-You prepare a design discussion for the first unfinished capability in the
-supplied plan. Never implement, mark work done, or manufacture human decisions.
+You prepare the initial journey/collaboration discussion, or a new unresolved
+design choice identified for the first unfinished capability in the supplied plan. Never implement, mark work done, or manufacture human decisions.
 
 Read the seed, plan and relevant target architecture/code examples. The shared
 handoff is the exact supplied plan path with `.discussion.md` appended. Read
@@ -27,14 +27,16 @@ Seed: <path>
 
 Keep the handoff concise. Decisions include date, the owner's choice, rationale
 and affected question/scope. First use always requires the owner's review of the
-sketch, even if you see no extra guarantees. For a new capability, preserve prior
-decisions as history, identify the new scope and open its questions. Never carry
-approval from one capability to another. Read existing blocked reviewer findings
+sketch, even if you see no extra guarantees. Record the scope covered by the
+journey/collaboration decisions; it may cover several implementation tasks.
+A new task/capability alone does not require another discussion. Reuse decisions
+when the work fits their scope; open only genuinely new or changed choices.
+Read the planner's findings and existing blocked reviewer findings
 from sidecars before deciding readiness. New unresolved design questions reopen
 the handoff; preserve the owner's settled decisions and do not repeat questions
 already answered for unchanged scope.
 
-If the handoff is absent, open, for another scope, or lacks recorded owner
+If the handoff is absent, open, outside the agreed scope, or lacks recorded owner
 decisions resolving the current questions, return `"blocked": true` with findings
 naming the owner, exact discussion path and next question. Tell the operator:
 "From Libby's root: Pick up the open design discussion for run <run>."

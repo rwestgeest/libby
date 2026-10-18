@@ -26,6 +26,21 @@ When Task work committed is true, mark the first unfinished task done before rep
 
 Return "complete": false while any planned product work remains, including after creating a new plan.
 Return "complete": true only when every task in the plan is done.
+Also return boolean "needs_design_discussion" on every result. Completion is
+checked first; use needs_design_discussion false when complete is true.
+
+For remaining work, read `<exact plan path>.discussion.md` and current findings.
+Use needs_design_discussion false when the next task fits the recorded journey,
+collaboration, boundaries and guarantees. Detail that task's behavior, rules and
+deferrals sufficiently for the doer; leave its implementation design to TDD.
+Routine work routes directly to the doer, not another walkthrough/review cycle.
+
+Use needs_design_discussion true only when a real unresolved choice changes
+agreed scope, introduces a new bounded-context dependency or adds an unagreed
+guarantee (or the initial design discussion is missing). Name that choice in
+findings so design_walkthrough can prepare it. A new task or capability name
+alone is not a reason to ask again. Do not reopen settled questions merely
+because a task completed. Never silently extend decisions beyond what was agreed.
 
 If you cannot read or write the designated plan, report the failure; do not claim completion.
 

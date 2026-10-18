@@ -1,319 +1,223 @@
 # Careful plan assembly line
 
-This line reviews the plan with three independent models before implementation,
-then validates each implemented task through an object-oriented,
-responsibility-driven design (OO/RDD) lens.
+**Start with a design discussion and independent plan review.** After accepted
+work, routine tasks continue within those decisions. Revisit the discussion and
+review gate only for genuinely new scope, context dependencies or guarantees.
 
-![Assembly line: initial plan revision and three parallel reviews until unanimous approval, followed by task implementation, OO/RDD validation and completion.](assets/careful-plan-process.svg)
+Source: [live runnable graph](../q/.assembly-lines/careful-plan.dot) ·
+[sharing snapshot](../qubigo/.assembly-lines/careful-plan.dot).
 
-[Open the full-size diagram](assets/careful-plan-process.svg).
+![Careful plan: initial discussion and parallel reviews, then implementation and validation; routine tasks continue directly, while new design choices return to discussion.](assets/careful-plan-process.svg)
 
-**Initial planning:** the three brains review in parallel until they unanimously
-approve the same plan. **Task execution:** the doer, validator and planner then
-repeat for each task, with no return to plan review.
+[Open the full-size clickable diagram](assets/careful-plan-process.svg).
+The picture follows the DOT edges. Blocking is a runtime stop, not a separate
+edge or a successful completion.
 
-To view this page locally in your browser, run `bin/serve-docs` from the repository
-root and open [the process page](http://localhost:8000/docs/careful-plan-process.md).
+To view locally, run `bin/serve-docs` from the repository root and open
+[the process page](http://localhost:8000/docs/careful-plan-process.md).
 
 <details>
 <summary>Mermaid diagram source</summary>
 
 ```mermaid
 flowchart TD
-    start([Start]) --> initial[Initial planner: create or read plan]
-    initial -->|Unfinished tasks remain| revision[Revise and clarify unfinished plan]
-    initial -->|Already complete| planner[Planner: update task status]
-    planner -->|All tasks complete| finish([Finish])
-    planner -->|Next unfinished task| doer
-    revision --> r1[Reviewer 1: OpenAI]
-    revision --> r2[Reviewer 2: Anthropic]
-    revision --> r3[Reviewer 3: Google]
+    start([Start / explicit rerun]) --> initial[Initial planner: outline or read plan]
+    initial -->|Not complete| design[Design walkthrough: scoped decisions]
+    initial -->|Complete| planner[Planner: record accepted completion]
+    design --> revision[Revise current capability]
+    revision --> r1[Reviewer 1]
+    revision --> r2[Reviewer 2]
+    revision --> r3[Reviewer 3]
     r1 --> consensus{All three approve the same plan?}
     r2 --> consensus
     r3 --> consensus
-    consensus -->|No: revise and review again| revision
-    consensus -->|Yes| doer[Doer: implement first unfinished task]
-    doer --> validator{OO/RDD validator satisfied?}
-    validator -->|No: fix findings| doer
-    validator -->|Yes: accept work| planner
+    consensus -->|Not satisfied| revision
+    consensus -->|Satisfied| doer[Doer: test-drive capability]
+    doer --> validator{RDD validator satisfied?}
+    validator -->|Not satisfied| doer
+    validator -->|Satisfied| planner
+    planner -->|Complete| finish([Finish])
+    planner -->|Needs design discussion| design
+    planner -->|Routine work within decisions| doer
 ```
 
 </details>
 
-The three reviewers run concurrently. The consensus machine runs once after
-all three finish. A dissenting reviewer sends the plan back for revision;
-approval requires unanimity, rather than a majority vote.
+## Design discussion and blocked runs
+
+`design_walkthrough` writes `<exact plan path>.discussion.md`: a small journey,
+domain events, policies, responsibility ownership and questions about additional
+guarantees or changed bounded-context dependencies. First use requires human
+review. It returns `blocked: true` until initial or newly required decisions are recorded.
+
+From Libby's root, ask Codex or pi:
+
+> Pick up the open design discussion for run qubigo-004a.
+
+The [discussion skill](../.agents/skills/discuss-factory-design/SKILL.md) reads the
+handoff and discusses one question at a time. It records decisions; it does not
+restart the factory. When ready, explicitly rerun the same named run.
+**A rerun starts at `start`; it does not resume a suspended machine.** Matching,
+resolved decisions are preserved and may cover multiple tasks. A new task alone
+does not require another discussion.
+
+Revision and reviewers can also block for new unagreed guarantees or context
+boundaries. Parallel reviewers write their questions in their own sidecars; the
+interactive session brings them into the shared discussion. The RDD validator
+can block when an implementation repair requires a new design decision.
+
+Any machine's `blocked: true` result stops before routing or acceptance of that
+result. Ordinary fixable defects use the review/retry loops instead. Existing
+work stays available; blocking does not mark the task complete.
 
 ## Machines at a glance
 
-All nine machines use **`pi`**. **Inherited** means the machine has no `model`
-override: it uses the factory run's model setting, or the harness default when
-that setting is absent. Reviewer model strings below are configured identifiers.
+All ten machines currently use `pi`. Model identifiers below are read from the
+current target configuration. “Inherited” uses the run model or harness default.
 
-| Machine / configuration | Model | Job | Route |
+| Machine | Model | Job | Route |
 | --- | --- | --- | --- |
-| [plan_initializer](#plan-initializer) | Inherited | Create or read the plan; leave tasks open. | `complete` → planner; otherwise → revision |
-| [plan_revision](#plan-revision) | Inherited | Clarify unfinished tasks and consume review reports. | Fan out → all three reviewers |
-| [plan_reviewer_1](#plan-reviewer-1) | `openai-codex/gpt-6-astra` | Review seed coverage, feasibility, tests and OO/RDD design. | Report → consensus |
-| [plan_reviewer_2](#plan-reviewer-2) | `openrouter/anthropic/claude-opus-4.8` | Independently review the same unfinished plan. | Report → consensus |
-| [plan_reviewer_3](#plan-reviewer-3) | `openrouter/~google/gemini-pro-latest` | Independently review the same unfinished plan. | Report → consensus |
-| [plan_consensus](#plan-consensus) | Inherited | Require three approvals, empty findings and matching plan hashes. | `satisfied` → doer; otherwise → revision |
-| [doer](#doer) | Inherited | Implement the first unfinished task; repair validation findings. | Always → validator |
-| [rdd_validator](#rdd-validator) | Inherited | Validate current work against the task, seed and OO/RDD lens. | `satisfied` → planner; otherwise → doer |
-| [planner](#planner) | Inherited | Mark accepted work done; select the next task or finish. | `complete` → finish; otherwise → doer |
+| [plan_initializer](#plan-initializer) | `Inherited` | Create/read the overall capability outline. | Complete → planner; otherwise → design walkthrough. |
+| [design_walkthrough](#design-walkthrough) | `openai-codex/gpt-6.1-sol:medium` | Prepare the initial sketch or genuinely new design questions. | Blocked → stop; resolved → revision. |
+| [plan_revision](#plan-revision) | `Inherited` | Detail the current capability; consume review reports. | Fan out to three reviewers. |
+| [plan_reviewer_1](#plan-reviewer-1) | `openai-codex/gpt-6-astra` | Review the unfinished plan and current capability. | Own report → consensus. |
+| [plan_reviewer_2](#plan-reviewer-2) | `openrouter/anthropic/claude-opus-4.8` | Independently review the same plan. | Own report → consensus. |
+| [plan_reviewer_3](#plan-reviewer-3) | `openrouter/~google/gemini-pro-latest` | Independently review the same plan. | Own report → consensus. |
+| [plan_consensus](#plan-consensus) | `Inherited` | Require unanimous approval of the same plan hash. | Satisfied → doer; otherwise → revision. |
+| [doer](#doer) | `Inherited` | Test-drive bounded behavior; repair ordinary defects. | Result → RDD validator. |
+| [rdd_validator](#rdd-validator) | `Inherited` | Review changed behavior, design and TDD evidence. | Satisfied → planner; otherwise → doer. |
+| [planner](#planner) | `Inherited` | Record completion and assess the next task against decisions. | Complete → finish; new choice → walkthrough; routine work → doer. |
 
-## The two feedback loops
+## Feedback loops and acceptance
 
-**Plan review:** revision → three reviewers → consensus → revision, until all
-three approve the same plan. This loop runs only before implementation begins. Each reviewer writes a separate report at the
-exact run plan path with `.plan_reviewer_1.json`, `.plan_reviewer_2.json`, or
-`.plan_reviewer_3.json` appended. This lets the revision machine read the
-findings on its next turn. Reports stay beside the run plan, outside product
-commits.
+**Plan review:** revision → three concurrent reviewers → consensus → revision
+until unanimous approval of the same plan hash. This gate runs initially and
+when the planner identifies a new design choice requiring discussion. It does
+not repeat merely because a task completed. Reviewers retain overall seed
+coverage while accepting a brief outline for later work.
 
-**Implementation:** doer → OO/RDD validator → doer, until validation passes
-or the implementation attempt limit is reached. The factory passes validation
-findings to the doer's retry. On acceptance, returning to the planner causes
-the factory to commit the work; the planner then marks the task done. If more
-tasks remain, the planner routes directly to the doer for the next task.
-Implementation and validation never route back to the three-reviewer gate.
+Each reviewer writes its own `<plan>.plan_reviewer_1.json`,
+`<plan>.plan_reviewer_2.json` or `<plan>.plan_reviewer_3.json`. Reports stay beside the run
+plan, outside product commits. Revision consumes ordinary reports and preserves
+unresolved design questions when blocking.
 
-The OO/RDD lens looks for cohesive responsibilities, behavior beside the
-knowledge it needs, intention-revealing messages, narrow protocols, isolated
-tests, and simple designs. Findings should identify concrete costs and small
-improvements, without demanding speculative abstractions. It is copied from
-[the factory validator lens](../factory/validator-lens.md).
+**Implementation:** doer → RDD validator → doer for ordinary defects. Findings
+feed the retry, bounded by `--max-attempts`. Acceptance routes to the planner:
+the factory commits product work before invoking it, then the planner marks
+completion. It returns both `complete` and `needs_design_discussion`.
+The graph checks `complete` first: true → finish. For incomplete work,
+`needs_design_discussion: false` → doer; true → walkthrough, revision and review.
+The planner details routine behavior within recorded decisions; it does not
+silently invent new scope or guarantees.
 
-## Machine configurations
+Plan only the next capability in detail: actor, observable outcome, relevant
+rules, acceptance examples and deferrals. The doer uses TDD to discover
+collaborators within the recorded architecture; it does not implement future
+capabilities simply because they appear in the overall journey.
 
-These configurations are snapshots of the target files linked below. Expand a
-machine's JSON to see its complete settings, including custom prompts and lenses.
-Configuration paths are relative to `q/` (`/home/rob/dev/qubigo`).
+## Machine instructions and configuration
 
-The factory supplies the exact seed and plan paths and handles product commits.
-A custom `prompt` replaces the default role instructions. For ordinary machine
-calls, the factory also appends a lens, routing-field request and product diff.
-The consensus join instead receives branch results and instructions to use only
-those results, without reading or changing files.
+`config.json` selects harness/model. Job instructions and the RDD lens are in
+machine `AGENTS.md` files, not the old inline `prompt`/`lens` JSON snapshots.
+The factory supplies seed/plan paths, product changes, routing fields and prior
+findings. Consensus receives branch results. Follow the links below for current
+instructions and settings; these links use the sharing snapshot.
 
 ### plan-initializer
 
-**Custom prompt · inherited model.** Creates a missing plan or reads an existing one without closing tasks. Returns `complete`; a completed plan goes through `planner` to finish.
+Create/read the overall capability outline.
 
-Source: [`.assembly-lines/.machines/plan_initializer/config.json`](../q/.assembly-lines/.machines/plan_initializer/config.json).
+[Instructions](../qubigo/.assembly-lines/.machines/plan_initializer/AGENTS.md) · [Configuration](../qubigo/.assembly-lines/.machines/plan_initializer/config.json)
 
-<details>
-<summary>Full configuration JSON</summary>
+### design-walkthrough
 
-```json
-{
-  "harness": "pi",
-  "prompt": "You are the initial planner. If no plan exists at the designated plan path, create a plan from the seed. Otherwise read the existing plan without marking any task done. Do not implement product work. Return boolean complete true only when every task in the plan is done; otherwise return complete false, including after creating a new plan. If the designated plan cannot be read or written, report the failure and do not claim completion. This stage runs before initial parallel plan review; the regular planner handles accepted task completion afterward."
-}
-```
+Prepare the initial sketch or genuinely new design questions.
 
-</details>
+[Instructions](../qubigo/.assembly-lines/.machines/design_walkthrough/AGENTS.md) · [Configuration](../qubigo/.assembly-lines/.machines/design_walkthrough/config.json)
 
 ### plan-revision
 
-**Custom prompt · inherited model.** Reads the three reports beside the exact run plan, revises unfinished tasks, then removes consumed reports. Uses the readable OO/RDD lens; preserves completed tasks and seed scope.
+Detail the current capability; consume review reports.
 
-Source: [`.assembly-lines/.machines/plan_revision/config.json`](../q/.assembly-lines/.machines/plan_revision/config.json).
-
-<details>
-<summary>Full configuration JSON</summary>
-
-```json
-{
-  "harness": "pi",
-  "prompt": "Prepare the existing designated plan for independent review. Never implement product changes or mark top-level tasks done. Read any files at the exact plan path plus .plan_reviewer_1.json, .plan_reviewer_2.json and .plan_reviewer_3.json. These are reports from the preceding review round. Address all concrete findings by revising unfinished tasks in the designated plan; preserve completed tasks and seed requirements. On the first round without reports, inspect and clarify the planner's plan. Remove these three report files after consuming them so stale reports cannot leak into the next task. Make tasks small, ordered, independently verifiable and explicit about acceptance criteria and testing. Consult .assembly-lines/lenses/responsibility-driven-design.md for design guidance. Return a JSON object describing the revision."
-}
-```
-
-</details>
+[Instructions](../qubigo/.assembly-lines/.machines/plan_revision/AGENTS.md) · [Configuration](../qubigo/.assembly-lines/.machines/plan_revision/config.json)
 
 ### plan-reviewer-1
 
-**Custom prompt · explicit OpenAI model.** Reviews the entire unfinished plan against the seed and code. Returns `satisfied`, `findings` and `plan_sha256`, and writes the same JSON to `<plan>.plan_reviewer_1.json`.
+Review the unfinished plan and current capability.
 
-Source: [`.assembly-lines/.machines/plan_reviewer_1/config.json`](../q/.assembly-lines/.machines/plan_reviewer_1/config.json).
-
-<details>
-<summary>Full configuration JSON</summary>
-
-```json
-{
-  "harness": "pi",
-  "model": "openai-codex/gpt-6-astra",
-  "lens": "Seed coverage, feasibility, testability and responsibility-driven object design",
-  "prompt": "Independently review the entire unfinished plan at the designated plan path against the seed and the actual code. Read .assembly-lines/lenses/responsibility-driven-design.md. Check completeness, task order, feasible implementation, explicit acceptance criteria, meaningful tests, clear object responsibilities and collaborations, and unnecessary abstractions. Review the plan, not the supplied product diff. Change neither the plan nor product files. Be satisfied only when there are no concrete blocking findings. Explain each blocking finding with a specific plan location and actionable revision. Do not invent requirements or demand speculative design. Return a JSON object with boolean satisfied and array findings. Before answering, write that same JSON to the exact plan path with .plan_reviewer_1.json appended. Overwrite only your own report. Include a plan_sha256 field containing the SHA-256 of the exact plan bytes reviewed. End with that same JSON on one line."
-}
-```
-
-</details>
+[Instructions](../qubigo/.assembly-lines/.machines/plan_reviewer_1/AGENTS.md) · [Configuration](../qubigo/.assembly-lines/.machines/plan_reviewer_1/config.json)
 
 ### plan-reviewer-2
 
-**Custom prompt · explicit Anthropic model.** Uses the same review instructions as reviewer 1 with an independent model. Writes only its own report, `<plan>.plan_reviewer_2.json`, with `satisfied`, `findings` and `plan_sha256`.
+Independently review the same plan.
 
-Source: [`.assembly-lines/.machines/plan_reviewer_2/config.json`](../q/.assembly-lines/.machines/plan_reviewer_2/config.json).
-
-<details>
-<summary>Full configuration JSON</summary>
-
-```json
-{
-  "harness": "pi",
-  "model": "openrouter/anthropic/claude-opus-4.8",
-  "lens": "Seed coverage, feasibility, testability and responsibility-driven object design",
-  "prompt": "Independently review the entire unfinished plan at the designated plan path against the seed and the actual code. Read .assembly-lines/lenses/responsibility-driven-design.md. Check completeness, task order, feasible implementation, explicit acceptance criteria, meaningful tests, clear object responsibilities and collaborations, and unnecessary abstractions. Review the plan, not the supplied product diff. Change neither the plan nor product files. Be satisfied only when there are no concrete blocking findings. Explain each blocking finding with a specific plan location and actionable revision. Do not invent requirements or demand speculative design. Return a JSON object with boolean satisfied and array findings. Before answering, write that same JSON to the exact plan path with .plan_reviewer_2.json appended. Overwrite only your own report. Include a plan_sha256 field containing the SHA-256 of the exact plan bytes reviewed. End with that same JSON on one line."
-}
-```
-
-</details>
+[Instructions](../qubigo/.assembly-lines/.machines/plan_reviewer_2/AGENTS.md) · [Configuration](../qubigo/.assembly-lines/.machines/plan_reviewer_2/config.json)
 
 ### plan-reviewer-3
 
-**Custom prompt · explicit Google model.** Uses the same review instructions as reviewer 1 with an independent model. Writes only its own report, `<plan>.plan_reviewer_3.json`, with `satisfied`, `findings` and `plan_sha256`.
+Independently review the same plan.
 
-Source: [`.assembly-lines/.machines/plan_reviewer_3/config.json`](../q/.assembly-lines/.machines/plan_reviewer_3/config.json).
-
-<details>
-<summary>Full configuration JSON</summary>
-
-```json
-{
-  "harness": "pi",
-  "model": "openrouter/~google/gemini-pro-latest",
-  "lens": "Seed coverage, feasibility, testability and responsibility-driven object design",
-  "prompt": "Independently review the entire unfinished plan at the designated plan path against the seed and the actual code. Read .assembly-lines/lenses/responsibility-driven-design.md. Check completeness, task order, feasible implementation, explicit acceptance criteria, meaningful tests, clear object responsibilities and collaborations, and unnecessary abstractions. Review the plan, not the supplied product diff. Change neither the plan nor product files. Be satisfied only when there are no concrete blocking findings. Explain each blocking finding with a specific plan location and actionable revision. Do not invent requirements or demand speculative design. Return a JSON object with boolean satisfied and array findings. Before answering, write that same JSON to the exact plan path with .plan_reviewer_3.json appended. Overwrite only your own report. Include a plan_sha256 field containing the SHA-256 of the exact plan bytes reviewed. End with that same JSON on one line."
-}
-```
-
-</details>
+[Instructions](../qubigo/.assembly-lines/.machines/plan_reviewer_3/AGENTS.md) · [Configuration](../qubigo/.assembly-lines/.machines/plan_reviewer_3/config.json)
 
 ### plan-consensus
 
-**Custom join prompt · inherited model.** Combines only the three branch results. Approves only when all three report `satisfied: true`, empty findings and the same nonempty hash. Returns `satisfied` and reviewer-labelled `findings`; never uses majority voting.
+Require unanimous approval of the same plan hash.
 
-Source: [`.assembly-lines/.machines/plan_consensus/config.json`](../q/.assembly-lines/.machines/plan_consensus/config.json).
-
-<details>
-<summary>Full configuration JSON</summary>
-
-```json
-{
-  "harness": "pi",
-  "prompt": "Decide whether all three independent reviewers approve the same plan. Require exactly plan_reviewer_1, plan_reviewer_2 and plan_reviewer_3. Return satisfied true only if all three reports have satisfied exactly true, empty findings arrays and the same nonempty plan_sha256. Otherwise return satisfied false and combine all blocking findings, identifying their reviewers; include a diagnostic for missing, malformed or mismatched reports. Never override a dissenting reviewer or use majority voting. Return findings as an array, including [] on approval."
-}
-```
-
-</details>
+[Instructions](../qubigo/.assembly-lines/.machines/plan_consensus/AGENTS.md) · [Configuration](../qubigo/.assembly-lines/.machines/plan_consensus/config.json)
 
 ### doer
 
-**Default doer prompt · inherited model.** Implements the first unfinished task. On retry, records validator findings as subtasks and fixes them, marking resolved subtasks done. Leaves the top-level task open for the planner. No custom prompt or lens is configured.
+Test-drive bounded behavior; repair ordinary defects.
 
-Source: [`.assembly-lines/.machines/doer/config.json`](../q/.assembly-lines/.machines/doer/config.json).
-
-<details>
-<summary>Full configuration JSON</summary>
-
-```json
-{
-  "harness": "pi"
-}
-```
-
-</details>
+[Instructions](../qubigo/.assembly-lines/.machines/doer/AGENTS.md) · [Configuration](../qubigo/.assembly-lines/.machines/doer/config.json)
 
 ### rdd-validator
 
-**Custom prompt · embedded OO/RDD lens · inherited model.** Checks current uncommitted changes against the task, seed and responsibility-driven design lens, running meaningful checks. Changes neither product nor plan. Returns `satisfied` and `findings`; acceptance requires no blocking findings. The lens is literal text embedded below, not a file path.
+Review changed behavior, design and TDD evidence.
 
-Source: [`.assembly-lines/.machines/rdd_validator/config.json`](../q/.assembly-lines/.machines/rdd_validator/config.json).
-
-<details>
-<summary>Full configuration JSON</summary>
-
-```json
-{
-  "harness": "pi",
-  "lens": "# Responsibility-driven object design\n\nReview through the object-design traditions of Sandi Metz, Rebecca Wirfs-Brock,\nDavid West, Kent Beck, and Ward Cunningham: Smalltalk-style objects collaborating\nthrough intention-revealing messages. These are influences, not claims that the\npractitioners share one fixed checklist.\n\nLook for:\n- Cohesive objects with clear responsibilities and understandable collaborators.\n- Behavior living with the object that owns the knowledge it needs; avoid exposing\n  internal state so another object can make its decisions for it.\n- Small, focused methods and meaningful names that express domain intent.\n- Collaboration through narrow protocols, rather than type switches, sprawling\n  procedural controllers, or inheritance that merely shares implementation.\n- Dependencies that permit isolated tests and changes without cascading edits.\n- The simplest design that expresses today's behavior; prefer composition and\n  useful polymorphism, but do not manufacture classes or speculative abstractions.\n\nReport concrete problems in the changed work: identify the responsibility or\ncollaboration at fault, explain its cost, and suggest a small behavioral improvement.\nJudge the current task, not an unfinished future task or the number of classes.\nDo not reject a useful function merely because it is not a method. Preserve the\nseed's behavior and the project's language idioms.\n",
-  "prompt": "Validate the doer's current uncommitted product changes, including new files, against the first unfinished task, the seed and the configured responsibility-driven object-design lens. Read the designated plan and relevant code; run meaningful checks appropriate to the changed behavior. Review only this attempt, preserving existing behavior and language idioms. Report concrete defects, missing acceptance criteria or material responsibility/collaboration problems with locations and small actionable fixes. Change neither product nor plan. Return a JSON object with boolean satisfied and array findings; satisfied is true only if no blocking findings remain. Include [] when satisfied."
-}
-```
-
-</details>
+[Instructions](../qubigo/.assembly-lines/.machines/rdd_validator/AGENTS.md) · [Configuration](../qubigo/.assembly-lines/.machines/rdd_validator/config.json)
 
 ### planner
 
-**Default planner prompt · inherited model.** After acceptance, the factory commits product work before invoking this machine. The default accepted-work prompt marks the first unfinished task done and returns `complete`. On entry from an already-complete initializer, its default status prompt reads the plan without changing it. No custom prompt or lens is configured.
+Record completion and assess the next task against decisions.
 
-Source: [`.assembly-lines/.machines/planner/config.json`](../q/.assembly-lines/.machines/planner/config.json).
+[Instructions](../qubigo/.assembly-lines/.machines/planner/AGENTS.md) · [Configuration](../qubigo/.assembly-lines/.machines/planner/config.json)
 
-<details>
-<summary>Full configuration JSON</summary>
+## Run or revisit a discussion
 
-```json
-{
-  "harness": "pi"
-}
-```
-
-</details>
-
-## Files
-
-All target paths below are relative to `q/`, which points to
-`/home/rob/dev/qubigo`.
-
-| Path | Purpose |
-| --- | --- |
-| `.assembly-lines/careful-plan.dot` | Authoritative runnable graph loaded by `--line careful-plan`. |
-| `.assembly-lines/.machines/plan_initializer/config.json` | Initial plan creation and status instructions. |
-| `.assembly-lines/.machines/planner/config.json` | Existing planner configuration for accepted task completion. |
-| `.assembly-lines/.machines/doer/config.json` | Existing doer configuration. |
-| `.assembly-lines/.machines/plan_revision/config.json` | Plan revision instructions. |
-| `.assembly-lines/.machines/plan_reviewer_1/config.json` | OpenAI reviewer model and instructions. |
-| `.assembly-lines/.machines/plan_reviewer_2/config.json` | Anthropic reviewer model and instructions. |
-| `.assembly-lines/.machines/plan_reviewer_3/config.json` | Google reviewer model and instructions. |
-| `.assembly-lines/.machines/plan_consensus/config.json` | Unanimous approval instructions. |
-| `.assembly-lines/.machines/rdd_validator/config.json` | Implementation validation instructions and embedded lens. |
-| `.assembly-lines/lenses/responsibility-driven-design.md` | Readable lens used by plan revision and reviewers. |
-| `.assembly-lines/careful-plan.md` | Target-local usage notes. |
-
-The validator's lens is embedded in its JSON configuration because the factory
-treats `lens` as literal text. Keep that text and the readable lens in sync if
-the lens changes. The existing assembly lines keep their configurations.
-
-## Run it
-
-From this factory checkout, start a new named run:
+Use a fresh working branch in the live target before starting implementation.
+For the prepared 004a seed, from Libby's root:
 
 ```sh
-bin/factory --run qubigo-careful-plan --target q --line careful-plan --seed q/docs/iterations/002-clearer-onboarding.md
+bin/factory --run qubigo-004a --target q --line careful-plan \
+  --seed q/docs/iterations/004a-competitions-run-brief.md
+bin/factory watch qubigo-004a
 ```
 
-Choose the seed for the work you want implemented. Resume the same run with:
+After discussing the blocked sketch and recording decisions, explicitly rerun:
 
 ```sh
-bin/factory --run qubigo-careful-plan
+bin/factory --run qubigo-004a
 ```
 
-Run settings are immutable after creation, so use a fresh run name for a
-different seed or assembly line. These commands invoke real agents. Pi needs
-access to OpenAI Codex and OpenRouter; reviewer-specific models override the
-shared CLI model setting.
+Run settings are fixed at creation; a different seed or line needs a fresh run
+name. These commands invoke real agents; they are not executed by reading this
+page. The first expected stop for a new run is its initial design discussion.
+Routine task completion does not require another human stop.
 
 ## Limits and verification
 
-The factory's `--max-attempts` bounds implementation attempts, not plan review
-rounds. Plan review can continue indefinitely if the reviewers cannot agree;
-stop the run manually in that case.
+The factory enforces graph routing and stops on `blocked: true`. Discussion
+readiness, unanimous matching-hash approval and report writing depend on agents
+following instructions; the factory does not parse discussion-file status or
+independently enforce consensus semantics. `--max-attempts` bounds implementation
+attempts, not plan-review rounds. Stop a non-converging review loop manually.
 
-Unanimity, matching hashes, and report writing are instructions to agents,
-rather than deterministic checks enforced by factory code. Structural checks
-verified the JSON configurations, routing, three-branch join, reachability of
-finish, and copied lens. No real-agent execution has been
-performed to verify this line end to end.
+The graph and instruction changes passed structural checks. The full factory
+suite passed, and bounded format-repair regressions cover pi print/ACP doers.
+Those checks do not demonstrate the quality of human discussions or incremental
+design; observe those effects during 004a. No success of that attempt is implied.
+
+See [target workflow notes](../qubigo/.assembly-lines/careful-plan.md) and the
+[short kaizen map](runs/qubigo-004/five-whys-summary.md) for the reasoning behind
+these changes.

@@ -86,8 +86,10 @@ Seed: <path>
 
 Keep `Status: open` while any required decision remains. Use `Status: resolved`
 only when the user has settled all listed questions, including explicitly
-accepted deferrals. Resolved means ready for planning of this scope, not approval
-of future design changes or implementation acceptance. If the capability/sketch
+accepted deferrals. Resolved means ready for planning/work within the recorded scope, which may
+cover multiple implementation tasks. A new task alone does not reopen the
+discussion; new unagreed scope, dependencies or guarantees do. Resolution is
+not blanket approval of future design changes or implementation acceptance. If the capability/sketch
 changes materially, record the change and reopen affected questions.
 
 End each session with a link to this file and the next question or readiness.
