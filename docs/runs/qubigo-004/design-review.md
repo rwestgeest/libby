@@ -23,10 +23,10 @@ task 7 open, and tasks 8–18 unfinished. Its repair scope requires stopping aft
 task 7. Current source was inspected after the failed run; it is not a captured
 source snapshot from each earlier attempt.
 
-Shared references: [product requirements](../qubigo/docs/iterations/004-competitions.md),
-[implementation claims and evidence](../qubigo/docs/iterations/004-competitions-implementation.md),
-[factory workflow](../qubigo/.assembly-lines/careful-plan.md), and
-[responsibility-driven design lens](../qubigo/.assembly-lines/lenses/responsibility-driven-design.md).
+Shared references: [product requirements](../../../qubigo/docs/iterations/004-competitions.md),
+[implementation claims and evidence](../../../qubigo/docs/iterations/004-competitions-implementation.md),
+[factory workflow](../../../qubigo/.assembly-lines/careful-plan.md), and
+[responsibility-driven design lens](../../../qubigo/.assembly-lines/lenses/responsibility-driven-design.md).
 The implementation report contains agent claims, not independent acceptance of
 the last changes. Application source is intentionally outside the sharing export.
 Class names below identify the inspected source for a later walkthrough.

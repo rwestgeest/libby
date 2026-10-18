@@ -1,0 +1,338 @@
+# Qubigo-004 — session 7 run notes
+
+Historical observations in capture order. Later entries qualify earlier status
+claims; these notes are not a current completion report.
+
+## 2026-10-17 — Factory run issues on the qubigo-004 sizable change
+
+Continued the qubigo-004 run and inspected its outputs. The run progressed
+through tasks 1–5 (competition drafts, publication/invitations, enrollment,
+competition context, manual start/matching) but stalled repeatedly:
+
+### Stop causes
+
+- **Codex usage-limit errors** hit the doer and plan_initializer three times
+  (recorded in `daemon.log`). Machines without explicit model config still used
+  `openai-codex/gpt-6-astra` by default, burning quota even though the main
+  doer was switched to DeepSeek.
+- **Unparseable plan_revision results** — the machine returned fenced,
+  pretty-printed JSON. The factory's ACP reader accumulated streamed text but
+  only parsed single lines, stopping with `Could not read the plan_revision's
+  result`. Fixed by updating the factory result reader to accept fenced and
+  multiline JSON. Factory suite passed: 136 scenarios, 1,966 steps.
+- **Unparseable rdd_validator result** — the run ended with `Could not read
+  the rdd_validator's result` (same root cause as plan_revision, presumably).
+  Task 6 work was left uncommitted.
+
+### Plan revision cycles
+
+Reviewers ran 4 times, not once as designed. The crash/recovery re-triggered
+the initialization path (`plan_initializer` → `plan_revision` → reviewers).
+Reviewer 1 found multiple contradictions in tasks 6–7 (read-only linkage,
+board-full semantics, transaction contract, move-notification ownership),
+each requiring a revision round until all three reviewers were satisfied.
+
+### Friction throughout the run
+
+A detailed `plan.md.friction.md` was produced (see
+`factory/runs/qubigo-004/plan.md.friction.md`). Notable items:
+
+- **Java 25** — `./gradlew` fails with `What went wrong: 25.0.4`; must use
+  existing documented `/tmp/qubigo-jdk21`.
+- **Wrong directory** — validators launched commands from `qubigo/` root
+  instead of `qubigo-backend/` or `qubigo-frontend/`, causing ENOENT errors.
+- **Edit tool collisions** — repeated `Found N occurrences` rejections on
+  batched edits (tasks 2, 3, 4, 5, 6), each needing a retry.
+- **Test-report lookup** — result XML is under `build/reports/`, not
+  `build/test-results/`.
+- **Missing acceptance runner** — `browser.cjs` reference in iteration 003
+  docs was deleted by the kaizen resolution, causing a rebuild of a disposable
+  runner.
+- **Spring devtools** — disposable acceptance runner restarted repeatedly due
+  to devtools; had to disable them.
+- **Local browser proxy** — security config only allowed port 9090; acceptance
+  runner on 5196 returned 403 before reconfiguring.
+- **Multiple edit retries** — tasks 3, 4, 5, 6 each needed at least one
+  retried edit call because the replacement text was not unique.
+
+### Validator findings on task 5
+
+The rdd_validator found a test-design violation introduced by the doer:
+`CompetitionMatchingTest` passed positional boolean flags to `ReservedPair`,
+obscuring intent. The doer replaced those with `completedPair`/`pendingPair`
+fixture helpers in a follow-up, and the validator accepted the fix.
+
+### Cross-cutting kaizen from this run
+
+All the 2026-10-16 kaizen notes (Java 25, gradlew directory, plan location,
+commit messages, yx, tests-after-implementation, validator loops) were
+initiated by reviewing iteration 003 and are stored in the qubigo snapshot
+at `qubigo/docs/kaizen/`. Their resolutions vary: some were fixed (yx
+installed, test guidelines added, scenario tests deleted), others are
+still open (plan lifecycles, commit messages, JDK toolchain).
+
+The run's `plan.md`, `record.jsonl` and `daemon.log` are in the ignored
+local `factory/runs/qubigo-004/`.
+
+## 2026-10-17 — Competition run and structured results
+
+Continued iteration 004 on the live QubiGo target through the `careful-plan`
+line. The saved `qubigo-004` plan has tasks 1–5 checked and task 6, invitation
+acceptance and game creation, still open. The live target contains uncommitted
+task 6 work; this session did not accept or commit it.
+
+The run exposed two different stop causes. Its earlier output reported Codex
+usage-limit errors for the doer and plan initializer, so those attempts exited
+unsuccessfully. Later, `plan_revision` returned its result as a fenced,
+pretty-printed JSON object. The factory's ACP reader accumulated streamed text
+but only parsed individual lines, then stopped with `Could not read the
+plan_revision's result`. The reported `complete: false` results were expected:
+unfinished tasks remained in the plan. Restarting the named run starts again at
+the assembly line's start node, which explains the repeated initialization and
+review work; it does not resume at the machine that last failed.
+
+Updated the factory result reader to accept fenced and multiline JSON while
+preserving the rule that the last JSON value controls the result. Added an end
+to end regression where agents return fenced, pretty-printed results. The
+factory suite passed: 136 scenarios and 1,966 steps. The provider usage limit is
+separate from parsing and may still stop a future agent attempt.
+
+Relevant material: [iteration 004 seed](../../../qubigo/docs/iterations/004-competitions.md),
+[implementation evidence](../../../qubigo/docs/iterations/004-competitions-implementation.md),
+[careful-plan line](../../../qubigo/.assembly-lines/careful-plan.md),
+[validator-loop kaizen note](../../../qubigo/docs/kaizen/2026-10-16-validator-loops-on-evidence-no-agent-can-produce.md).
+
+After provider access is available, restart and inspect the saved run with
+`bin/factory --run qubigo-004` and `bin/factory watch qubigo-004`. Then verify
+whether task 6's existing changes satisfy the acceptance checks before
+accepting the task; do not infer completion from the earlier plan reviews.
+
+## 2026-10-17 — Provider usage analysis and reviewer cycle audit
+
+Inspected the live `qubigo-004` run's `record.jsonl` and `daemon.log` to
+understand why OpenAI Codex credits were still being consumed after the
+model config changes that switched the doer and plan_revision to
+DeepSeek.
+
+### Config change effect
+
+The following machines had explicit model overrides in
+`.assembly-lines/.machines/`:
+
+| Machine | Model | Burns OpenAI? |
+|---------|-------|--------------|
+| doer | `deepseek/deepseek-v4-flash` | No |
+| plan_revision | `deepseek/deepseek-v4-flash` | No |
+| planner | `deepseek/deepseek-v4-flash` | No |
+| plan_reviewer_2 | `openrouter/anthropic/claude-opus-4.8` | No |
+| plan_reviewer_3 | `openrouter/~google/gemini-pro-latest` | No |
+| **plan_reviewer_1** | **`openai-codex/gpt-6-astra`** | **Yes** |
+| plan_initializer | *(no config — uses harness default)* | Yes |
+| plan_consensus | *(no config — uses harness default)* | Yes |
+| validator/rdd_validator | *(no config — uses harness default)* | Yes |
+
+### Reviewers ran 4 times, not once
+
+The `careful-plan.md` line promises the three-reviewer brain runs only
+during initial planning. In practice it ran four complete cycles:
+
+1. **Initial plan** (normal) — all satisfied → doer tasks 1–5
+2. **After usage-limit crash** — plan_initializer re-ran during recovery,
+   plan got revised, reviewers ran again → reviewer_1 found 4 issues
+3. **Revision round 2** — reviewers ran again → reviewer_1 still found 1
+   issue
+4. **Revision round 3** — all satisfied → doer for task 6
+
+The extra cycles were caused by the crash/recovery re-triggering the
+initialization path (`plan_initializer` → `plan_revision` → reviewers).
+
+### Current pipeline status (as of inspection)
+
+The doer completed task 6 (fixed `AcceptInvitationPage.open()` async race
+condition). The `rdd_validator` was running. Going forward the flow is
+`planner → doer → rdd_validator → planner` for each remaining task
+(7–18) — the reviewers will **not** run again unless a plan revision cycle
+is triggered.
+
+### Still burning OpenAI credits
+
+While the reviewers are done, these machines still use the harness default
+(Codex/OpenAI) and run on every task:
+- `rdd_validator` — runs after every doer task
+- `plan_consensus` — runs during review cycles (done for now)
+- `plan_initializer` — only if recovery triggers again
+
+To fully stop OpenAI consumption, give them explicit models matching the
+doer, e.g.:
+```json
+{"harness": "pi", "model": "deepseek/deepseek-v4-flash"}
+```
+
+### Useful commands
+```
+# Inspect machine configs
+cat .assembly-lines/.machines/{machine}/config.json
+
+# Count reviewer cycles from the record
+python3 -c "
+import json
+with open('factory/runs/qubigo-004/record.jsonl') as f:
+    for i, line in enumerate(f):
+        rec = json.loads(line)
+        if rec.get('type') == 'machine-state' and rec.get('running'):
+            print(f'line {i:3d}: ▶ {rec[\"machine\"]}')
+"
+```
+
+Open question: whether the Codex daemon's default model for unconfigured
+machines can be set globally, or each machine needs an explicit model
+override.
+
+## 2026-10-17 — RDD validator omitted its JSON result
+
+**Problem.** `qubigo-004` stopped during task 6 with
+`Could not read the rdd_validator's result`. Tasks 1–5 remain accepted;
+task 6 remains unchecked. The validator's recorded response was a prose
+assessment ending with “No blocking findings”, without the JSON decision
+the factory needs to route to the planner. This differs from the earlier
+fenced/multiline JSON failures: there was no JSON for the improved parser
+to extract. The stop does not establish a product defect or task acceptance.
+
+**Cause.** The agent omitted a required response format, and the factory
+depends on a textual instruction rather than enforced structured output.
+The validator now uses Pi with `deepseek/deepseek-v4-flash`. That switch is
+a possible trigger, but the evidence does not isolate the harness from
+the model or prove why the instruction was missed. The current invocation
+passes the machine instructions via `--append-system-prompt` and includes
+the JSON requirement in the task prompt; the run does not capture the
+complete effective model request. Prose approval must not be interpreted
+as a machine-readable acceptance decision.
+
+**Fix.** Added a final response contract to the live
+[RDD validator instructions](../../../qubigo/.assembly-lines/.machines/rdd_validator/AGENTS.md#final-response-contract).
+It requires a single-line JSON object as the final line, without Markdown
+fences or trailing prose, and supplies examples for acceptance, fixable
+defects and unavailable external input. Acceptance explicitly returns
+`{"satisfied":true,"findings":[]}`. The validator must check the JSON syntax
+and field types before sending. Refreshed the sharing snapshot with this
+instruction change; `git diff --check` passed.
+
+The fix has not yet been verified in a new agent invocation. No logs,
+status or plan history were rewritten, and this change did not restart
+the run. Next: restart with `bin/factory --run qubigo-004`, inspect with
+`bin/factory watch qubigo-004`, and confirm a valid validator decision
+before accepting task 6. Restart enters the assembly line at its start,
+so planning/review work may repeat. If the format failure persists,
+inspect the effective Pi prompt and compare with the previous working
+harness/model configuration. A bounded response-repair step is a proposed
+later factory improvement, not part of this instruction fix.
+
+
+## 2026-10-17 — Task 7 failed review; factory asked to repair it
+
+Analyzed `qubigo-004` from its saved settings, status, plan, daemon log and
+machine record. This run lives under `factory/runs/qubigo-004/`, rather than
+the older target-owned run location. It uses `careful-plan` against the live
+Qubigo repository for [iteration 004 — event competitions](../../../qubigo/docs/iterations/004-competitions.md).
+At the failure recorded at 17:30 CEST, tasks 1–6 were checked complete;
+task 7 (durable competition results and admission markers) had exhausted
+three implementation attempts. Tasks 8–18 remained unchecked.
+
+The doer repeatedly reported completion and passing backend tests, but the
+final validator still found five substantive gaps:
+
+- Move execution and time sampling happen before acquiring the competition
+  write boundary. A request waiting across the deadline can therefore use a
+  stale pre-cutoff timestamp. Reusing the event timestamp did not correct
+  when that timestamp was sampled.
+- Missing admission markers or marker-read failures fall back to the latest
+  journal revision, risking points awarded from excluded post-cutoff moves.
+- Helper tests bypass the wired `MakeMove` command, its decorator, finalizer
+  and notifications. They do not establish complete-game result recording,
+  concurrent final-move safety, rollback or restart recovery through that path.
+- Scrambling five journal inserts does not prove the test detects removal of
+  `ORDER BY`: an existing index may still return revision order. Complete
+  creation-plus-26-move reconstruction also needs evidence.
+- Result-composition tests claim companion-state rollback without actually
+  modifying companion state inside the enclosing transaction.
+
+The main lesson is that a passing suite and an implementation completion
+claim do not establish the planned collaboration contract. Tests must cross
+its real production boundary. Earlier plan revisions had already converged
+on an injectable move protocol: acquire the serialized write boundary,
+sample authoritative time once, execute the move, and persist the event,
+projections and admission marker together. The remaining implementation
+still diverged from that contract. Require a valid durable marker for
+finalization; a read failure should remain retryable rather than silently
+substitute unrestricted game state.
+
+The run also contains earlier provider-limit interruptions, plan-review
+churn over cutoff reconstruction and transaction ownership, and an earlier
+task-7 attempt-limit failure. These are separate from the final correctness
+findings. All three plan reviewers accepted the final reviewed plan; that
+approval did not establish implementation acceptance.
+
+The student asked the factory to fix task 7. Added all five final findings
+and a repair scope to the existing external run plan, preserving prior work,
+then launched:
+
+```sh
+bin/factory --run qubigo-004
+bin/factory watch qubigo-004
+```
+
+Restart does not automatically carry the previous validator findings into
+its first attempt, so recording them in the plan makes them available to
+the new machines. The plan asks the factory to validate and commit task 7,
+mark it complete only after acceptance, then pause before task 8 pending
+further authorization. The whole iteration must remain incomplete.
+
+The restart was observed running: the initializer started and a subsequent
+plan reviewer returned approval. No repaired task-7 implementation, new test
+success or acceptance is claimed by this capture. Next: inspect the new
+validator decision and the task-7 commit, and confirm the requested pause.
+The analysis itself changed no application code and reran no tests.
+
+Refreshed the sharing snapshot, including the current
+[implementation report](../../../qubigo/docs/iterations/004-competitions-implementation.md)
+and [validator configuration](../../../qubigo/.assembly-lines/.machines/rdd_validator/config.json).
+The report contains the doer's task-7 success claims; the unresolved findings
+above qualify those claims. The copied validator configuration currently
+selects `openai-codex/gpt-6.1-sol:medium`; this capture did not change the live
+machine configuration. See the [careful-plan workflow](../../../qubigo/.assembly-lines/careful-plan.md)
+for restart and review behavior. Local run artifacts are not part of the
+sharing snapshot.
+
+
+## 2026-10-17 — Task 7 repair stopped; reconsidering the design approach
+
+Re-inspected `qubigo-004` after the repair restart. Tasks 1–6 remain recorded as
+complete; task 7 remains open. The latest stop is `Could not read the doer's
+result`: the final doer returned a Markdown summary without the required JSON.
+This differs from the earlier fenced/multiline JSON parsing problem. Its claims
+of fixes and passing backend tests received no subsequent validator acceptance.
+Earlier reviews repeatedly found tests bypassing the production move wiring,
+so suite success alone still does not establish task-7 completion.
+
+After reading the code and plan, I find the design overly complicated. I need
+time to consider starting again and using a different approach to guide both
+implementation and design. This is an open direction to think through, not a
+decision to discard the current work or authorize a rewrite.
+
+The linked [design review and comparison](design-review.md)
+captures the established application structure, the competition design prescribed
+by the plan, how the current implementation changes responsibility and transaction
+ownership, and the factory workflow behind it. It also distinguishes remaining
+acceptance gaps from proposed alternatives. In particular, competition moves now
+follow a separate persistence protocol, followed by result recording in another
+transaction; the full collaboration is harder to see across the added layers.
+
+Next: step back from repeated task repairs, explain the intended collaboration
+in domain terms, and compare simpler implementation-guidance approaches before
+choosing whether to restart. Preserve existing work and requirements while making
+that decision. A small vertical example through real command wiring is one
+possible experiment, not an agreed replacement plan.
+
+Refreshed the Qubigo sharing snapshot with `bin/take-over-qubigo`. This capture
+changes documentation only, does not restart the factory, and reruns no application
+or factory tests. The latest implementation report remains agent-reported evidence.
