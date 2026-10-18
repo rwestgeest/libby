@@ -2,13 +2,30 @@
 
 Date: 2026-10-18
 
+## Current outcome — 03 done
+
+Implemented on main in `d7780d02`:
+
+- [ADR 0007](../../qubigo-backend/docs/adr/0007-domain-primitives-and-validated-domain-inputs.md): Domain Primitives and validated domain inputs.
+- [ADR 0008](../../qubigo-backend/docs/adr/0008-immutable-aggregates-with-behavior.md): immutable aggregates with behavior.
+- Both reference ADRs 0002/0005. Backend guidance and machine instructions require
+  tracing these responsibilities through the existing Games example.
+
+**Adjustment complete; effectiveness verification belongs to 004a.** Check clean
+inputs, aggregate-owned rules and command-owned coordination in that attempt.
+No additional investigation or separate trial is required before moving on.
+Ledger status: Closed (implemented outcome documented; effectiveness not yet
+claimed). No product code changed.
+
+The sections below preserve the original observation and investigation context.
+
 ## Context
 
 Collaborative investigation with Rob of `qubigo-004`, line `careful-plan`.
 Live branch `feature/004-competitions`, preserved implementation `221d7bb3`.
 Comparison uses Games on local main `df120f51`; inspection only, no tests run.
-This note records findings agreed in conversation, not a completed root-cause
-analysis or an implemented countermeasure.
+At capture, this note recorded agreed findings before a countermeasure was
+implemented. The current outcome above supersedes that initial state.
 
 ## Expected standard
 
@@ -88,7 +105,7 @@ established that machines simply failed to find the documents. Adding prose
 alone cannot be assumed to fix the second gap. The exact discovery, application
 and review failure mechanisms remain open.
 
-## Open questions
+## Questions recorded during investigation
 
 - How do machines select and apply the relevant architectural decisions, and
   how does review distinguish a command wrapper from actual use-case ownership?
@@ -99,23 +116,24 @@ and review failure mechanisms remain open.
 - How would a collaborative event/policy walkthrough expose these departures
   before implementation, and what observation would demonstrate improvement?
 
-## Possible prevention ideas
+## Prevention ideas recorded before implementation
 
 Document the missing design intent with the established Games example, and
 separately examine how the factory applies already documented responsibilities.
 The proposed collaborative event-storming/responsibility walkthrough may expose
-boundary changes early. These are candidates, not fixes or active experiments.
+boundary changes early. These were candidates at capture; the selected adjustments are now implemented
+as recorded above. No active experiment is claimed.
 
 ## Countermeasure implemented — 18 October 2026
 
 On main, ADR 0007 records Domain Primitives and validated inputs; ADR 0008
 records immutable aggregates with behavior. Both reference command decisions
-0002/0005 and use the existing Games flow as an example. Backend AGENTS.md links it. Design walkthrough, revision, doer,
+0002/0005 and use the existing Games flow as an example. Backend AGENTS.md links both. Design walkthrough, revision, doer,
 plan reviewers and RDD validator explicitly read ADRs 0002/0005/0007/0008 and trace
 responsibilities along changed behavior, rather than infer conformance from
 package/class names. No product code was changed.
 
 This addresses missing intent and gives discovery/application an explicit route.
-It is not evidence that machines apply it reliably. The note remains Open;
-observe a subsequent capability for typed inputs, aggregate-owned rules and
-command-owned coordination. No active experiment or review date is claimed.
+It is not evidence that machines apply it reliably. Thread 03 is complete as
+an adjustment; verify its effect in 004a, as agreed. No active experiment or
+review date is claimed.

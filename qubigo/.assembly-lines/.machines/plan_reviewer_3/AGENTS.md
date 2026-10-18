@@ -35,3 +35,15 @@ field-specific conversion failures and which object owns state-dependent rules.
 A command wrapper around an SQL use case does not meet these responsibilities.
 Apply this to changed behavior, not a speculative rewrite of unrelated code.
 A needed architectural departure belongs in the owner design discussion.
+
+## Capability scope and test-driven design
+
+Judge the current capability against its behavioral goal and recorded scope.
+A brief outline for later capabilities is intentional; do not demand future
+implementation detail or promote deferred behavior into this increment.
+Allow collaborators to emerge through TDD within the ADRs. For implemented
+behavior, examine the recorded failing-test → change → refactor sequence as
+well as final results; do not infer TDD from a passing suite alone. Report an
+actual evidence gap honestly without inventing a past red run or demanding
+unrelated test machinery. Plan reviewers assess whether test-first work is
+feasible, not whether a not-yet-implemented task already has execution evidence.

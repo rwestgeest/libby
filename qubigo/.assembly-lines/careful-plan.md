@@ -67,3 +67,11 @@ there is no factory parser enforcing discussion-file status. A planning-only
 trial must still demonstrate first-stop, discussion pickup, unchanged-scope
 rerun and a newly introduced question blocking again. No trial is implied by
 installing these instructions.
+
+## Capability detail and TDD
+
+Keep an overall journey outline, but detail only the next releasable capability:
+actor, outcome, relevant rules, acceptance examples and deferrals. The doer
+uses TDD to discover collaborators within the agreed ADRs; a lightweight plan is
+intentional. Reviewers do not demand later functionality or implementation
+recipes. Effectiveness of this adjustment will be checked in 004a.

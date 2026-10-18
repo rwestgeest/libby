@@ -33,3 +33,29 @@ Would a thinner vertical slice (restart test first, then adapter, then wiring) h
 
 ## Possible prevention ideas
 Ask the planner to order tasks so each behavior's failing test comes before its implementation; give the validator a "red evidence present" check.
+
+## Additional observation and countermeasure — 18 October 2026
+
+In the collaborative qubigo-004 investigation, we identified a related planning
+pressure: instructions demanded acceptance checks for happy paths, errors and
+edge cases for every task, despite also asking for small increments. This could
+encourage future design elaboration; it does not prove why every earlier choice
+was made. We agreed to keep a journey/capability outline and detail only the next
+releasable capability, with behavior, relevant rules and explicit deferrals.
+
+Implemented on main: initializer/planner/revision now use that distinction.
+The doer explicitly test-drives bounded behavior and lets collaborators/ports
+emerge; reviewers honor limited scope and inspect actual TDD evidence instead
+of treating passing tests as proof. Backend guidance permits outside-in and
+inside-out rather than a mandatory layer order. Existing design checkpoints
+still handle new scope/architecture decisions.
+
+### Outcome and follow-up
+
+Thread 04 is done as an instruction/process adjustment, by the user's decision.
+Effectiveness testing is deliberately assigned to the next iteration-004 attempt,
+004a: observe capability scope, failing-test-first work and emerging domain
+collaborators. No separate trial is required before moving on. This is not a
+claim of observed improvement or that 004a has started. No active experiment or
+review date is inferred. Documentation consistency/whitespace checks passed;
+no product code changed or tests rerun for these instruction edits.

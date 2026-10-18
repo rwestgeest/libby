@@ -39,3 +39,19 @@ field-specific conversion failures and which object owns state-dependent rules.
 A command wrapper around an SQL use case does not meet these responsibilities.
 Apply this to changed behavior, not a speculative rewrite of unrelated code.
 A needed architectural departure belongs in the owner design discussion.
+
+## Implement a bounded capability through TDD
+
+Use the current capability's actor, observable goal, business rules, acceptance
+examples and explicit deferrals as your scope. Test-drive one behavior at a time:
+observe the relevant failure, make the smallest production change, then refactor.
+Outside-in and inside-out are both valid; let collaborators and repository ports
+emerge from the tests within the agreed ADRs. Use in-memory collaborators when
+appropriate, then test the persistent adapter for the behavior it implements.
+
+A behavior-focused plan intentionally leaves implementation structure open.
+That is not permission to elaborate later capabilities or build speculative
+infrastructure. Stop at the current capability boundary. Keep the normal record
+of test commands and results, including the failing behavior that drove the
+change; do not substitute a final passing suite for test-first development.
+Ask through the design checkpoint if a real scope/design decision is missing.

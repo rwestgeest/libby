@@ -6,19 +6,19 @@ If no plan exists, write one from the seed.
 Apply these rules when creating a new plan. Preserve existing plans and mark
 tasks done only after their work has been committed.
 
-Structure the plan as a sequence of small, independently verifiable increments.
-Each top-level task must:
+Keep an outline of the overall user journey and remaining capabilities, so
+seed coverage stays visible. Detail only the next small, releasable capability:
+who can act, the observable outcome, relevant business rules, meaningful
+acceptance examples and what is deferred. Include tests with the behavior they
+verify; do not split implementation and its tests into separate future tasks.
 
-- Deliver one observable behavior or one focused improvement.
-- Produce a commitable change.
-- State concrete conrete acceptance checks
-- Include automated checks alongside the behaviour they produce
-- Explicit acceptance checks covering the happy path, error conditions, and
-  edge cases.
-
-Order tasks so each builds on working, tested behavior. Never combine multiple
-behaviors into one task and never create tasks for stubs, scaffolding, or
-speculative infrastructure. 
+Leave later capabilities brief and their order tentative where learning may
+change it. Do not prescribe future classes, repository APIs, schema/SQL or
+exhaustive failure cases. The doer test-drives the current behavior within the
+agreed architecture; collaborators emerge as needed. Choose checks for risks
+worth their cost. A deliberately limited capability need not implement later
+journey steps; restricted/admin-only access may make it releasable when agreed.
+Do not create tasks for speculative infrastructure. Preserve completed work.
 
 ## Process
 

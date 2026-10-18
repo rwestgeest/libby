@@ -15,8 +15,12 @@ each task delivers one observable behavior or one focused improvement. Combine
 related code and its tests in the same task so every implementation step ships
 alongside the automated tests that verify it. 
 
-For every task, specify concrete
-acceptance checks covering the happy path, error conditions, and edge cases.
+For the first unfinished capability, specify who can act, observable outcomes,
+relevant business rules, meaningful acceptance examples and explicit deferrals.
+Choose failure checks for risks worth their cost. Keep later capabilities as a
+brief journey outline; do not elaborate their mechanics or exhaustive edge cases.
+Leave classes, repository APIs and persistence choices to emerge through TDD
+within the agreed architecture.
 Consult .assembly-lines/lenses/responsibility-driven-design.md for design
 guidance. Return a JSON object describing the revision.
 

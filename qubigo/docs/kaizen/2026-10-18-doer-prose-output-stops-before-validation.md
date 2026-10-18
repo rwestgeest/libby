@@ -2,6 +2,23 @@
 
 Date: 2026-10-18
 
+## Current outcome — 05 implemented
+
+Libby's machine runner now makes one format-only repair attempt when a
+successfully completed pi doer returns no JSON value. Tools, extensions, MCP,
+skills and prompt templates are disabled for repair; the original answer stays
+in the run record. A repaired handoff still requires independent validation.
+Blocked input remains blocked; another unreadable result stops the run.
+
+This covers pi print and pi ACP invocations. Other harnesses retain their
+existing failure behavior until a tool-free repair path is supported. Explicit
+invalid JSON values and unsuccessful process exits are not format-repaired.
+The cause of the original omission remains unknown; this is bounded recovery,
+not a claim that omissions are prevented. Regression and full-suite results are
+recorded below. No old run has been resumed.
+
+Earlier sections preserve the original diagnosis and candidate discussion.
+
 ## Context and expected standard
 
 Run `qubigo-004`, target `/home/rob/dev/qubigo` through Libby's `q` symlink,
@@ -92,4 +109,25 @@ Inspect any retained harness session before claiming the request was ignored
 rather than absent from the historical input. Check nonzero-exit and truncated
 output cases separately; this record alone does not diagnose them. A repair
 that repeats product work or silently drops blocked findings is inadequate.
-No countermeasure has been applied or demonstrated effective.
+At the original assessment no countermeasure had been applied. The implementation
+and verification below supersede that state; effectiveness in 004a remains to
+be observed.
+
+## Implementation and regression verification — 18 October 2026
+
+A new prose-only fixture first reproduced `Could not read the doer's result`
+before implementation. The response parser now distinguishes no JSON value
+from a present but invalid final value; only the former pi-doer case receives
+one tool-free formatting invocation. It receives the captured answer as data,
+not a replay of the implementation job. The repaired object requires a findings
+array and a boolean blocked field if present. Implementation retries, validator
+routing and commit acceptance stay under the existing lifecycle.
+
+Regression coverage includes successful formatting before validation, rejection
+still preventing commits, exhaustion after one repair, preserved external-input
+blocking, retained original output, and pi ACP formatting. Libby commit `07aa81b` contains the fix. `cd factory && ./test` passed:
+140 scenarios / 2021 steps. The subsequently added pi ACP scenario also passed
+(1 scenario / 14 steps), after recompiling tests. The focused invocation feature
+passed all 14 scenarios before the extra ACP case was added.
+Ledger Closed records the implemented bounded recovery, not prevention of the
+original generation defect or support for every harness.

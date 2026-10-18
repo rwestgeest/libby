@@ -242,6 +242,37 @@ and the architecture overview link it. Walkthrough/revision, implementation and
 review instructions explicitly read the relevant ADRs and trace a changed path
 through those responsibilities. Source links require the live target checkout.
 The [kaizen note](../../../qubigo/docs/kaizen/2026-10-18-domain-design-intent-missing-and-documented-responsibilities-not-upheld.md)
-records implementation and the pending effectiveness check; ledger status is Open.
+records the completed adjustment and the 004a effectiveness check; ledger status is Closed.
 No product code changed. Documentation links/ledger consistency and whitespace
 were checked; machine conformance still needs observation in a later increment.
+
+## Thread 04 — done; verification belongs to 004a
+
+We agreed to an overall journey outline with behavioral detail only for the next
+releasable capability. Planning instructions now state actor, outcome, relevant
+rules, acceptance examples and deferrals, leaving implementation collaborators
+to emerge through TDD. The doer explicitly follows failing test → minimal change
+→ refactor within the capability boundary. Reviewers respect deferred scope and
+look at actual TDD evidence; backend guidance allows outside-in or inside-out.
+
+The user explicitly called 04 done and assigned effectiveness verification to
+004a. No separate trial or further broad investigation is a prerequisite.
+The [ledger's increments/TDD item](../../../qubigo/docs/kaizen/README.md#test-design)
+is Closed with the implemented outcome and 004a follow-up documented. This does
+not claim demonstrated prevention or launch a new run. Changes are on main;
+no application code changed.
+
+## Thread 05 — bounded pi handoff recovery implemented
+
+The factory now makes one tool-free format-only invocation after a successful
+pi doer returns no JSON value (print and ACP paths). Original output remains
+recorded. Another malformed answer fails; external-input blocking is preserved;
+repaired output still goes to independent validation before acceptance/commit.
+Other harnesses and explicit invalid final JSON values retain failure behavior.
+See the [updated kaizen note](../../../qubigo/docs/kaizen/2026-10-18-doer-prose-output-stops-before-validation.md).
+No existing run was resumed. This addresses recovery, not the unexplained
+original omission; 004a will provide further operational evidence.
+
+05 verification/commit: Libby `07aa81b`; full factory suite 140 scenarios passed,
+plus the subsequently added pi ACP regression (1 scenario) passed. The original
+prose-only regression failed before the fix. No real-agent run was launched.
