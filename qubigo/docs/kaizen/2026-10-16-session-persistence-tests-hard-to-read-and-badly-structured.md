@@ -241,3 +241,47 @@ Update (same day): `CurrentUserRepositoryTest` and `SpringBasedPasswordEncoderTe
 Closed as resolved by the user. The countermeasures are applied: test design guidelines and ADR 0006, the doer and validator prompts point at the guidelines, and the scenario, migration, wiring and characterization tests were removed or restructured. Whether the guidelines change the test code of the next iteration was not observed; no review date was set, and the user chose to close without an observation period.
 
 Follow-up idea (not part of this note's resolution): a code walkthrough assembly line that compares a branch against its siblings, ADRs and guidelines and leaves review remarks for an interactive session. It addresses the escape cause (no check on test code before human review). Tracked as the yak "Code walkthrough assembly line that leaves review remarks" (`yx show`), not as a kaizen note.
+
+## Investigation — 18 October 2026: production collaboration still missing
+
+New evidence concerns iteration 004 task 7, not a claim that the earlier test
+style changes were never applied. Current doer instructions explicitly point to
+backend testing guidance. The earlier explanation “no standard exists” therefore
+cannot explain this recurrence by itself.
+
+**Why were passing tests insufficient?** The fixtures bypassed collaborators
+whose behavior the criteria required. Local Libby `factory/runs/qubigo-004/record.jsonl`
+lines 1604, 1744 and 1778 repeatedly reject helper/protocol tests for this reason.
+The last review also finds copied journal/move helpers allowed a fake to be
+called “wired”. This is stronger evidence than a misleading test name alone.
+
+**Why did the final repair still not establish completion?** At preserved
+commit `221d7bb3`,
+[SqliteBasedCompetitionRepositoryTest.kt](../../qubigo-backend/qubigo-servlet/src/test/kotlin/com/qubigo/qubigobackend/competitions/adapters/repositories/SqliteBasedCompetitionRepositoryTest.kt#L1295)
+now invokes `MakeMove` for 26 moves, but supplies `JdbcGameRepository`, no
+post-processors and no notification recorder. It asserts 27 events and board
+fullness. `MakeMove` defaults post-processors to empty and notifications to a
+no-op (production class lines 13–18). Thus this test can pass without recording
+a competition result. This is current source inspection, not a rerun or a
+claim that all other tests are absent.
+
+**Why could this escape self-checks?** The chosen fixture makes optional
+collaborators disappear silently, and its assertions never observe the omitted
+result. Full suites can pass under that condition. Why the doer repeatedly chose
+that fixture despite explicit findings is unknown; context overload is only a
+hypothesis. Independent validation caught the earlier omissions; the latest
+prose-only answer never reached it.
+
+Challenge the assumption that each test must assemble its own “wired” route.
+Recommend one reusable fixture using the actual production composition for
+collaboration acceptance, alongside focused domain/adapter tests. Its headline
+example must observe the durable result, and demonstrate sensitivity to removing
+the finalizer. Then isolate notification, rollback and recovery behaviors rather
+than combining all into one long scenario. Merely renaming tests or adding more
+style instructions would not repair this evidence gap.
+
+This reopens the note for the new collaboration/fixture evidence. No tests were
+run or edited; no prevention is yet verified. Further checks: inspect all wiring
+coverage, demonstrate the missing-finalizer failure, and compare the fixture
+against Spring configuration before claiming production coverage. See the
+[plan investigation](2026-10-16-plan-lives-outside-repo-and-doubles-as-a-log.md#investigation--18-october-2026-task-7-design-and-repair-amplification).
