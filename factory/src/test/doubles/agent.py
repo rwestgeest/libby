@@ -57,6 +57,20 @@ if hold.exists():
         import time
         time.sleep(0.02)
 
+# A format-only invocation must not reach the implementation below.
+if "--no-tools" in sys.argv:
+    assert all(flag in sys.argv for flag in ("--no-extensions", "--no-mcp", "--no-skills"))
+    assert "FORMAT-ONLY HANDOFF REPAIR" in sys.argv[-1]
+    assert "Here's my summary:" in sys.argv[-1]
+    folder = Path(__file__).parent
+    if (folder / "repair-prose").exists():
+        print("Still only prose.")
+    elif (folder / "repair-blocked").exists():
+        print(json.dumps({"blocked": True, "findings": ["Owner must confirm signing key persistence."]}))
+    else:
+        print(json.dumps({"result": "Reported completed; requires independent validation", "findings": []}))
+    sys.exit(0)
+
 # The factory must run the agent inside its target, while the prompt points it
 # at the plan belonging to the named run.
 plan_match = re.search(r'The plan is at "([^"]+)"\.', prompt)
@@ -131,7 +145,11 @@ else:
 message_file = Path(__file__).parent / "before-result.txt"
 if message_file.exists():
     print(message_file.read_text())
-if (Path(__file__).parent / "no-result").exists():
+if (Path(__file__).parent / "prose-handoff").exists():
+    print("Here's my summary:\n## Work completed\n- Addressed the reported findings.\n- Full backend tests: PASS")
+    if (Path(__file__).parent / "repair-blocked").exists():
+        print("Owner must confirm signing key persistence; external input is required.")
+elif (Path(__file__).parent / "no-result").exists():
     print("I did some work, but have no structured result.")
 else:
     if (Path(__file__).parent / "blocked").exists():

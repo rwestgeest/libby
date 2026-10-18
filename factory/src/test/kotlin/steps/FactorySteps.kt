@@ -194,6 +194,42 @@ class FactorySteps {
         configureMachine("doer", "harness", doer.toString())
     }
 
+    @Given("the pi doer returns only prose")
+    fun piDoerReturnsOnlyProse() {
+        val executable = workspace.resolve("doer/pi")
+        Files.copy(Path.of("src/test/doubles/agent.py"), executable)
+        executable.toFile().setExecutable(true)
+        configureMachine("doer", "harness", executable.toString())
+        Files.writeString(workspace.resolve("doer/prose-handoff"), "yes")
+    }
+
+    @Given("the pi doer uses the ACP bridge")
+    fun piDoerUsesAcpBridge() {
+        configureMachine("doer", "harness", "pi-rpc-acp")
+        environmentOverrides["FACTORY_TEST_PI_EXECUTABLE"] = workspace.resolve("doer/pi").toString()
+    }
+
+    @Given("the format repair also returns prose")
+    fun formatRepairReturnsProse() { Files.writeString(workspace.resolve("doer/repair-prose"), "yes") }
+
+    @Given("the format repair reports missing external input")
+    fun formatRepairReportsBlocked() { Files.writeString(workspace.resolve("doer/repair-blocked"), "yes") }
+
+    @Then("each prose handoff was repaired once without tools")
+    fun proseHandoffsRepairedWithoutTools() {
+        val calls = workspace.resolve("doer/calls").toFile().listFiles()!!.filter { it.extension == "json" }
+        check(calls.size == 4) { "Expected implementation plus repair for each task" }
+        check(calls.count { "--no-tools" in it.readText() } == 2)
+        check(Files.readString(target.resolve("alpha.txt")) == "Work for alpha\n")
+        check(Files.readString(target.resolve("beta.txt")) == "Work for beta\n")
+    }
+
+    @Then("the original prose remains in the run record")
+    fun originalProseInRecord() {
+        check(Files.readString(workspace.resolve("factory/runs/$currentRun/record.jsonl"))
+            .contains("Here's my summary:"))
+    }
+
     @Given("agents format results as fenced multiline JSON")
     fun agentsFormatResultsAsFencedMultilineJson() {
         Files.writeString(workspace.resolve("pretty-json-result"), "yes\n")
@@ -1847,7 +1883,7 @@ for line in sys.stdin:
     elif method == 'session/set_model': send({'jsonrpc':'2.0','id':ident,'result':{}})
     elif method == 'session/prompt':
         prompt = '\n'.join(block.get('text','') for block in params.get('prompt',[]) if block.get('type') == 'text')
-        command = ['pi','--print','--no-session',*sys.argv[1:],prompt]
+        command = [os.environ.get('FACTORY_TEST_PI_EXECUTABLE','pi'),'--print','--no-session',*sys.argv[1:],prompt]
         result = subprocess.run(command, text=True, capture_output=True, stdin=subprocess.DEVNULL)
         if result.stderr: sys.stderr.write(result.stderr)
         for part in result.stdout.splitlines():

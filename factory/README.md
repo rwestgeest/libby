@@ -152,3 +152,17 @@ and unfinished plan entries remain for inspection. After supplying the input,
 start the same named run again to use its existing plan. Fixable product defects
 should use normal rejection and retry findings instead. Omit `blocked` (or use
 `false`) for normal results.
+
+### Missing doer result
+
+When a pi doer finishes successfully but emits no JSON value, the runner makes
+one format-only invocation with tools, extensions, MCP, skills and prompt
+templates disabled. It supplies the original answer as data; it does not repeat
+the implementation job. Both answers remain in the run record. The repaired
+object must contain a findings array, preserves external-input blocking, and
+still goes through normal independent validation before acceptance or commit.
+
+Another unreadable answer stops the run. This repair does not consume another
+implementation attempt. Explicit invalid final JSON values and unsuccessful
+process exits are not repaired. Other harnesses retain their existing failure
+behavior; this bounded recovery currently supports pi print and pi ACP only.

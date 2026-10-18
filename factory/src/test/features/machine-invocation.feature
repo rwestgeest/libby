@@ -72,3 +72,43 @@ Feature: Machine invocation and job context preserve the current protocol
     And it reports the diagnostic "failure stdout"
     And it reports the diagnostic "failure stderr"
     And there are no new commits
+
+  Scenario: A prose-only doer handoff is repaired before independent validation
+    Given the pi doer returns only prose
+    When the factory runs
+    Then it accepts it
+    And the plan shows every task as done
+    And each prose handoff was repaired once without tools
+    And the original prose remains in the run record
+
+  Scenario: A format repair cannot bypass validator rejection
+    Given the pi doer returns only prose
+    And the validator is never satisfied
+    When the factory runs
+    Then it reports the diagnostic "The task hit its limit of 3 attempts"
+    And there are no new commits
+
+  Scenario: A second prose answer stops without another format repair
+    Given the pi doer returns only prose
+    And the format repair also returns prose
+    When the factory runs
+    Then it reports the diagnostic "Could not read the doer's result"
+    And the doer has been called twice
+    And the validator has not been called
+    And there are no new commits
+
+  Scenario: External-input blocking survives handoff formatting
+    Given the pi doer returns only prose
+    And the format repair reports missing external input
+    When the factory runs
+    Then it reports the missing operator evidence
+    And the validator has not been called
+    And there are no new commits
+
+  Scenario: A pi ACP doer can repair its prose handoff without tools
+    Given the pi doer returns only prose
+    And the pi doer uses the ACP bridge
+    When the factory runs
+    Then it accepts it
+    And each prose handoff was repaired once without tools
+    And the original prose remains in the run record
