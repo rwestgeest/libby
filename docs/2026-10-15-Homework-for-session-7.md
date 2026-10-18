@@ -79,3 +79,67 @@ and design are guided before choosing whether to start again.
 [Today's checklist, 18 October](runs/qubigo-004/2026-10-18-todo.md) records the
 proposed preservation, five-whys analysis, factory correction and possible 004a
 experiment, with decision points to avoid repeating the same approach.
+
+
+## 2026-10-18 — First design walkthrough for qubigo-004a
+
+Tried the new human design checkpoint on the fresh competition run, using the
+[004a run brief](../qubigo/docs/iterations/004a-competitions-run-brief.md).
+The factory stopped at `design_walkthrough` before detailed planning. We then
+used the discuss-factory-design skill for an interview, one question at a time,
+starting with ubiquitous language rather than implementation mechanics.
+The [consolidated walkthrough](runs/qubigo-004a/design-walkthrough.md) records
+the resulting decisions; the [interview history](runs/qubigo-004a/plan.md.discussion.interview-history.md)
+preserves the initial proposals and accumulated notes.
+
+The language interview exposed useful distinctions. A competition has
+**participants**; a game has **players**. An **organizer** is a domain role,
+permitted by existing admin authorization. **Games per participant** replaced
+“game allowance”: the competition arranges games, rather than granting permission
+to play. Playing fewer is fine, but gives fewer opportunities to score.
+**Suggested minimum participants** makes the advisory nature explicit.
+**Open for joining** is separate from **not started / running / closed**, since
+participants may join before or during play.
+
+The owner changed the first slice materially during the discussion:
+
+- Create a complete **draft**, edit it, then explicitly **open for joining**.
+  All four settings are editable in draft; after opening, only name and
+  suggested minimum participants remain editable. Organizers share access;
+  ownership rules and co-organizership can wait.
+- Joining is available to already signed-in users through a shared QR link,
+  including forwarded links. There is no ordinary listing of unjoined
+  competitions for regular users. This replaces the seed's admin-only joining
+  boundary. Competition-specific registration/sign-in return flows remain later work.
+- Joining is explicit, even for organizers. Repeated joining keeps the existing
+  participation. New joining is refused at closing time, even if play never started.
+- **CompetitionName** is a domain primitive: trim surrounding spaces, reject an
+  empty result, permit only ASCII letters, digits and spaces; duplicate names
+  are allowed. Games per participant is a whole number ≥1; suggested minimum
+  participants is a whole number ≥2. Opening requires a future closing time,
+  entered in the device's local timezone with the timezone shown.
+
+A useful correction during the interview: questions drifted into matching and
+invitations, and the owner brought the discussion back to creating and joining.
+We preserved that later learning without making it part of the first slice.
+The competition is the inviter; only the participant selected to move first
+receives the actionable invitation. Separate competition invitations may be
+appropriate, but representation and timing still need later discussion.
+Matching by wins or speed was an idea, not a new agreed algorithm.
+
+Lessons: interviewing for language uncovered product behavior that an upfront
+technical plan would have assumed incorrectly. Keep proposals distinct from
+owner decisions, update the capability sketch when scope changes, and avoid
+turning every possible reliability concern into a required guarantee. The
+accumulated notes initially retained stale questions and contradictory proposals;
+consolidation was necessary before handing them back to the factory.
+
+The discussion is now marked resolved for this scoped capability, ready for
+planning. This is a successful human walkthrough, not evidence of working
+competition software or completion of iteration 004. No application code or
+factory behavior changed, and no tests were run during the walkthrough.
+The factory was not restarted by the agent. The owner will resume the existing
+run from Libby's root with `bin/factory --run qubigo-004a`; a fresh run is not
+needed. The saved `q` target is a symlink to the live Qubigo repository, not a
+separate target. Next observe whether the resumed planner follows the recorded
+decisions and returns for genuinely new scope rather than reopening settled ones.
