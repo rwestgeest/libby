@@ -24,3 +24,4 @@ Use `Review due` only for the agreed review date of an active experiment. Use `�
 | 2026-10-16 | [Problem: commits all named "Record factory task"](2026-10-16-uninformative-record-factory-task-commits.md) | New | — |
 | 2026-10-16 | [Problem: branch tests hard to understand and badly structured](2026-10-16-session-persistence-tests-hard-to-read-and-badly-structured.md) | Open | — |
 | 2026-10-18 | [Problem: prose-only doer output stops the run before validation](2026-10-18-doer-prose-output-stops-before-validation.md) | Open | — |
+| 2026-10-18 | [Problem: domain design intent is partly missing and documented responsibilities are not upheld](2026-10-18-domain-design-intent-missing-and-documented-responsibilities-not-upheld.md) | New | — |
