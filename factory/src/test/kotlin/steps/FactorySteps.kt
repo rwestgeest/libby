@@ -700,7 +700,7 @@ class FactorySteps {
 
     @Then("every reviewer was given the work for the second task")
     fun reviewersGivenSecondTask() {
-        inspectedPrompts = reviewers.map(::reviewPrompt)
+        inspectedPrompts = reviewers.map { Files.readString(workspace.resolve("$it/calls/0.product-changes")) }
         inspectedPrompts.forEach { check(it.contains("beta.txt") && it.contains("Work for beta")) { it } }
     }
 
@@ -880,14 +880,17 @@ class FactorySteps {
         Files.writeString(target.resolve("existing.txt"), "original product\n")
         repo.git("add", "--", "target/existing.txt")
         repo.commit("Tracked product fixture")
-        Files.writeString(target.resolve("existing.txt"), "changed product\n")
+        Files.writeString(target.resolve("existing.txt"), "changed product\n" + "large product content\n".repeat(10_000))
         Files.createDirectories(target.resolve(".factory"))
         Files.writeString(target.resolve(".factory/private.txt"), "PRIVATE_METADATA_SENTINEL\n")
     }
 
     @Then("the validator sees tracked and untracked target product changes only")
     fun validatorTargetOnlyDiff() {
-        val diff = validatorPrompt().substringAfter("Product changes:")
+        val prompt = validatorPrompt()
+        check(prompt.toByteArray().size < 16_384) { "Product content inflated the prompt" }
+        check(!prompt.contains("large product content")) { "Product diff was embedded" }
+        val diff = Files.readString(workspace.resolve("validator/calls/0.product-changes"))
         check(diff.contains("existing.txt") && diff.contains("+changed product")) { diff }
         check(diff.contains("alpha.txt") && diff.contains("+Work for alpha")) { diff }
         for (excluded in listOf(".factory", "PRIVATE_METADATA_SENTINEL", "unrelated.txt", "untracked.txt")) {
@@ -1515,8 +1518,9 @@ class FactorySteps {
 
     @Then("the validator was given the work for the second task")
     fun validatorGivenSecondTask() {
-        val prompt = validatorPrompt()
-        check(prompt.contains("beta.txt") && prompt.contains("Work for beta")) { prompt }
+        val changes = Files.readString(workspace.resolve("validator/calls/0.product-changes"))
+        inspectedPrompts = listOf(changes)
+        check(changes.contains("beta.txt") && changes.contains("Work for beta")) { changes }
     }
 
     @Then("it was not given the work for the first task")

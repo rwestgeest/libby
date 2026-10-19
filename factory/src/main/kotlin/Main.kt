@@ -60,7 +60,7 @@ private fun executeNamedRun(factoryDir: File, runName: String, args: Array<Strin
         onOutput = { machine, text, usage -> control.event(runName, machine, text, usage) },
         onMachineState = { machine, running -> control.machineState(runName, machine, running) }
     )
-    val jobs = MachineJobs(namedRun.seed, namedRun.plan, assemblyLine::resultFields, repository)
+    val jobs = MachineJobs(namedRun.seed, namedRun.plan, assemblyLine::resultFields)
     val maxAttempts = args.toList().let { it.indexOf("--max-attempts").takeIf { i -> i >= 0 }?.let { i -> it.getOrNull(i + 1)?.toIntOrNull() } } ?: 3
     try {
         runFactory(assemblyLine, runner, TaskLifecycle(maxAttempts, jobs, repository), repository)

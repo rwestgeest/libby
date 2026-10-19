@@ -6,8 +6,7 @@ import kotlinx.serialization.json.JsonObject
 internal class MachineJobs(
     private val seed: File,
     private val plan: File,
-    private val resultFields: (String) -> List<String>,
-    private val repository: TargetRepository
+    private val resultFields: (String) -> List<String>
 ) {
     fun prompt(machine: String, taskAccepted: Boolean, findings: JsonArray): String = """
         Read the seed at "$seed".
@@ -19,8 +18,14 @@ internal class MachineJobs(
         Task work committed: $taskAccepted.
         Validator findings from the previous attempt: $findings
         ${resultRequest(machine)}
-        Product changes:
-        ${repository.uncommittedProductChanges()}
+        Inspect product changes directly in the current target working tree, including staged,
+        unstaged and untracked files. Scope Git commands to this directory even when it is
+        inside a containing repository; exclude .factory and .assembly-lines metadata.
+        Use `git diff --no-ext-diff HEAD -- . ':(exclude).factory' ':(exclude).assembly-lines'`
+        for tracked changes and `git ls-files --others --exclude-standard -- . ':(exclude).factory' ':(exclude).assembly-lines'`
+        to discover new files, then read those files. If HEAD does not exist yet, use
+        `git ls-files --cached --others --exclude-standard -- . ":(exclude).factory" ":(exclude).assembly-lines"`
+        and inspect all listed files. Do not treat an empty tracked diff as no changes.
     """.trimIndent()
 
     fun meetingPrompt(machine: String, results: Map<String, JsonObject>): String = """

@@ -2,6 +2,7 @@
 import json
 import os
 import sys
+import subprocess
 from pathlib import Path
 
 sys.stdin.read()
@@ -43,6 +44,21 @@ number = len(list(calls.glob("*.json")))
     "configuration": str(configuration), "instructions": instructions, "auth": auth,
 }))
 (calls / f"{number}.txt").write_text(prompt)
+
+# Follow the factory's working-tree review instructions, including new files.
+pathspec = [".", ":(exclude).factory", ":(exclude).assembly-lines"]
+assert "git diff --no-ext-diff HEAD --" in prompt
+assert "git ls-files --others --exclude-standard --" in prompt
+has_head = subprocess.run(["git", "rev-parse", "--verify", "HEAD"], capture_output=True).returncode == 0
+changes = subprocess.check_output(["git", "diff", "--no-ext-diff", "HEAD", "--", *pathspec]) if has_head else b""
+new_files = subprocess.check_output([
+    "git", "ls-files", *([] if has_head else ["--cached"]), "--others", "--exclude-standard", "-z", "--", *pathspec,
+]).decode().split("\0")
+for path in filter(None, new_files):
+    changes += subprocess.run([
+        "git", "diff", "--no-ext-diff", "--no-index", "--", "/dev/null", path,
+    ], capture_output=True, check=False).stdout
+(calls / f"{number}.product-changes").write_bytes(changes)
 
 workspace = os.environ.get("FACTORY_TEST_WORKSPACE")
 if workspace:
