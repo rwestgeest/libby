@@ -60,6 +60,13 @@ If resolving an issue would introduce an unagreed extra guarantee or change a
 bounded-context dependency, return blocked true and satisfied false, naming the
 owner, discussion path and choice with its reason/cost. Do not demand that design
 as a routine repair. Existing agreed behavior/correctness defects remain retryable.
+Before blocking, check whether the seed, recorded decisions, current code or an
+established platform contract already settles the behavior. Do not block for an
+ordinary implementation choice, theoretical edge case or missing device evidence
+that can be planned as a human verification gate. Block only when the fix really
+requires a new owner decision with a material effect on promised behavior, scope,
+access/privacy, dependency or guarantee; explain the conflict and cost in one
+actionable finding.
 
 ## Backend architecture in changed work
 

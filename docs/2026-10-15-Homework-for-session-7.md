@@ -143,3 +143,45 @@ run from Libby's root with `bin/factory --run qubigo-004a`; a fresh run is not
 needed. The saved `q` target is a symlink to the live Qubigo repository, not a
 separate target. Next observe whether the resumed planner follows the recorded
 decisions and returns for genuinely new scope rather than reopening settled ones.
+
+## 2026-10-19 — False-positive design question and run continuation
+
+After task 2a, the planner flagged native/browser continuity as needing another
+owner decision. The walkthrough asked whether reopening the competition link
+after verification or installation was acceptable. The owner clarified that
+competition links already open the installed app, and agreed that after email
+verification it is enough to return to the original app and reopen the link.
+The [discussion handoff](../factory/runs/qubigo-004a/plan.md.discussion.md)
+records the clarification and is resolved. The question exposed a weakness in
+the planner's triage: it treated an unstated detail as an unresolved product
+choice before checking the existing link behavior.
+
+Updated the Qubigo machine instructions so the planner checks the seed,
+decisions, implementation and platform contract before setting
+`needs_design_discussion`; the walkthrough checks whether a finding really needs
+owner input; and the doer/validator proceed with ordinary reversible choices
+while reserving human blocks for material changes to behavior, scope, access or
+dependencies. The RDD validator also keeps device evidence as an evidence gate
+rather than a design question. These instructions are in the shared
+[planner](../qubigo/.assembly-lines/.machines/planner/AGENTS.md),
+[walkthrough](../qubigo/.assembly-lines/.machines/design_walkthrough/AGENTS.md),
+[doer](../qubigo/.assembly-lines/.machines/doer/AGENTS.md) and
+[validator](../qubigo/.assembly-lines/.machines/rdd_validator/AGENTS.md)
+configuration. Updated Libby's
+[discussion skill](../.agents/skills/discuss-factory-design/SKILL.md) to restart
+a blocked run automatically after all owner questions are resolved, while
+avoiding a duplicate when the run is already active. The instruction commits
+were pushed to Qubigo's `main` and `feature/004a-competitions`; the skill change
+was pushed to Libby's `main` (`333a16c7`, `606fe226`, and `52d1bab`).
+
+The run continued after resolution. It completed 2b, recorded in the
+[native onboarding evidence](../qubigo/docs/iterations/004a-native-onboarding-evidence.md),
+and 3b, then reached 3c.
+The 3c doer reported matching, invitation acceptance and lifecycle-safe
+presentation implemented. Its [matching evidence](../qubigo/docs/iterations/004a-matching-evidence.md)
+records 909 servlet tests plus 18 CLI tests passing, 845 frontend tests passing,
+11 skipped, and a passing build and diff check. After the doer addressed
+validator findings, the next validator invocation did not start: the `pi`
+process failed with `Argument list too long`. So 3c remains unaccepted and
+uncommitted at this checkpoint; validation must resume, and the doer's report is
+not acceptance. No tests were run for the instruction-only changes.

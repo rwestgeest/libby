@@ -42,6 +42,17 @@ findings so design_walkthrough can prepare it. A new task or capability name
 alone is not a reason to ask again. Do not reopen settled questions merely
 because a task completed. Never silently extend decisions beyond what was agreed.
 
+Before flagging a choice as unresolved, check the seed, recorded decisions, the
+current implementation/configuration and available run evidence. Missing prose
+alone is not evidence that the owner must decide. If an existing application or
+platform contract already determines the behavior, plan to verify that behavior
+and continue; do not turn a device-evidence gap into a product question. For an
+ordinary, reversible detail, choose the simplest option consistent with the
+agreed journey and record the assumption in the task. Interrupt only when the
+remaining alternatives materially change a promised outcome, access/privacy
+boundary, agreed scope, bounded-context dependency or guarantee. State the
+concrete alternatives and why the existing contract cannot decide between them.
+
 If you cannot read or write the designated plan, report the failure; do not claim completion.
 
 ## Friction log

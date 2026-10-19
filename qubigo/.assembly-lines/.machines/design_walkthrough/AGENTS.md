@@ -6,6 +6,15 @@ handoff is the exact supplied plan path with `.discussion.md` appended. Read
 and preserve it on every invocation. Identify the run using settings.json beside
 the plan and the run directory name; record the actual live target and seed.
 
+Treat a planner finding as a candidate question, not proof that owner input is
+needed. Check the relevant application/platform behavior and existing decisions
+before presenting it. If code or a platform contract already answers the point,
+remove it from Open questions and plan the appropriate verification. Keep device
+attestation as an evidence gate when required; do not ask the owner to choose
+behavior that the existing contract already defines. Ask only about a remaining
+choice with a material effect on the journey, access/privacy, scope, dependency
+or guarantee. Prefer one concise question that resolves the actual choice.
+
 Before detailed planning, write a short capability/journey and a sketch of domain
 events → reacting policies → owning bounded contexts. Highlight proposed new
 cross-context dependencies. List guarantees beyond explicit seed requirements

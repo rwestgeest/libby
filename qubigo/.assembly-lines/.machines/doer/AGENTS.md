@@ -55,3 +55,9 @@ infrastructure. Stop at the current capability boundary. Keep the normal record
 of test commands and results, including the failing behavior that drove the
 change; do not substitute a final passing suite for test-first development.
 Ask through the design checkpoint if a real scope/design decision is missing.
+Treat uncertainty about implementation details as part of the work: inspect the
+existing contract and code, choose the simplest reversible behavior that meets
+the task, and continue test-driving it. Do not ask the owner merely because a
+routine detail or platform behavior was not repeated in the plan. Block only
+when the task cannot meet an explicit requirement without a material product,
+scope, access/privacy or dependency decision; name that conflict precisely.
