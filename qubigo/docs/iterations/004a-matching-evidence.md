@@ -82,9 +82,22 @@ This continuation, commands from `qubigo-backend` unless noted:
 
 ## Final verification
 
-- `cd qubigo-backend && ./gradlew test`: **passed**. Current XML totals: **909 servlet tests, 18 CLI tests**, zero failures/errors/skips.
+- `cd qubigo-backend && ./gradlew test`: **passed**. Current XML totals: **911 servlet tests, 18 CLI tests**, zero failures/errors/skips.
 - `cd qubigo-frontend && npm test -- --runInBand`: **845 passed, 11 skipped**; 72 suites passed, 1 skipped.
 - `cd qubigo-frontend && npm run build`: **passed**.
 - `git diff --check`: **passed**.
+
+## Continuation verification
+
+Inspected the existing uncommitted 3c implementation directly using the scoped HEAD diff and all 16 untracked product/evidence files. No previous validator findings were supplied and no additional defect was identified; production behavior and tests were preserved rather than reimplemented. Rechecked the Games input/command/aggregate/storage trace and the changed Competition-owned matching/association path against the required ADRs.
+
+Observed commands in this continuation:
+
+- Backend `./gradlew test`: exit 0, test tasks up-to-date; then `./gradlew test --rerun-tasks`: exit 0, all tasks executed. XML under `qubigo-backend/build-reports/*/test-results/test` reports 911 servlet and 18 CLI tests, no failures/errors/skips.
+- Frontend `npm test -- --runInBand`: exit 0, 845 passed and 11 skipped.
+- Frontend `npm run build`: exit 0.
+- Scoped `git diff --check`: exit 0.
+
+This continuation updates verification evidence only; the earlier test-first record above remains the record driving the inherited implementation. Task 3c stays open for independent acceptance and factory commit.
 
 These are automated local application/storage results, not physical mail, native OS, camera, store-install or push attestation. Those later readiness inputs are neither supplied nor required for 3c. Task 3c itself is not marked done; planner/factory acceptance and commit remain outstanding.

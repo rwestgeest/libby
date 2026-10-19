@@ -185,3 +185,48 @@ validator findings, the next validator invocation did not start: the `pi`
 process failed with `Argument list too long`. So 3c remains unaccepted and
 uncommitted at this checkpoint; validation must resume, and the doer's report is
 not acceptance. No tests were run for the instruction-only changes.
+
+
+## 2026-10-19 — Shorter factory prompts after the 004a launch failure
+
+Investigated the `Argument list too long` failure at the next RDD validator
+launch. The factory embedded the entire uncommitted product diff, including
+new files, in every machine prompt and passed it as one command-line argument
+to `pi`. The inspected diff alone was 136,265 bytes, before the surrounding
+instructions. This explains the process-launch failure; it was not a new
+validator rejection or evidence that the product tests failed. The machine's
+`AGENTS.md` was supplied separately by path, rather than being the large inline
+payload.
+
+The owner challenged whether a larger transport was the right answer. Since
+machines already have access to the target working tree, we removed the
+redundant inline diff instead of truncating review evidence or only moving the
+same payload to stdin. The prompt now gives scoped Git inspection commands
+for staged/unstaged changes and discovery of untracked files, excluding
+`.factory` and `.assembly-lines`. It also covers targets with no initial commit.
+Seed/plan paths, previous findings and response instructions remain available.
+No machine configuration or machine instructions changed for this fix.
+
+Committed as [f0acab7](https://github.com/rwestgeest/libby/commit/f0acab7)
+(`fix(factory): inspect product changes without embedding diffs`). The factory
+regression uses over 200 KB of changed content, verifies a prompt below 16 KiB,
+and checks that the validator still discovers tracked and new product changes
+without reviewing previously committed work or files outside the target.
+Updating the test doubles exposed assumptions that review evidence had to be
+inside the prompt; a subsequent suite run caught the no-HEAD case. After fixing
+both, `cd factory && ./test` passed **141 scenarios / 2,036 steps**;
+`git diff --check` also passed. These are factory checks, not fresh application
+acceptance or physical-device evidence.
+
+Lesson: keep the handoff small by pointing agents at authoritative local
+artifacts. Removing duplicate context should preserve review scope, including
+new files and repository boundaries. Bigger command-line limits would only
+have postponed this failure.
+
+The owner chose to restart the line personally. At capture time the run is
+recorded as running and has progressed beyond 3c; the refreshed
+[matching evidence](../qubigo/docs/iterations/004a-matching-evidence.md)
+records a continuation inspecting tracked and untracked files directly.
+This is evidence that execution continued, not a claim that iteration 004a is
+complete. Next observe the remaining capability reviews and retain the later
+human platform-evidence gate.
