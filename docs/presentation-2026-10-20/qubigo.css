@@ -133,3 +133,5 @@
 .shameless { display: inline-block; padding: .1em .8em .15em; border-radius: 99px; background: var(--q-accent); color: #fff !important; font-family: var(--sk-font-label); font-size: 2.2em; text-decoration: none !important; box-shadow: 0 4px 0 rgba(0,0,0,.18); }
 .q-big .big-line { color: var(--q-offwhite); }
 .q-big .big-line strong { color: #fff; }
+
+.line-svg .dim { opacity: .3; }
