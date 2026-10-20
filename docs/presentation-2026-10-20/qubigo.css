@@ -67,3 +67,19 @@
 .reveal .sk-section { margin-bottom: .2em; }
 .mini-icon { width: 90px; height: auto; margin-right: .6em; vertical-align: middle; border: 0; background: none; box-shadow: none; }
 .row-head { display: flex; align-items: center; gap: .3em; }
+
+.photo-split { display: grid; grid-template-columns: 1.55fr .8fr; gap: 2em; align-items: center; width: 100%; }
+.photo { margin: 0; }
+.photo img { display: block; width: 100%; height: auto; border: 5px solid var(--sk-ink); border-radius: 14px; box-shadow: none; filter: url(#sk-wobble-soft); }
+.photo figcaption { margin-top: .3em; font-size: .75em; opacity: .7; text-align: right; }
+.photo-facts { list-style: none; padding: 0; margin: 0; }
+.photo-facts li { margin: .7em 0; font-size: 1.35em; line-height: 1.25; }
+
+/* Japanese lean terms: a stamp-like kanji with a romaji caption */
+.jp { display: flex; align-items: baseline; gap: .6em; margin: .1em 0 .3em; font-size: 1em; }
+.jp-k { font-family: 'Yusei Magic', 'Noto Sans JP', 'Hiragino Sans', sans-serif; font-size: 1.9em; line-height: 1; color: var(--sk-rust-text); border: 3px solid var(--sk-rust); border-radius: 8px; padding: .05em .3em; transform: rotate(-3deg); background: color-mix(in oklab, var(--sk-rust) 8%, transparent); }
+.jp-r { font-family: var(--sk-font-label); font-size: 1.05em; color: var(--sk-body-text); }
+.jp-inline { justify-content: center; margin-top: .2em; }
+.three-up .sk-panel .jp { justify-content: center; margin: .2em 0; }
+.three-up .sk-panel .jp-k { font-size: 1.5em; }
+.three-up .sk-panel .jp-r { font-size: .9em; }
