@@ -107,3 +107,22 @@
 .bc-label.mid { stroke: none; }
 .bc-note { fill: var(--sk-highlighter); stroke: var(--sk-mustard); stroke-width: 4; }
 .photo-credit.light { color: #fff; opacity: .8; text-shadow: 0 1px 3px #000; }
+
+/* careful-plan line drawings */
+.line-svg { max-height: 600px; }
+.ln-t { font-family: var(--sk-font-label); font-size: 27px; fill: var(--sk-ink-title); text-anchor: middle; }
+.ln-t.ln-s { font-family: var(--sk-font-body); font-size: 23px; fill: var(--sk-body-text); }
+.ln-a { stroke: var(--sk-connector); stroke-width: 5; }
+.ln-a.warn { stroke: var(--sk-coral); }
+.ln-a.ok { stroke: var(--sk-forest); }
+.ln-a.human { stroke: var(--sk-rust); stroke-width: 6; }
+.bc-label.warn { fill: var(--sk-rust-text); }
+.bc-label.ok { fill: var(--sk-forest-text); }
+.bc-label.human { fill: var(--sk-rust-text); }
+.bc-label.left { text-anchor: start; stroke-width: 0; }
+.ln-p { stroke-width: 4; }
+.ln-p.blue { fill: color-mix(in oklab, var(--sk-blue) 8%, var(--sk-paper)); stroke: var(--sk-blue); }
+.ln-p.green { fill: color-mix(in oklab, var(--sk-forest) 8%, var(--sk-paper)); stroke: var(--sk-forest); }
+.ln-ph { font-family: var(--sk-font-label); font-size: 24px; }
+.ln-ph.blue { fill: var(--sk-blue-text); }
+.ln-ph.green { fill: var(--sk-forest-text); }
