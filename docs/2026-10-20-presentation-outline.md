@@ -43,6 +43,7 @@ the factory produced (genchi genbutsu) found problems, and a kaizen ledger plus
 - While repairing, I read the code and plan and found them **overly complicated**. Stopped and preserved the work (`221d7bb3`, no acceptance claimed).
 - Five whys, done together with the agent ([summary and picture](runs/qubigo-004/five-whys-summary.md)). Headline: *the process checked whether machinery was correct more than whether it was needed.*
 - Threads: speculative failure cases became mandatory guarantees; design intent stayed tacit; documented responsibilities were not upheld; plans detailed too far ahead; a doer answer with no JSON.
+- What the 004 code looked like ([design review](runs/qubigo-004/design-review.md)): Games' `MakeMove` imported a competition move protocol; explicit `BEGIN IMMEDIATE` transaction handling; a move and its result in two transactions plus a startup reconciliation scan; an admission marker with a `cutoff_observed` flag guarding against clock regression. Real concerns, but machinery nobody had decided we needed.
 - Visual: `five-whys-map.svg`.
 
 ### 6. Second attempt: 004a (4:15–5:45)
@@ -56,6 +57,8 @@ the factory produced (genchi genbutsu) found problems, and a kaizen ledger plus
   - [player: join](runs/qubigo-004a/screens/3-player-join.png)
   - [player: in play, own progress](runs/qubigo-004a/screens/4-player-playing.png)
   - [admin: live stand](runs/qubigo-004a/screens/5-admin-stand.png)
+- **Is the code simpler? Owner's judgment, after reading it: yes, really.** A clear new Competition bounded context; looser coupling to the existing contexts (the evidence says Games has no Competition dependency; in 004 `MakeMove` imported the competition protocol); no unnecessary transactional clutter. This is a reading, not a measurement.
+- Be ready for: the closure evidence still describes a shared SQLite "writer gate" around move admission, closure and joining. Be able to say why that one is needed.
 - Still honest to say: the screens are plain and utilitarian. The code is the thing I'm asking about.
 
 ### 7. What I'd like from you (5:45–7:00)
@@ -69,7 +72,8 @@ the factory produced (genchi genbutsu) found problems, and a kaizen ledger plus
 - [x] Date: Tuesday 20 October. Demo: none; diagrams, kaizen list and screenshots carry it.
 - [ ] Which single feedback question to lead with (slide 7).
 - [x] "17 of 17 tasks" with the device evidence attested by me: keep as drafted on slide 6.
-- [ ] Do you have an assessment of the 004a code quality (simpler than 004?) to offer? Not in the repo yet; the outline claims none.
+- [x] 004a code quality: owner says really simpler (new bounded context, looser coupling, no transactional clutter). Slide 6 states it as judgment.
+- [ ] The 004a closure evidence still mentions a shared SQLite writer gate. Is that the necessary minimum? Decide what to say if asked.
 - [x] Deadline (8 November): 004a is probably releasable in time. Say "probably" on slide 6 or 7.
 - [ ] Screenshots use mock API data. Replace with real-app screenshots from a running backend if you prefer.
 
