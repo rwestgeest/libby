@@ -99,6 +99,33 @@
       <aside class="notes">Careful-plan line, mixed models (DeepSeek doer/planner, Claude and Gemini reviewers). Task 7: repeated review findings and a doer answer without JSON. Meanwhile I read the code and plan and found them overly complicated.</aside>
     </section>
 
+    <!-- Train wreck: 004 entangled -->
+    <section class="mid wreck" data-menu-title="004: entangled" data-background-image="img/train-wreck.jpg" data-background-opacity="0.9" data-background-size="cover">
+      <div class="drawing-card">
+        <h2 class="sk-section">004: Games and Competition, entangled</h2>
+        <svg class="bc-svg" viewBox="0 0 1400 540" role="img" aria-label="Games and Competition tangled together by many arrows">
+  <rect x="40" y="150" width="360" height="240" rx="22" class="bc bc-teal" filter="url(#sk-wobble)"/><text x="220.0" y="264.0" class="bc-title">Games</text><text x="220.0" y="304.0" class="bc-sub">moves, journal, projections</text>
+  <rect x="1000" y="150" width="360" height="240" rx="22" class="bc bc-coral" filter="url(#sk-wobble)"/><text x="1180.0" y="264.0" class="bc-title">Competition</text><text x="1180.0" y="304.0" class="bc-sub">lifecycle, results, matching</text>
+  <g class="bc-arrows" fill="none" stroke-width="5" stroke-linecap="round" filter="url(#sk-wobble-line)">
+    <path d="M400 190 C 560 60, 840 60, 1000 200" marker-end="url(#sk-head)"/>
+    <path d="M1000 250 C 820 330, 580 120, 400 250" marker-end="url(#sk-head)"/>
+    <path d="M400 330 C 560 470, 840 470, 1000 340" stroke-dasharray="14 10" marker-end="url(#sk-head)"/>
+    <path d="M1000 300 C 800 200, 620 400, 400 300" marker-end="url(#sk-head)"/>
+    <path d="M400 370 C 620 520, 800 250, 1000 380" marker-end="url(#sk-head)"/>
+  </g>
+  <rect x="560" y="236" width="280" height="68" rx="12" class="bc-note" filter="url(#sk-wobble-soft)"/>
+  <text x="700" y="268" class="bc-label mid">BEGIN IMMEDIATE</text>
+  <text x="700" y="294" class="bc-label mid small">two transactions</text>
+  <text x="700" y="62" class="bc-label">MakeMove imports the competition protocol</text>
+  <text x="700" y="140" class="bc-label small">protocol reloads the game</text>
+  <text x="700" y="490" class="bc-label">bypasses the repository</text>
+  <text x="700" y="525" class="bc-label small">finalizer post-processor · startup scan of all games</text>
+</svg>
+      </div>
+      <p class="photo-credit light">Montparnasse derailment, 1895 (public domain, Wikimedia Commons)</p>
+      <aside class="notes">What the 004 code looked like (docs/runs/qubigo-004/design-review.md): Games' MakeMove imported a competition move protocol; the protocol reloaded the game and bypassed the repository decorator; hand-rolled BEGIN IMMEDIATE transactions; a move and its result in two transactions; a finalizer post-processor; a startup scan of all games for missing results. Drawing is schematic.</aside>
+    </section>
+
     <!-- 5 Cord + five whys -->
     <section class="mid" data-menu-title="Pull the cord">
       <h2 class="sk-section">I pulled the cord. Five whys.</h2>
@@ -140,6 +167,33 @@
       </div>
       <p class="callout">17 of 17 tasks done. The device checks I attested myself. Really simpler: my reading, not a measurement.</p>
       <aside class="notes">Also changed: one tool-free repair for a doer that omits JSON; shorter prompts after an 'Argument list too long' on a 136 KB embedded diff (we pointed machines at the working tree instead of raising a limit). Be ready for: CompetitionStartGate, a small port that serialises start, join, open, edit and closure. The shared-cache lock kaizen note is a separate, test-database problem. Test counts in the evidence are agent-reported (e.g. 985 backend, 870 frontend at task 4a). Probably releasable before 8 November.</aside>
+    </section>
+
+    <!-- 004a: separated -->
+    <section class="mid" data-menu-title="004a: separated">
+      <h2 class="sk-section">004a: Competition beside the others</h2>
+      <div class="drawing-card plain">
+        <svg class="bc-svg" viewBox="0 0 1400 520" role="img" aria-label="Competition sits beside Games, Invitations, Users and Notifications and depends on them in one direction">
+  <rect x="40" y="150" width="360" height="230" rx="22" class="bc bc-coral" filter="url(#sk-wobble)"/><text x="220.0" y="259.0" class="bc-title">Competition</text><text x="220.0" y="299.0" class="bc-sub">its own bounded context</text>
+  <rect x="900" y="10" width="460" height="100" rx="22" class="bc bc-teal" filter="url(#sk-wobble)"/><text x="1130.0" y="52.0" class="bc-title">Games</text><text x="1130.0" y="92.0" class="bc-sub">asks Competition only for a name label</text>
+  <rect x="900" y="140" width="460" height="100" rx="22" class="bc bc-mustard" filter="url(#sk-wobble)"/><text x="1130.0" y="200.0" class="bc-title">Invitations</text>
+  <rect x="900" y="270" width="460" height="100" rx="22" class="bc bc-slate" filter="url(#sk-wobble)"/><text x="1130.0" y="330.0" class="bc-title">Users</text>
+  <rect x="900" y="400" width="460" height="100" rx="22" class="bc bc-forest" filter="url(#sk-wobble)"/><text x="1130.0" y="460.0" class="bc-title">Notifications</text>
+  <g fill="none" stroke-width="5" stroke-linecap="round" filter="url(#sk-wobble-line)" class="bc-arrows">
+    <path d="M400 190 C 560 100, 720 70, 895 62" marker-end="url(#sk-head)"/>
+    <path d="M400 240 C 600 200, 740 190, 895 190" marker-end="url(#sk-head)"/>
+    <path d="M400 300 C 600 320, 740 320, 895 320" marker-end="url(#sk-head)"/>
+    <path d="M400 350 C 560 420, 720 450, 895 450" marker-end="url(#sk-head)"/>
+    <path d="M1140 112 C 1140 135, 1140 135, 1140 112" stroke="none"/>
+  </g>
+  <text x="640" y="52" class="bc-label">reads games, plugs into MovePersistence</text>
+  <text x="680" y="176" class="bc-label">arranges invitations</text>
+  <text x="680" y="352" class="bc-label">who is playing</text>
+  <text x="640" y="486" class="bc-label">turn reminders</text>
+</svg>
+      </div>
+      <p class="callout">Dependencies point one way. Games' only look back is a name for a label.</p>
+      <aside class="notes">From the 004a code: Competition depends on Games, Invitations, Users and Notifications, never the other way round at domain level. Games defines a small MovePersistence port that Competition implements. The one arrow back is the Games controller asking the Competition side for the competition name to show a label (an adapter-level query). Verify wording against code before claiming "never".</aside>
     </section>
 
     <!-- 7 Screens -->

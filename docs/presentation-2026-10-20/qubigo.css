@@ -85,3 +85,25 @@
 .three-up .sk-panel .jp-r { font-size: .9em; }
 
 .photo-credit { position: absolute; left: 24px; bottom: 14px; margin: 0; font-size: .6em; opacity: .65; }
+
+/* Bounded-context drawings in the sketchbook style */
+.wreck .drawing-card, .drawing-card.plain { width: 100%; box-sizing: border-box; }
+.drawing-card { background: color-mix(in oklab, var(--sk-paper) 90%, transparent); border-radius: 18px; padding: .3em .8em .6em; }
+.drawing-card.plain { background: transparent; padding: 0; }
+.drawing-card .sk-section { margin-top: .2em; }
+.bc-svg { width: 100%; height: auto; max-height: 560px; display: block; }
+.bc { stroke-width: 6; fill: var(--sk-paper); }
+.bc-teal { stroke: var(--sk-teal); fill: color-mix(in oklab, var(--sk-teal) 12%, var(--sk-paper)); }
+.bc-coral { stroke: var(--sk-coral); fill: color-mix(in oklab, var(--sk-coral) 14%, var(--sk-paper)); }
+.bc-mustard { stroke: var(--sk-mustard); fill: color-mix(in oklab, var(--sk-mustard) 16%, var(--sk-paper)); }
+.bc-forest { stroke: var(--sk-forest); fill: color-mix(in oklab, var(--sk-forest) 14%, var(--sk-paper)); }
+.bc-slate { stroke: var(--sk-slate); fill: color-mix(in oklab, var(--sk-slate) 12%, var(--sk-paper)); }
+.bc-title { font-family: var(--sk-font-title); font-size: 44px; fill: var(--sk-ink-title); text-anchor: middle; }
+.bc-sub { font-family: var(--sk-font-body); font-size: 26px; fill: var(--sk-body-text); text-anchor: middle; }
+.bc-arrows { stroke: var(--sk-connector); }
+.dash { stroke: var(--sk-coral); }
+.bc-label { font-family: var(--sk-font-body); font-size: 30px; fill: var(--sk-ink); text-anchor: middle; paint-order: stroke; stroke: var(--sk-paper); stroke-width: 8px; }
+.bc-label.small { font-size: 24px; fill: var(--sk-body-text); }
+.bc-label.mid { stroke: none; }
+.bc-note { fill: var(--sk-highlighter); stroke: var(--sk-mustard); stroke-width: 4; }
+.photo-credit.light { color: #fff; opacity: .8; text-shadow: 0 1px 3px #000; }
