@@ -2,8 +2,7 @@
 internal fun runFactory(
     assemblyLine: AssemblyLine,
     runner: MachineRunner,
-    lifecycle: TaskLifecycle,
-    repository: TargetRepository
+    lifecycle: TaskLifecycle
 ) {
     var machine = assemblyLine.next("start", null)
     var branchResults: Map<String, kotlinx.serialization.json.JsonObject>? = null
@@ -27,6 +26,6 @@ internal fun runFactory(
         lifecycle.followRoute(machine, next, result)
         machine = next
     }
-    repository.recordTaskChanges()
+    lifecycle.recordTaskChanges()
     println("factory stopped")
 }

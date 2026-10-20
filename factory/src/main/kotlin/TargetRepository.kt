@@ -22,11 +22,15 @@ internal class TargetRepository(private val target: File) {
         }
     }
 
-    fun recordTaskChanges() {
+    fun recordTaskChanges(subject: String = DEFAULT_SUBJECT) {
         if (git("status", "--porcelain", "--", *productPathspec).isNotBlank()) {
             git("add", "--", *productPathspec)
-            git("commit", "--only", "-m", "Record factory task", "--", *productPathspec)
+            git("commit", "--only", "-m", subject, "--", *productPathspec)
         }
+    }
+
+    private companion object {
+        const val DEFAULT_SUBJECT = "Record factory task"
     }
 
     private fun git(vararg arguments: String): String {

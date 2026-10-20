@@ -63,7 +63,7 @@ private fun executeNamedRun(factoryDir: File, runName: String, args: Array<Strin
     val jobs = MachineJobs(namedRun.seed, namedRun.plan, assemblyLine::resultFields)
     val maxAttempts = args.toList().let { it.indexOf("--max-attempts").takeIf { i -> i >= 0 }?.let { i -> it.getOrNull(i + 1)?.toIntOrNull() } } ?: 3
     try {
-        runFactory(assemblyLine, runner, TaskLifecycle(maxAttempts, jobs, repository), repository)
+        runFactory(assemblyLine, runner, TaskLifecycle(maxAttempts, jobs, repository))
         control.finished(runName, "finished")
     } catch (error: Throwable) {
         control.finished(runName, if (error is FactoryBlocked) "blocked" else "failed", error.message)

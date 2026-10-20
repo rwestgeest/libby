@@ -43,3 +43,17 @@ Feature: Choosing where to build
       Then the target is a Git repository
       And the work for alpha and beta has been committed
       And the factory's own files and unrelated uncommitted changes are as they were
+
+  Rule: A work commit says what the task did
+
+    The doer may propose the commit's subject in a "commit" field of its result.
+    Without one, the factory falls back to a generic subject.
+
+    Example: The doer proposes a subject
+      Given the doer proposes the commit subject "feat(game): alpha and beta"
+      When the factory runs the "tetris" run
+      Then every new work commit has the subject "feat(game): alpha and beta"
+
+    Example: The doer proposes no subject
+      When the factory runs the "tetris" run
+      Then every new work commit has the subject "Record factory task"

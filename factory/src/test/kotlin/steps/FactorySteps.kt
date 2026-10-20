@@ -1621,6 +1621,18 @@ class FactorySteps {
         }
     }
 
+    @Given("the doer proposes the commit subject {string}")
+    fun doerProposesCommitSubject(subject: String) {
+        Files.writeString(workspace.resolve("doer/commit-subject.txt"), subject)
+    }
+
+    @Then("every new work commit has the subject {string}")
+    fun everyCommitHasSubject(subject: String) {
+        val commits = repo.logSince(headBeforeRun, target)
+        check(commits.isNotEmpty()) { "Expected work commits.\n$output" }
+        commits.forEach { check(repo.git("log", "-1", "--format=%s", it) == subject) { "$it\n$output" } }
+    }
+
     @Then("no new commit contains the work for the first task")
     fun noCommitContainsFirstTask() {
         val alpha = workspace.relativize(target.resolve("alpha.txt")).toString()

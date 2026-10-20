@@ -11,6 +11,7 @@ internal class TaskLifecycle(
     private var workInProgress = false
     private var workAccepted = false
     private var attempts = 0
+    private var commitSubject: String? = null
     private var findings = JsonArray(emptyList())
 
     fun prepareExecution(machine: String, branchResults: Map<String, JsonObject>? = null): String {
@@ -25,6 +26,10 @@ internal class TaskLifecycle(
     fun receiveResult(machine: String, result: JsonObject) {
         if (result["blocked"] == JsonPrimitive(true)) {
             throw FactoryBlocked("Blocked on external input at $machine. Findings: ${result["findings"] ?: "[]"}")
+        }
+        if (machine == "doer") {
+            val proposed = (result["commit"] as? JsonPrimitive)?.takeIf { it.isString }?.content?.trim()
+            if (!proposed.isNullOrEmpty()) commitSubject = proposed.lineSequence().first()
         }
         if (machine == "validator") {
             findings = result["findings"] as? JsonArray
@@ -47,16 +52,21 @@ internal class TaskLifecycle(
     private fun beginAttempt() {
         workInProgress = true
         workAccepted = false
+        commitSubject = null
         attempts++
     }
 
+    /** Records any work still uncommitted, using the doer's proposed subject when it gave one. */
+    fun recordTaskChanges() = commitSubject?.let(repository::recordTaskChanges) ?: repository.recordTaskChanges()
+
     private fun acceptWork() {
-        repository.recordTaskChanges()
+        recordTaskChanges()
         workAccepted = true
     }
 
     private fun finishPlanning() {
-        if (workAccepted) repository.recordTaskChanges()
+        if (workAccepted) recordTaskChanges()
+        commitSubject = null
         workInProgress = false
         workAccepted = false
         attempts = 0

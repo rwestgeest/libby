@@ -141,6 +141,9 @@ else:
         product = name_file.read_text().strip() if name_file.exists() else f"{task}.txt"
         Path(product).write_text(f"Work for {task}\n")
         result = {"task": task}
+        subject_file = Path(__file__).parent / "commit-subject.txt"
+        if subject_file.exists():
+            result["commit"] = subject_file.read_text().strip()
 
 message_file = Path(__file__).parent / "before-result.txt"
 if message_file.exists():
