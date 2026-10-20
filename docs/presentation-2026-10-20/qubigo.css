@@ -1,0 +1,69 @@
+/* Mix: Sketchbook kit for the story, Qubigo's dark phone look for the product. */
+:root {
+  --q-black: #000;
+  --q-darkgrey: #20252C;
+  --q-offwhite: #DADDE2;
+  --q-accent: #0088FF;
+  --q-green: #0A6E0A;
+  --q-red: #DC0A0A;
+  --q-yellow: #FADC32;
+}
+
+/* Qubigo-dark slides: flip the kit's roles to the app's palette. */
+.reveal .slides section.q-dark {
+  --sk-text: var(--q-offwhite);
+  --sk-body-text: var(--q-offwhite);
+  --sk-ink: #fff;
+  --sk-ink-title: #fff;
+  --sk-rust-text: var(--q-accent);
+  --sk-deep-teal: var(--q-accent);
+  --sk-blue-text: var(--q-accent);
+  --sk-accent: var(--q-accent);
+  --sk-accent-text: var(--q-accent);
+  --sk-on-accent: #fff;
+  --sk-connector: var(--q-offwhite);
+  --sk-swash: #0b3d75;
+  --sk-heading: var(--q-accent);
+  --sk-line: #4d4d4d;
+  color: var(--q-offwhite);
+}
+.reveal .q-dark strong { color: #fff; }
+.reveal .q-dark .sk-panel { background: linear-gradient(135deg, #14181e, #0a0c10); color: var(--q-offwhite); }
+.reveal .q-dark .callout { color: var(--q-offwhite); }
+.reveal .q-dark .kicker { color: var(--q-accent); }
+
+.reveal .slides section.title-slide .lede { max-width: 24em; }
+
+.reveal .q-logo { align-self: center; height: 70px; width: auto !important; max-width: none; margin: 0 0 .4em; border: 0; background: none; box-shadow: none; }
+
+.q-hero { display: grid; grid-template-columns: 1.25fr .75fr; gap: 2.4em; align-items: center; width: 100%; }
+.q-hero img.board { width: 100%; max-width: 520px; border-radius: 50%; border: 0; box-shadow: none; justify-self: center; }
+.q-facts { list-style: none; padding: 0; margin: .6em 0; }
+.q-facts li { margin: .55em 0; font-size: 1.35em; line-height: 1.25; padding-left: 1.1em; position: relative; }
+.q-facts li::before { content: ""; position: absolute; left: 0; top: .5em; width: .5em; height: .5em; border-radius: 50%; background: var(--q-accent); }
+
+.pill { display: inline-block; padding: .15em .9em; border-radius: 99px; background: var(--q-accent); color: #fff; font-family: var(--sk-font-label); font-size: 1em; }
+
+/* Phone frame for screenshots */
+.phones { display: flex; gap: 2.2em; justify-content: center; align-items: flex-start; margin-top: .4em; }
+.phone { text-align: center; }
+.phone img { display: block; height: 600px; width: auto; border: 7px solid #3b424d; border-radius: 34px; background: #000; box-shadow: 0 10px 30px rgba(0,0,0,.45); margin: 0 auto; }
+.phone figcaption { margin-top: .5em; font-family: var(--sk-font-label); font-size: 1.05em; color: var(--q-offwhite); }
+.q-dark .phone figcaption { color: var(--q-offwhite); }
+.fineprint { font-size: .8em; opacity: .8; text-align: center; margin-top: .5em; }
+
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6em; width: 100%; margin: .5em 0; }
+.compare .sk-panel { justify-content: flex-start; align-items: flex-start; text-align: left; }
+.compare ul { margin: .4em 0 0; padding-left: 1.1em; font-size: 1.05em; line-height: 1.3; }
+.compare li { margin: .3em 0; }
+
+.whys { width: 100%; border-collapse: separate; border-spacing: 0 .35em; font-size: 1.1em; }
+.whys td { padding: .35em .8em; vertical-align: top; }
+.whys td:first-child { font-family: var(--sk-font-label); font-size: 1.05em; color: var(--sk-rust-text); white-space: nowrap; width: 11em; }
+.whys tr { background: var(--sk-ribbon); }
+
+.ask-list { margin: .4em 0; padding: 0; list-style: none; }
+.ask-list li { margin: .5em 0; font-size: 1.5em; line-height: 1.25; }
+.reveal .sk-section { margin-bottom: .2em; }
+.mini-icon { width: 90px; height: auto; margin-right: .6em; vertical-align: middle; border: 0; background: none; box-shadow: none; }
+.row-head { display: flex; align-items: center; gap: .3em; }

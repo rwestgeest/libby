@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A skeptic's factory · Qubigo</title>
+  <link rel="stylesheet" href="vendor/reveal/reset.css">
+  <link rel="stylesheet" href="vendor/reveal/reveal.css">
+  <link rel="stylesheet" href="kit/sketchbook.css">
+  <link rel="stylesheet" href="kit/tutorial.css">
+  <link rel="stylesheet" href="qubigo.css">
+  <script src="kit/sketchbook.js" defer></script>
+</head>
+<body>
+<div class="reveal">
+  <div class="slides">
+
+    <!-- 1 Title -->
+    <section class="center title-slide" data-menu-title="A skeptic's factory">
+      <p class="kicker">Build a Software Factory · capstone share-out</p>
+      <h1 class="sk-title"><span class="sk-burst"><span class="sk-hl sk-sweep">Go and look at</span><br><span class="sk-hl sk-sweep">what it built</span></span></h1>
+      <p class="lede">A skeptic's factory: Qubigo, kaizen, and one cord pulled.</p>
+      <img class="corner-character" src="kit/characters/pointer.svg" alt="A person pointing at the title">
+      <aside class="notes">7 minutes. Message: looking at the code the factory produced (genchi genbutsu) found problems; a kaizen ledger and pulling the cord with five whys is how I learn what to change, not just what to patch. I want feedback at the end.</aside>
+    </section>
+
+    <!-- 2 Qubigo -->
+    <section class="mid q-dark" data-background-color="#000" data-menu-title="Qubigo">
+      <img class="q-logo" src="img/qubigo-logo-text-small.png" alt="Qubigo">
+      <h2 class="sk-section">Chess meets 3D tic-tac-toe</h2>
+      <div class="q-hero">
+        <ul class="q-facts">
+          <li>Three in a row on a <strong>3×3×3 cube</strong>: 27 stones, three properties each, 20–30 minutes.</li>
+          <li><strong>Easy to learn, hard to master.</strong> A physical board game at qubigo.com.</li>
+          <li>This software: web and mobile, an <strong>on-ramp to the physical game</strong>. Players fall in love online, then buy the box.</li>
+          <li>My capstone target. A real product, real releases, a real deadline.</li>
+        </ul>
+        <img class="board" src="img/welcome-board.png" alt="The Qubigo welcome board">
+      </div>
+      <aside class="notes">Sources: qubigo.com and q/docs/vision.md. Not a toy like Tetris. The factory builds it iteration by iteration; I'm a skeptic about the quality of what comes out.</aside>
+    </section>
+
+    <!-- 3 Look + ledger -->
+    <section class="mid" data-menu-title="Look, then write it down">
+      <h2 class="sk-section">Look. Then write it down.</h2>
+      <div class="sk-row three-up">
+        <div class="sk-panel sk-teal">
+          <div class="sk-step"><span class="sk-num">1</span><span class="sk-label">Go and look</span></div>
+          <img src="kit/icons/magnifier.svg" alt="A magnifying glass">
+          <p>Read the code from <strong>run 003</strong> (sessions survive deployments), not just the green checks.</p>
+        </div>
+        <div class="sk-panel sk-coral">
+          <div class="sk-step"><span class="sk-num">2</span><span class="sk-label">Find</span></div>
+          <img src="kit/icons/puzzle.svg" alt="A puzzle piece">
+          <p>Long scenario tests: boolean flags, duplicated helpers, sleeping on the wall clock.</p>
+        </div>
+        <div class="sk-panel sk-mustard">
+          <div class="sk-step"><span class="sk-num">3</span><span class="sk-label">Kaizen ledger</span></div>
+          <img src="kit/icons/sticky-note.svg" alt="A sticky note">
+          <p>One note per problem, resolved or open. Idea from Matt Wynne's Memba.</p>
+        </div>
+      </div>
+      <p class="callout"><span class="sk-tick" aria-hidden="true"></span> Cause: no test standard, a plan that prescribed test mechanics, a validator that never read test code.</p>
+      <aside class="notes">Seven more notes came out of the same run: Java 25 harness, gradlew in the wrong directory, plan outside the repo, uninformative commits, missing yx, tests split by task, validator looping on evidence no agent can produce. Cheap ones got fixed: yx installed, test guidelines in AGENTS.md and machine prompts, scenario tests replaced by one wiring test.</aside>
+    </section>
+
+    <!-- 4 004 competitions -->
+    <section class="mid" data-menu-title="Iteration 004: competitions">
+      <p class="iteration-kicker">Iteration 004</p>
+      <h2 class="sk-section">Competitions, for Spellenspektakel</h2>
+      <div class="sk-row capability-flow">
+        <div class="sk-panel sk-blue sk-wash"><div class="sk-step"><span class="sk-label">Scan</span></div><p>QR code at the stand, register, <strong>join</strong>.</p></div>
+        <svg class="sk-arrow" viewBox="0 0 40 20" aria-hidden="true"><line x1="4" y1="10" x2="30" y2="10" stroke-width="4" stroke-linecap="round" marker-end="url(#sk-head)" filter="url(#sk-wobble-line)"/></svg>
+        <div class="sk-panel sk-teal sk-wash"><div class="sk-step"><span class="sk-label">Play</span></div><p>Random pairing, 3 / 1 / 0 points, speed breaks ties.</p></div>
+        <svg class="sk-arrow" viewBox="0 0 40 20" aria-hidden="true"><line x1="4" y1="10" x2="30" y2="10" stroke-width="4" stroke-linecap="round" marker-end="url(#sk-head)" filter="url(#sk-wobble-line)"/></svg>
+        <div class="sk-panel sk-mustard sk-wash"><div class="sk-step"><span class="sk-label">Close</span></div><p>Unfinished games lost at closing time.</p></div>
+      </div>
+      <div class="sk-ribbon"><img src="kit/icons/compass.svg" alt=""><span class="sk-kicker">Deadline:</span> 7–8 November 2026, Jaarbeurs Utrecht.</div>
+      <p class="callout">Grilled the requirements. Ran the factory. Tasks 1–6 passed. Task 7 stuck.</p>
+      <aside class="notes">Careful-plan line, mixed models (DeepSeek doer/planner, Claude and Gemini reviewers). Task 7: repeated review findings and a doer answer without JSON. Meanwhile I read the code and plan and found them overly complicated.</aside>
+    </section>
+
+    <!-- 5 Cord + five whys -->
+    <section class="mid" data-menu-title="Pull the cord">
+      <h2 class="sk-section">I pulled the cord. Five whys.</h2>
+      <div class="sk-bubble">The process checked whether the machinery was <strong>correct</strong> more than whether it was <strong>needed</strong>.</div>
+      <table class="whys">
+        <tr><td>Requirements</td><td>Speculative failure cases became mandatory guarantees.</td></tr>
+        <tr><td>Collaboration</td><td>Design intent stayed tacit; nobody checked boundaries with me.</td></tr>
+        <tr><td>Design guidance</td><td>Documented responsibilities were not upheld.</td></tr>
+        <tr><td>Increments</td><td>Plans detailed too far ahead of what we had learned.</td></tr>
+        <tr><td>Handoff</td><td>A doer answer without JSON. Still unexplained.</td></tr>
+      </table>
+      <aside class="notes">Five whys done together with the agent. Picture and summary: docs/runs/qubigo-004/five-whys-summary.md and five-whys-map.svg. We stopped chains where evidence ended. Work was preserved first (221d7bb3, no acceptance claimed).</aside>
+    </section>
+
+    <!-- 6 004 vs 004a -->
+    <section class="mid" data-menu-title="004 versus 004a">
+      <h2 class="sk-section">Same requirements. Second attempt: 004a.</h2>
+      <div class="compare">
+        <div class="sk-panel sk-coral sk-dashed">
+          <div class="sk-step"><span class="sk-label">004</span></div>
+          <ul>
+            <li>Games' <code>MakeMove</code> imported a competition protocol</li>
+            <li>Hand-rolled <code>BEGIN IMMEDIATE</code> transactions</li>
+            <li>Move and result in two transactions, plus a startup reconciliation scan</li>
+            <li>An admission marker with a <code>cutoff_observed</code> flag</li>
+          </ul>
+        </div>
+        <div class="sk-panel sk-forest sk-wash">
+          <div class="sk-step"><span class="sk-label">004a</span></div>
+          <ul>
+            <li>A clear new <strong>Competition bounded context</strong></li>
+            <li>Looser coupling: Games doesn't know Competitions</li>
+            <li>No unnecessary transactional clutter</li>
+            <li>Design walkthrough with me <em>before</em> the plan; next capability only; domain primitives; TDD</li>
+          </ul>
+        </div>
+      </div>
+      <p class="callout">17 of 17 tasks done. The device checks I attested myself. Really simpler: my reading, not a measurement.</p>
+      <aside class="notes">Also changed: one tool-free repair for a doer that omits JSON; shorter prompts after an 'Argument list too long' on a 136 KB embedded diff (we pointed machines at the working tree instead of raising a limit). Be ready for: CompetitionStartGate, a small port that serialises start, join, open, edit and closure. The shared-cache lock kaizen note is a separate, test-database problem. Test counts in the evidence are agent-reported (e.g. 985 backend, 870 frontend at task 4a). Probably releasable before 8 November.</aside>
+    </section>
+
+    <!-- 7 Screens -->
+    <section class="mid q-dark" data-background-color="#000" data-menu-title="What it looks like">
+      <h2 class="sk-section">What 004a built</h2>
+      <div class="phones">
+        <figure class="phone"><img src="img/2-admin-open-share.png" alt="Admin screen of an open competition with participants"><figcaption>Organizer: open competition</figcaption></figure>
+        <figure class="phone"><img src="img/4-player-playing.png" alt="Player screen during play showing own progress"><figcaption>Player: my progress</figcaption></figure>
+        <figure class="phone"><img src="img/5-admin-stand.png" alt="Admin live standings table"><figcaption>Organizer: live stand</figcaption></figure>
+      </div>
+      <p class="fineprint">Real frontend code from the 004a branch, shown with mock data.</p>
+      <aside class="notes">Plain and utilitarian screens; the code is what I'm asking about. Also delivered: draft, edit, matching and invitations, game labels, automatic closure, reminders, onboarding.</aside>
+    </section>
+
+    <!-- 8 Ask -->
+    <section class="center final-slide" data-menu-title="Feedback">
+      <p class="kicker">Your turn</p>
+      <h2 class="sk-title"><span class="sk-burst"><span class="sk-hl">What would you</span><br><span class="sk-hl">do next?</span></span></h2>
+      <ul class="ask-list" style="text-align:left">
+        <li>How do you guide <strong>design</strong>, not only implementation, so a plan stays simple?</li>
+        <li>Should a validator review <strong>design complexity</strong>, and with what lens?</li>
+        <li>How do I verify 004a's output <strong>without reading everything</strong>?</li>
+      </ul>
+      <img class="corner-character final-character" src="kit/characters/waver.svg" alt="A person waving">
+      <aside class="notes">Lead with one question. Closing line: the factory got better because I went and looked.</aside>
+    </section>
+
+  </div>
+</div>
+<script src="vendor/reveal/reveal.js"></script>
+<script src="vendor/reveal/plugin/notes/notes.js"></script>
+<script>
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  Reveal.initialize({
+    width: 1600, height: 900, margin: 0.04,
+    hash: true, history: true, controlsTutorial: false,
+    scrollActivationWidth: null, slideNumber: "c/t",
+    transition: reduceMotion ? "none" : "fade",
+    backgroundTransition: reduceMotion ? "none" : "fade",
+    center: false, plugins: [RevealNotes]
+  }).then(() => document.documentElement.classList.add("reveal-ready"));
+</script>
+</body>
+</html>
