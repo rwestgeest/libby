@@ -58,7 +58,7 @@ the factory produced (genchi genbutsu) found problems, and a kaizen ledger plus
   - [player: in play, own progress](runs/qubigo-004a/screens/4-player-playing.png)
   - [admin: live stand](runs/qubigo-004a/screens/5-admin-stand.png)
 - **Is the code simpler? Owner's judgment, after reading it: yes, really.** A clear new Competition bounded context; looser coupling to the existing contexts (the evidence says Games has no Competition dependency; in 004 `MakeMove` imported the competition protocol); no unnecessary transactional clutter. This is a reading, not a measurement.
-- Be ready for: the closure evidence still describes a shared SQLite "writer gate" around move admission, closure and joining. Be able to say why that one is needed.
+- Be ready for: the code has a `CompetitionStartGate` that serialises start, join, open, edit and closure. Be able to say why it exists and why it is simpler than 004's transaction handling.
 - Still honest to say: the screens are plain and utilitarian. The code is the thing I'm asking about.
 
 ### 7. What I'd like from you (5:45–7:00)
@@ -73,7 +73,7 @@ the factory produced (genchi genbutsu) found problems, and a kaizen ledger plus
 - [ ] Which single feedback question to lead with (slide 7).
 - [x] "17 of 17 tasks" with the device evidence attested by me: keep as drafted on slide 6.
 - [x] 004a code quality: owner says really simpler (new bounded context, looser coupling, no transactional clutter). Slide 6 states it as judgment.
-- [ ] The 004a closure evidence still mentions a shared SQLite writer gate. Is that the necessary minimum? Decide what to say if asked.
+- [ ] The "gate" in 004a is production code: `CompetitionStartGate`, a port in the Competition domain that serialises start, join, open, edit, closure and arranged acceptance. The SQLite shared-cache lock kaizen note (2026-10-19) is a separate, test-database problem. Decide how to describe the gate: a deliberate, small single-writer guard, versus 004's `BEGIN IMMEDIATE`, two transactions and startup reconciliation.
 - [x] Deadline (8 November): 004a is probably releasable in time. Say "probably" on slide 6 or 7.
 - [ ] Screenshots use mock API data. Replace with real-app screenshots from a running backend if you prefer.
 
