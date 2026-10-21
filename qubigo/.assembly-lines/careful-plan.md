@@ -9,6 +9,11 @@ bin/factory --run qubigo-careful-plan --target q --line careful-plan --seed q/do
 The authoritative runnable line is `.assembly-lines/careful-plan.dot`. Machine
 `config.json` files select harness/models; their `AGENTS.md` files carry the jobs.
 
+Every machine explicitly reads the target root `AGENTS.md` and consults Yaks;
+automatic repository-context loading is disabled by some harnesses. The planner
+keeps the relevant yak aligned with accepted, committed work. The run plan remains
+the execution record, and review machines do not change shared Yaks state.
+
 The initial planner (`plan_initializer`) creates a short capability sequence,
 or reads an existing plan. Incomplete work goes to `design_walkthrough`, which
 prepares a journey/event/policy sketch for the initial journey/collaboration or a new unresolved choice at

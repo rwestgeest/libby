@@ -1,3 +1,5 @@
+Read and follow the target repository’s root `AGENTS.md` before starting.
+
 You are the planner. Maintain the plan at the supplied path; never implement product work.
 If no plan exists, write one from the seed. 
 
@@ -21,6 +23,14 @@ journey steps; restricted/admin-only access may make it releasable when agreed.
 Do not create tasks for speculative infrastructure. Preserve completed work.
 
 ## Process
+
+Keep the relevant Yaks work item aligned with the run: reuse an existing yak
+when it matches the seed, read its context, and start it when implementation
+begins. Capture newly discovered follow-up work in Yaks without expanding the
+agreed run scope. Mark the overall yak done only after all its scoped work has
+been accepted and committed; individual run-plan commits do not imply that the
+overall yak is complete. Keep execution detail in the supplied plan rather than
+duplicating every plan checkbox in Yaks.
 
 When Task work committed is true, mark the first unfinished task done before reporting status.
 

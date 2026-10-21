@@ -145,3 +145,36 @@ The walkthrough uses `openai-codex/gpt-6.1-sol:medium`. Structural validation an
 all four complete/needs_design_discussion routing combinations passed against
 the actual graph. Human question quality and scope judgment remain to observe
 in 004a; no new run was launched by this change.
+
+### Additional observation: 2026-10-19
+
+Run `qubigo-004a`, plan `/home/rob/dev/libby/factory/runs/qubigo-004a/plan.md`, is now 137,061 bytes with tasks 1a–5b checked and 5c (stand display) and 6 open. The planner has logged the same cost in `plan.md.friction.md` on lines 26, 46, 52, 57 and 59 (tasks 3d, 3e, 4b, 5a):
+
+- The initial read truncates at 50 KB before the first unfinished task; at 5a the 211-line plan "exceeds two 50KB read responses", so every planning round pays for continuation reads.
+- Completed checkboxes (3c–4b) still carry text such as "Task 3d remains open" and "uncommitted", plus superseded handoffs with obsolete HEAD and review status. The planner must reconcile status text against checkboxes each round.
+- The plan is 1.4 times the size it had in `qubigo-004` (98,647 bytes) and about three times the 003 size noted above, so the growth continues across iterations.
+
+Open question: how much of the cost is the checkpoint-then-route design (every doer and validator round appends a handoff) rather than the plan format itself?
+
+
+## Investigation
+
+Date: 2026-10-20. Run `qubigo-004a` repeated the problem at larger scale. The plan reached 137 KB / 227 lines. `plan.md.friction.md` records planner status reconciliation at tasks 3d, 3e, 4b and 5a: completed checkboxes (3c–4b) kept text such as "Task 3d remains open" and "uncommitted", superseded handoffs kept obsolete HEAD and review status, and reads truncated at 50 KB before the next unfinished task. The final handoff paragraph is followed by "Historical …" paragraphs for 4a and 3c, so history accretes per task rather than being replaced.
+
+Commit `175a64ba` ("require repository guidance and Yaks tracking") changed the machines: each reads the root `AGENTS.md`, and the planner reuses and starts the matching yak, keeps it aligned with accepted and committed work, marks it done only when all scoped work is accepted, and keeps execution detail in the plan rather than duplicating checkboxes in Yaks.
+
+Assessment (before any run with this change):
+
+- **Plausibly addressed:** "what state is this capability in", the status the planner currently rebuilds from prose each round. Yaks give a short authoritative answer.
+- **Not addressed:** plan growth (nothing tells the planner to replace the previous handoff or cap the plan); stale "remains open" text under checked boxes; the plan living outside the repo, so committed evidence still cites `/home/rob/dev/libby/factory/runs/...`; doer findings recorded as plan subtasks.
+
+## Decision and review point
+
+Decision (rob, 2026-10-20): do not add further countermeasures yet. Another run will show the effect of the Yaks/AGENTS.md change alone, so the result is not confounded.
+
+Observe in the next run's `plan.md.friction.md` and plan:
+
+- No planner entries about status reconciliation or truncated reads, and no stale "remains open" text under checked boxes.
+- Plan size per task, compared with 004a (about 5 KB per task).
+
+If status friction disappears but the plan still grows, the next candidate is a planner rule: replace the previous handoff instead of appending, and keep the plan under a size cap. Status stays **Open** until that run has been read.

@@ -1,3 +1,5 @@
+Read and follow the target repository’s root `AGENTS.md` before starting.
+
 Validate the doer's current uncommitted product changes, including new files, against the first unfinished task, the seed and the configured responsibility-driven object-design lens. Read the designated plan and relevant code; run meaningful checks appropriate to the changed behavior. Review only this attempt, preserving existing behavior and language idioms. Report concrete defects, missing acceptance criteria or material responsibility/collaboration problems with locations and small actionable fixes. Change neither product nor plan. Return a JSON object with boolean satisfied and array findings; satisfied is true only if no blocking findings remain. Include [] when satisfied.
 
 Your validation lens is:

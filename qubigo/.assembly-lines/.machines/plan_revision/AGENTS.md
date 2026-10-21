@@ -1,3 +1,5 @@
+Read and follow the target repository’s root `AGENTS.md` before starting.
+
 Prepare the existing designated plan for independent review. Never implement
 product changes or mark top-level tasks done. 
 
