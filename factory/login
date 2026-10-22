@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# Show and renew the logins of the target's machines. Each machine keeps its
+# own login in .assembly-lines/.machines/<machine>/, where the factory points
+# PI_CODING_AGENT_DIR (pi) or CLAUDE_CONFIG_DIR (claude).
+#
+#   factory/login                 list machines, harness, model and login expiry
+#   factory/login all             log in every machine that uses an OAuth login
+#   factory/login <machine>...    log in the named machines
+#
+# Set TARGET to use another target than q.
+set -euo pipefail
+root="$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")")"
+machines="${TARGET:-$root/q}/.assembly-lines/.machines"
+[ -d "$machines" ] || { echo "No machines in $machines" >&2; exit 1; }
+
+field() { jq -r ".$2 // \"\"" "$machines/$1/config.json" 2>/dev/null; }
+
+# Claude logins and pi models served by a subscription use OAuth; OpenRouter uses a key.
+oauth() {
+  local harness model
+  harness="$(field "$1" harness)"; model="$(field "$1" model)"
+  [ "$harness" = claude ] || [[ "$model" == openai-codex/* || "$model" == anthropic/* ]]
+}
+
+when() { [ -n "$1" ] && [ "$1" != null ] && date -d "@$(( $1 / 1000 ))" '+%Y-%m-%d %H:%M' || echo -; }
+
+# Print only expiry times, never tokens.
+expiry() {
+  local dir="$machines/$1"
+  if [ "$(field "$1" harness)" = claude ]; then
+    [ -f "$dir/.credentials.json" ] || { echo "no login"; return; }
+    echo "claude $(when "$(jq -r '.claudeAiOauth.expiresAt // empty' "$dir/.credentials.json")")"
+  else
+    [ -f "$dir/auth.json" ] || { echo "no login"; return; }
+    jq -r 'to_entries[] | "\(.key) \(.value.expires // "")"' "$dir/auth.json" |
+      while read -r provider expires; do printf "%s %s  " "$provider" "$(when "$expires")"; done
+    echo
+  fi
+}
+
+list() {
+  printf '%-20s %-7s %-6s %-42s %s\n' MACHINE HARNESS OAUTH MODEL "LOGIN EXPIRES"
+  for dir in "$machines"/*/; do
+    local name; name="$(basename "$dir")"
+    printf '%-20s %-7s %-6s %-42s %s\n' "$name" "$(field "$name" harness)" \
+      "$(oauth "$name" && echo yes || echo no)" "$(field "$name" model)" "$(expiry "$name")"
+  done
+}
+
+login() {
+  local name="$1" dir="$machines/$1"
+  [ -d "$dir" ] || { echo "There is no machine called \"$name\"" >&2; return 1; }
+  echo
+  echo "== $name ($(field "$name" harness), $(field "$name" model))"
+  echo "   Type /login, finish the login, then quit (/exit or Ctrl+C twice)."
+  # Like the factory: ignore a parent's configuration directory and tokens.
+  unset PI_CODING_AGENT_DIR CLAUDE_CONFIG_DIR CODEX_HOME \
+    ANTHROPIC_AUTH_TOKEN ANTHROPIC_OAUTH_TOKEN CLAUDE_CODE_OAUTH_TOKEN
+  if [ "$(field "$name" harness)" = claude ]; then
+    (cd "$dir" && CLAUDE_CONFIG_DIR="$dir" claude) || true
+  else
+    (cd "$dir" && PI_CODING_AGENT_DIR="$dir" pi) || true
+  fi
+  echo "   $name: $(expiry "$name")"
+}
+
+command -v jq >/dev/null || { echo "factory/login needs jq" >&2; exit 1; }
+
+if [ $# -eq 0 ]; then
+  list
+elif [ "$1" = all ]; then
+  for dir in "$machines"/*/; do
+    name="$(basename "$dir")"
+    if oauth "$name"; then login "$name"; fi
+  done
+else
+  for name in "$@"; do login "$name"; done
+fi
