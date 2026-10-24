@@ -17,6 +17,7 @@ internal class MachineJobs(
         Keep product work inside the current target directory. The factory handles commits.
         Task work committed: $taskAccepted.
         Validator findings from the previous attempt: $findings
+        ${reviewReports()}
         ${resultRequest(machine)}
         Inspect product changes directly in the current target working tree, including staged,
         unstaged and untracked files. Scope Git commands to this directory even when it is
@@ -27,6 +28,15 @@ internal class MachineJobs(
         `git ls-files --cached --others --exclude-standard -- . ":(exclude).factory" ":(exclude).assembly-lines"`
         and inspect all listed files. Do not treat an empty tracked diff as no changes.
     """.trimIndent()
+
+    /** Names the review reports beside the plan, so no machine has to construct their paths. */
+    private fun reviewReports(): String {
+        val reports = plan.absoluteFile.parentFile?.listFiles { file ->
+            file.isFile && file.name.startsWith(plan.name + ".") && file.name.endsWith(".json")
+        }.orEmpty().sortedBy { it.name }
+        return if (reports.isEmpty()) "No review reports beside the plan."
+            else "Review reports beside the plan: " + reports.joinToString(", ") { "\"${it.absolutePath}\"" } + "."
+    }
 
     fun meetingPrompt(machine: String, results: Map<String, JsonObject>): String = """
         ${resultRequest(machine)}

@@ -48,6 +48,17 @@ Feature: Machine invocation and job context preserve the current protocol
     And the validator was asked for a result with the field "satisfied"
     And the planner was asked for a result with the field "complete"
 
+  Scenario: Review reports beside the plan are named in every prompt
+    Given a review report from "plan_reviewer_1" beside the plan
+    When the factory runs
+    Then it accepts it
+    And the validator was given the path of the "plan_reviewer_1" report
+
+  Scenario: A prompt says when there are no review reports
+    When the factory runs
+    Then it accepts it
+    And the validator was given "No review reports beside the plan."
+
   Scenario Outline: Invalid configuration is refused before invocation
     Given the planner configuration is "<configuration>"
     When the factory runs

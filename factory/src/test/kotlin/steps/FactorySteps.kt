@@ -1529,6 +1529,19 @@ class FactorySteps {
         configureMachine("validator", "lens", "testability")
     }
 
+    @Given("a review report from {string} beside the plan")
+    fun reviewReportBesidePlan(reviewer: String) {
+        val plan = planPath()
+        Files.createDirectories(plan.parent)
+        Files.writeString(plan.resolveSibling("plan.md.$reviewer.json"), "{\"satisfied\": false, \"findings\": [\"Name the endpoint.\"]}\n")
+    }
+
+    @Then("the validator was given the path of the {string} report")
+    fun validatorGivenReportPath(reviewer: String) {
+        val report = planPath().resolveSibling("plan.md.$reviewer.json").toAbsolutePath().toString()
+        check(validatorPrompt().contains("Review reports beside the plan: \"$report\"")) { validatorPrompt() }
+    }
+
     @Then("the validator was given {string}")
     fun validatorGiven(value: String) {
         check(validatorPrompt().contains(value)) { "Validator was not given $value" }
