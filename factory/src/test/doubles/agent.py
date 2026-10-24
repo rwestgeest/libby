@@ -65,6 +65,8 @@ if "--no-tools" in sys.argv:
     folder = Path(__file__).parent
     if (folder / "repair-prose").exists():
         print("Still only prose.")
+    elif '"satisfied"' in sys.argv[-1]:
+        print(json.dumps({"satisfied": True, "findings": []}))
     elif (folder / "repair-blocked").exists():
         print(json.dumps({"blocked": True, "findings": ["Owner must confirm signing key persistence."]}))
     else:
@@ -99,7 +101,10 @@ if workspace:
         order.write(role + "\n")
 
 if validator:
-    print(json.dumps({"satisfied": True, "findings": []}))
+    if (Path(__file__).parent / "prose-handoff").exists():
+        print("Here's my summary:\nAll previous findings are resolved and no new defects were identified.")
+    else:
+        print(json.dumps({"satisfied": True, "findings": []}))
     sys.exit(0)
 
 if not plan.exists():

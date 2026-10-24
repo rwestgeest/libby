@@ -105,6 +105,13 @@ Feature: Machine invocation and job context preserve the current protocol
     And the validator has not been called
     And there are no new commits
 
+  Scenario: A prose-only pi validator verdict is repaired into the validator's result
+    Given the pi validator returns only prose
+    When the factory runs
+    Then it accepts it
+    And the plan shows every task as done
+    And each validator prose handoff was repaired once without tools, asking for its result fields
+
   Scenario: A pi ACP doer can repair its prose handoff without tools
     Given the pi doer returns only prose
     And the pi doer uses the ACP bridge

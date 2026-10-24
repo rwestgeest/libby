@@ -203,6 +203,24 @@ class FactorySteps {
         Files.writeString(workspace.resolve("doer/prose-handoff"), "yes")
     }
 
+    @Given("the pi validator returns only prose")
+    fun piValidatorReturnsOnlyProse() {
+        val executable = Files.createDirectories(workspace.resolve("validator")).resolve("pi")
+        Files.copy(Path.of("src/test/doubles/agent.py"), executable)
+        executable.toFile().setExecutable(true)
+        configureMachine("validator", "harness", executable.toString())
+        Files.writeString(workspace.resolve("validator/prose-handoff"), "yes")
+    }
+
+    @Then("each validator prose handoff was repaired once without tools, asking for its result fields")
+    fun validatorProseRepairedWithItsResultFields() {
+        val calls = workspace.resolve("validator/calls").toFile().listFiles()!!.filter { it.extension == "json" }
+        val repairs = calls.filter { "--no-tools" in it.readText() }
+        check(calls.size == 4 && repairs.size == 2) { "Expected a validation plus a repair for each task" }
+        val repairPrompts = repairs.map { Files.readString(Path.of(it.path.removeSuffix(".json") + ".txt")) }
+        check(repairPrompts.all { "\"satisfied\"" in it }) { "The repair must ask for the validator's result fields" }
+    }
+
     @Given("the pi doer uses the ACP bridge")
     fun piDoerUsesAcpBridge() {
         configureMachine("doer", "harness", "pi-rpc-acp")
